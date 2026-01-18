@@ -1,7 +1,32 @@
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+select = [
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "I",   # import
+  "UP",  # pyupgrade
+  "B",   # bugbear
+]
+
+ignore = [
+  "E501",  # line-length
+]
+
+fixable = ["ALL"]
+
 [project]
 name = "portfotrack"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "commitizen>=4.11.6",
+    "pre-commit>=4.5.1",
+]
