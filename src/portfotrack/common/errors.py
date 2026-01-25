@@ -1,3 +1,6 @@
+from enum import StrEnum
+
+
 class AppError(Exception):
     """Base application error with structured metadata.
 
@@ -22,7 +25,7 @@ class AppError(Exception):
     def __init__(
         self,
         *,
-        code: str,
+        code: str | StrEnum,
         message: str,
         details: dict | None = None,
         cause: BaseException | None = None,
@@ -39,7 +42,7 @@ class AppError(Exception):
 
         """
         super().__init__(message)
-        self.code = code
+        self.code = code.value if isinstance(code, StrEnum) else code
         self.message = message
         self.details = details or {}
         self.cause = cause

@@ -1,8 +1,21 @@
+from enum import StrEnum
+
 from portfotrack.common.errors import AppError
 
 
 def test_app_error_minal_init() -> None:
     e = AppError(code="X", message="m")
+    assert e.code == "X"
+    assert e.message == "m"
+    assert e.details == {}
+    assert e.cause is None
+
+
+def test_app_error_init_with_enum() -> None:
+    class TestEnum(StrEnum):
+        X = "X"
+
+    e = AppError(code=TestEnum.X, message="m")
     assert e.code == "X"
     assert e.message == "m"
     assert e.details == {}
