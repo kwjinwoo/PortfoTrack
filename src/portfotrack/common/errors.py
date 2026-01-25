@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Any
 
 
 class AppError(Exception):
@@ -27,7 +28,7 @@ class AppError(Exception):
         *,
         code: str | StrEnum,
         message: str,
-        details: dict | None = None,
+        details: dict[str, Any] | None = None,
         cause: BaseException | None = None,
     ) -> None:
         """Initializes an AppError.

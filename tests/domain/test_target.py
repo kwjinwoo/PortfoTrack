@@ -2,6 +2,13 @@ import pytest
 
 from portfotrack.domain.asset import Asset
 from portfotrack.domain.target_allocation import TargetAllocation, Tolerance
+from portfotrack.domain.target_allocation.error_codes import TargetErrorCode
+from portfotrack.domain.target_allocation.errors import (
+    DuplicateAssetError,
+    InvalidTargetRatioError,
+    InvalidToleranceBoundsError,
+    TotalRatioMismatchError,
+)
 
 
 @pytest.fixture
@@ -72,7 +79,9 @@ def test_add_asset_duplicated_asset_rasise_value_error(
     target_allocation = TargetAllocation()
     target_allocation.add_asset(asset_one, 0.30, tol_ok)
 
-    with pytest.raises(ValueError, match="already in Target Portfolio."):
+    with pytest.raises(
+        DuplicateAssetError, match=TargetErrorCode.TARGET_DUPLICATE_ASSET
+    ):
         target_allocation.add_asset(asset_other, 0.6, tol_ok)
 
 
@@ -83,7 +92,9 @@ def test_add_asset_malform_target_ratio_raise_value_error(
     target_allocation = TargetAllocation()
     asset_a = Asset("a", "Asset A", "growth")
 
-    with pytest.raises(ValueError, match="target_ratio must be between 0 and 1"):
+    with pytest.raises(
+        InvalidTargetRatioError, match=TargetErrorCode.TARGET_INVALID_RATIO
+    ):
         target_allocation.add_asset(asset_a, target_ratio, tol_ok)
 
 
@@ -107,7 +118,10 @@ def test_add_asset_bad_tolerance(request, tolerance: str) -> None:
     tol: Tolerance = request.getfixturevalue(tolerance)
     asset_a = Asset("a", "Asset A", "growth")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        InvalidToleranceBoundsError,
+        match=TargetErrorCode.TARGET_INVALID_TOLERANCE_BOUNDS,
+    ):
         target_allocation.add_asset(asset_a, 0.30, tol)
 
 
@@ -158,7 +172,9 @@ def test_validate_total_under_one_raise_value_error(tol_ok: Tolerance) -> None:
     target_allocation.add_asset(asset_a, 0.1, tol_ok)
     target_allocation.add_asset(asset_b, 0.2, tol_ok)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        TotalRatioMismatchError, match=TargetErrorCode.TARGET_TOTAL_MISMATCH
+    ):
         target_allocation.validate_total()
 
 
@@ -171,7 +187,9 @@ def test_validate_total_upper_one_raise_value_error(tol_ok: Tolerance) -> None:
     target_allocation.add_asset(asset_a, 0.8, tol_ok)
     target_allocation.add_asset(asset_b, 0.21, tol_ok)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        TotalRatioMismatchError, match=TargetErrorCode.TARGET_TOTAL_MISMATCH
+    ):
         target_allocation.validate_total()
 
 

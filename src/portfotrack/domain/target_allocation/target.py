@@ -2,6 +2,12 @@ from dataclasses import dataclass, field
 from typing import TypedDict
 
 from portfotrack.domain.asset.asset import Asset
+from portfotrack.domain.target_allocation.errors import (
+    DuplicateAssetError,
+    InvalidTargetRatioError,
+    InvalidToleranceBoundsError,
+    TotalRatioMismatchError,
+)
 
 
 class Tolerance(TypedDict):
@@ -64,24 +70,22 @@ class TargetAllocation:
             tolerance: Acceptable allocation bounds for the asset.
 
         Raises:
-            ValueError: If the asset already exists in the allocation.
-            ValueError: If target_ratio is outside [0.0, 1.0].
-            ValueError: If tolerance.lower is greater than tolerance.upper.
-            ValueError: If tolerance bounds are outside [0.0, 1.0].
+            DuplicateAssetError: If the asset already exists in the allocation.
+            InvalidTargetRatioError: If target_ratio is outside [0.0, 1.0].
+            InvalidToleranceBoundsError: If tolerance.lower is greater than tolerance.upper.
+            InvalidToleranceBoundsError: If tolerance bounds are outside [0.0, 1.0].
         """
         if asset in self.target_assets:
-            raise ValueError(
-                f"Asset {asset.id}-{asset.name} is already in Target Portfolio."
-            )
+            raise DuplicateAssetError(asset_id=asset.id, asset_name=asset.name)
 
         if not (0.0 <= target_ratio <= 1.0):
-            raise ValueError("target_ratio must be between 0 and 1")
+            raise InvalidTargetRatioError(target_ratio=target_ratio)
 
         lo, hi = tolerance["lower"], tolerance["upper"]
         if lo > hi:
-            raise ValueError("tolerance.lower must be <= tolerance.upper")
+            raise InvalidToleranceBoundsError(lower=lo, upper=hi)
         if lo < 0.0 or hi > 1.0:
-            raise ValueError("tolerance bounds must be within [0, 1]")
+            raise InvalidToleranceBoundsError(lower=lo, upper=hi)
 
         self.target_assets[asset] = (target_ratio, tolerance)
 
@@ -104,8 +108,8 @@ class TargetAllocation:
             eps: Allowed numerical tolerance when comparing against 1.0.
 
         Raises:
-            ValueError: If the total allocation deviates from 1.0 beyond eps.
+            TotalRatioMismatchError: If the total allocation deviates from 1.0 beyond eps.
         """
         total = self.total_ratio()
         if abs(total - 1.0) > eps:
-            raise ValueError(f"Total target ratio must be 1.0 (got {total})")
+            raise TotalRatioMismatchError(total=total, expected=1.0, eps=eps)
