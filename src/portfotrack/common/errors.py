@@ -21,9 +21,9 @@ class AppError(Exception):
 
     def __init__(
         self,
+        *,
         code: str,
         message: str,
-        *,
         details: dict | None = None,
         cause: BaseException | None = None,
     ) -> None:

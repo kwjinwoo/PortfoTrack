@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import TypedDict
 
-from portfotrack.domain.asset import Asset
+from portfotrack.domain.asset.asset import Asset
 
 
 class Tolerance(TypedDict):

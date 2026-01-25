@@ -1,6 +1,6 @@
 import pytest
 
-from portfotrack.domain.asset import Asset
+from portfotrack.domain.asset.asset import Asset
 
 
 def test__eq__same_instance__returns_true() -> None:

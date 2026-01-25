@@ -1,7 +1,7 @@
 import pytest
 
 from portfotrack.domain.asset import Asset
-from portfotrack.domain.target import TargetAllocation, Tolerance
+from portfotrack.domain.target_allocation import TargetAllocation, Tolerance
 
 
 @pytest.fixture
