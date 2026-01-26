@@ -1,4 +1,4 @@
-from portfotrack.cli.io import print_banner
+from portfotrack.cli.io import print_banner, print_help
 
 PROMPT = "portfotrack> "
 
@@ -18,5 +18,9 @@ def run_repl() -> int:
             return 0
 
         if raw in {"quit", "exit"}:
-            print("\nBye.")
+            print("Bye.")
             return 0
+
+        if raw in {"help", "?"}:
+            print_help()
+            continue
