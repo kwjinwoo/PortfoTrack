@@ -11,7 +11,7 @@ Design notes:
   to the interactive CLI loop.
 """
 
-from portfotrack.cli.target import run_repl
+from portfotrack.cli.target_cli.target import run_repl
 
 
 def main() -> int:
