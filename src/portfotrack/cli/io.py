@@ -21,7 +21,13 @@ def print_help() -> None:
     print(
         "\nCommands:\n"
         "  help | ?\n"
+        "      Show this help message.\n\n"
         "  exit | quit\n"
+        "      Exit the REPL.\n\n"
         "  init-target\n"
-        "  add-asset\n"
+        "      Initialize a new target allocation.\n\n"
+        "  add-asset <id> <name> <purpose> --ratio <r> --lower <l> --upper <u>\n"
+        "      Add an asset to the current target allocation.\n"
+        "      Example:\n"
+        '        add-asset us-stock "US Equity" core --ratio 0.4 --lower 0.35 --upper 0.45\n'
     )

@@ -46,7 +46,17 @@ def _run_init_target(state: ReplState, args: list[str]) -> None:
 
 
 def _run_add_asset(state: ReplState, args: list[str]) -> None:
-    pass
+    if state.target is None:
+        print("No target. Run `init-target` first.")
+        return
+
+    if len(args) < 3:
+        print(
+            "Usage: add-asset <id> <name> <purpose> --ratio <r> --lower <l> --upper <u>"
+        )
+        return
+
+    # add_asset_to_target()
 
 
 COMMAND_DICT: dict[str, CommandHandler] = {
