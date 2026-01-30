@@ -1,0 +1,7 @@
+from enum import StrEnum
+
+
+class CliParsingErrorCode(StrEnum):
+    CLI_INVALID_FLAG = "CLI.INVALID_FLAG"
+    CLI_DUPLICATED_FLAG = "CLI.DUPLICATED_FLAG"
+    CLI_MISSING_FLAG_VALUE = "CLI.MISSING_FLAG_VALUE"
