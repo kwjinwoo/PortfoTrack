@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from portfotrack.cli.parsing.errors import (
+from portfotrack.cli.errors import (
     DuplicatedFlagError,
     InvalidFlagError,
     InvalidValueTypeError,

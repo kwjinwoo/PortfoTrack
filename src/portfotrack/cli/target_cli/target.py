@@ -1,9 +1,9 @@
 from collections.abc import Callable
 
+from portfotrack.cli.errors import InvalidCommandError
 from portfotrack.cli.io import print_banner, print_help
 from portfotrack.cli.parsing.flags import parse_flags, pop_required_float
 from portfotrack.cli.state import ReplState
-from portfotrack.cli.target_cli.errors import InvalidCommandError
 from portfotrack.common.errors import AppError
 from portfotrack.services.target_services import add_asset_to_target, init_target
 

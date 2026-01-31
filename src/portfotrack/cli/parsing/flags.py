@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from portfotrack.cli.parsing.errors import (
+from portfotrack.cli.errors import (
     DuplicatedFlagError,
     InvalidFlagError,
     InvalidValueTypeError,
