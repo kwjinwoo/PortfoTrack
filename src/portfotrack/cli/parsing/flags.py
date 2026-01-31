@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from portfotrack.cli.parsing.errors import (
     DuplicatedFlagError,
     InvalidFlagError,
+    InvalidValueTypeError,
     MissingFlagValueError,
 )
 
@@ -256,3 +257,65 @@ def _parse_bool(raw: str, *, key: str) -> bool:
     if v in {"0", "false", "f", "no", "n", "off"}:
         return False
     raise MissingFlagValueError(flag=key, value=v)
+
+
+def pop_required_float(flags: dict[str, object], key: str) -> float:
+    """Pop and return a required float flag value.
+
+    This function retrieves the value associated with `key` from the given
+    flags dictionary, validates that it is present and convertible to `float`,
+    and removes it from the dictionary.
+
+    Args:
+        flags: Dictionary of parsed CLI flags. This dictionary is mutated by
+            removing the consumed flag.
+        key: Flag name (without leading `--`) to retrieve.
+
+    Returns:
+        The flag value converted to `float`.
+
+    Raises:
+        MissingFlagValueError: If the flag is missing or its value is an empty
+            string.
+        InvalidValueTypeError: If the flag value cannot be converted to a
+            float.
+
+    """
+    s = pop_required_str(flags, key)
+    try:
+        return float(s)
+    except ValueError as e:
+        raise InvalidValueTypeError(
+            flag=key, required_type="float", wrong_value=s
+        ) from e
+
+
+def pop_required_str(flags: dict[str, object], key: str) -> str:
+    """Pop and return a required string flag value.
+
+    This function retrieves the value associated with `key` from the given
+    flags dictionary, validates that it is a non-empty string, and removes
+    it from the dictionary.
+
+    Args:
+        flags: Dictionary of parsed CLI flags. This dictionary is mutated by
+            removing the consumed flag.
+        key: Flag name (without leading `--`) to retrieve.
+
+    Returns:
+        The non-empty string value of the flag.
+
+    Raises:
+        MissingFlagValueError: If the flag is missing or its value is an empty
+            string.
+        InvalidValueTypeError: If the flag value is not a string.
+
+    """
+    if key not in flags:
+        raise MissingFlagValueError(flag=key)
+    v = flags.pop(key)
+    if not isinstance(v, str):
+        raise InvalidValueTypeError(flag=key, required_type="string")
+    if v == "":
+        raise MissingFlagValueError(flag=key)
+    return v

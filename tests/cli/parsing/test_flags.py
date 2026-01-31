@@ -1,11 +1,18 @@
+import math
+
 import pytest
 
 from portfotrack.cli.parsing.errors import (
     DuplicatedFlagError,
     InvalidFlagError,
+    InvalidValueTypeError,
     MissingFlagValueError,
 )
-from portfotrack.cli.parsing.flags import parse_flags
+from portfotrack.cli.parsing.flags import (
+    parse_flags,
+    pop_required_float,
+    pop_required_str,
+)
 
 
 def test_parse_flags_puts_non_flag_tokens_in_rest() -> None:
@@ -129,3 +136,108 @@ def test_parse_flags_treats_non_double_dash_tokens_as_positional() -> None:
 
     assert results.flags == {"name": "alice"}
     assert results.rest == ["-x"]
+
+
+class TestPopRequiredStr:
+    def test_pop_required_str_success_pops_and_returns(self) -> None:
+        flags: dict[str, object] = {"name": "abc", "other": "x"}
+
+        v = pop_required_str(flags, "name")
+
+        assert v == "abc"
+        assert "name" not in flags
+        assert flags == {"other": "x"}
+
+    def test_pop_required_str_allows_whitespace_string(self) -> None:
+        flags: dict[str, object] = {"name": " "}
+
+        v = pop_required_str(flags, "name")
+
+        assert v == " "
+        assert flags == {}
+
+    def test_pop_required_str_missing_key_raises(self) -> None:
+        flags: dict[str, object] = {"other": "x"}
+
+        with pytest.raises(MissingFlagValueError):
+            pop_required_str(flags, "name")
+
+    def test_pop_required_str_empty_string_raises(self) -> None:
+        flags: dict[str, object] = {"name": ""}
+
+        with pytest.raises(MissingFlagValueError):
+            pop_required_str(flags, "name")
+
+    @pytest.mark.parametrize(
+        "wrong",
+        [123, 1.23, True, None, [], {}, object()],
+    )
+    def test_pop_required_str_non_string_raises_invalid_value_type(
+        self, wrong: object
+    ) -> None:
+        flags: dict[str, object] = {"name": wrong}
+
+        with pytest.raises(InvalidValueTypeError):
+            pop_required_str(flags, "name")
+
+
+class TestPopRequiredFloat:
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("1.5", 1.5),
+            ("2", 2.0),
+            ("1e-3", 1e-3),
+            (" 1.2 ", 1.2),
+        ],
+    )
+    def test_pop_required_float_success_pops_and_returns(
+        self, raw: str, expected: float
+    ) -> None:
+        flags: dict[str, object] = {"rate": raw, "other": "x"}
+
+        v = pop_required_float(flags, "rate")
+
+        assert v == pytest.approx(expected)
+        assert "rate" not in flags
+        assert flags == {"other": "x"}
+
+    def test_pop_required_float_missing_key_raises(self) -> None:
+        flags: dict[str, object] = {"other": "x"}
+
+        with pytest.raises(MissingFlagValueError):
+            pop_required_float(flags, "rate")
+
+    def test_pop_required_float_empty_string_raises(self) -> None:
+        flags: dict[str, object] = {"rate": ""}
+
+        with pytest.raises(MissingFlagValueError):
+            pop_required_float(flags, "rate")
+
+    @pytest.mark.parametrize(
+        "wrong",
+        [123, 1.23, True, None, [], {}, object()],
+    )
+    def test_pop_required_float_non_string_raises_invalid_value_type(
+        self, wrong: object
+    ) -> None:
+        flags: dict[str, object] = {"rate": wrong}
+
+        with pytest.raises(InvalidValueTypeError):
+            pop_required_float(flags, "rate")
+
+    def test_pop_required_float_unparseable_string_raises_invalid_value_type(
+        self,
+    ) -> None:
+        flags: dict[str, object] = {"rate": "abc"}
+
+        with pytest.raises(InvalidValueTypeError):
+            pop_required_float(flags, "rate")
+
+    def test_pop_required_float_parses_nan_and_pops(self) -> None:
+        flags: dict[str, object] = {"rate": "nan"}
+
+        v = pop_required_float(flags, "rate")
+
+        assert math.isnan(v)
+        assert flags == {}

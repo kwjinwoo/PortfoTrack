@@ -96,3 +96,44 @@ class MissingFlagValueError(CliError):
         self.details.update({"flag": flag})
         if value is not None:
             self.details.update({"value": value})
+
+
+class MissingRequiredFlagError(CliError):
+    def __init__(
+        self,
+        *,
+        flag: str,
+        details: dict[str, Any] | None = None,
+        cause: BaseException | None = None,
+    ) -> None:
+        super().__init__(
+            code=CliParsingErrorCode.CLI_MISSING_REQUIRED_FLAG,
+            message=f"Missing required flag '--{flag}'.",
+            details=details,
+            cause=cause,
+        )
+        self.details.update({"flag": flag})
+
+
+class InvalidValueTypeError(CliError):
+    def __init__(
+        self,
+        *,
+        flag: str,
+        required_type: str,
+        wrong_value: str | None = None,
+        details: dict[str, Any] | None = None,
+        cause: BaseException | None = None,
+    ) -> None:
+        message = f"Flag '--{flag}' must be {required_type}."
+        if wrong_value is not None:
+            message += f" but got '{wrong_value}'."
+        super().__init__(
+            code=CliParsingErrorCode.CLI_INVALID_VALUE_TYPE,
+            message=message,
+            details=details,
+            cause=cause,
+        )
+        self.details.update(
+            {"flag": flag, "required_type": required_type, "wrong_value": wrong_value}
+        )
