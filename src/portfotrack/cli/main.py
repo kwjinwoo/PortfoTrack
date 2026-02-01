@@ -1,28 +1,58 @@
-"""
-Interactive CLI entry point for PortfoTrack.
+from portfotrack.cli.io import print_banner, print_help
+from portfotrack.cli.registry import CommandRegistry
+from portfotrack.cli.state import ReplState
+from portfotrack.common.errors import AppError
 
-This module serves as the top-level entry point for the PortfoTrack application.
-When executed, it launches an interactive, REPL-style command-line interface
-that guides the user through managing target portfolio allocations.
-
-Design notes:
-- All business logic is delegated to service-layer functions.
-- This module is intentionally minimal and only wires program startup
-  to the interactive CLI loop.
-"""
-
-from portfotrack.cli.target_cli.target import run_repl
+PROMPT = "portfotrack> "
 
 
-def main() -> int:
-    """
-    Start the interactive PortfoTrack CLI.
+def build_registry() -> CommandRegistry:
+    """Build and initialize the global CLI command registry.
+
+    This function creates a CommandRegistry instance and registers
+    all available CLI commands by invoking feature-specific
+    registration functions.
+
+    It serves as a single, explicit entry point for command
+    registration and is intended to be called once during
+    application startup.
 
     Returns:
-        int: Process exit code. Returns 0 on normal termination.
+        A fully initialized CommandRegistry containing all
+        registered CLI commands.
     """
-    return run_repl()
+    registry = CommandRegistry()
+
+    from portfotrack.cli.target_cli.target import register_target_commands
+
+    register_target_commands(registry)
+
+    return registry
 
 
-if __name__ == "__main__":
-    SystemExit(main())
+def run_repl() -> int:
+    """Run the interactive PortfoTrack command loop."""
+    state = ReplState()
+    registry = build_registry()
+
+    print_banner()
+
+    while True:
+        try:
+            raw = input(PROMPT).strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nBye.")
+            return 0
+
+        if raw in {"quit", "exit"}:
+            print("Bye.")
+            return 0
+
+        if raw in {"help", "?"}:
+            print_help()
+            continue
+
+        try:
+            registry.dispatch(raw=raw, state=state)
+        except AppError as e:
+            print(e)
