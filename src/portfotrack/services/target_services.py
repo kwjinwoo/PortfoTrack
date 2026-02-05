@@ -1,5 +1,8 @@
 from portfotrack.domain.asset.factory import create_asset
 from portfotrack.domain.target_allocation import TargetAllocation
+from portfotrack.path import TARGETS_DIR
+from portfotrack.storage.json_store.target_store import load, save
+from portfotrack.storage.serialization.target_json import dto_to_target, target_to_dto
 
 
 def init_target() -> TargetAllocation:
@@ -59,3 +62,43 @@ def add_asset_to_target(
     asset = create_asset(asset_id, asset_name, purpose)
     target.add_asset(asset, target_ratio, {"lower": lower, "upper": upper})
     return target
+
+
+def save_target(target: TargetAllocation) -> None:
+    """Save the given target allocation to persistent JSON storage.
+
+    This is a service-layer convenience wrapper that converts the domain
+    `TargetAllocation` into a JSON-serializable DTO and delegates the actual
+    persistence to the JSON store.
+
+    Args:
+        target: Target allocation domain object to persist.
+
+    Returns:
+        None
+    """
+    target_dto = target_to_dto(target)
+    save(target_dto)
+
+
+def load_latest_target() -> TargetAllocation:
+    """Load the most recent target allocation from JSON storage.
+
+    This function scans the targets directory for JSON files and loads the
+    newest one (by filename sort order). It then converts the loaded DTO into
+    a domain `TargetAllocation`.
+
+    Returns:
+        The most recently saved target allocation.
+
+    Raises:
+        FileNotFoundError: If no target JSON files exist in the targets directory.
+    """
+    targets = sorted(TARGETS_DIR.glob("*.json"))
+
+    if not targets:
+        raise FileNotFoundError(f"No target files found under: {TARGETS_DIR}")
+
+    latest_target_path = targets[-1]
+    latest_target_dto = load(latest_target_path.name)
+    return dto_to_target(latest_target_dto)
