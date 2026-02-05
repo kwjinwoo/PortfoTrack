@@ -6,9 +6,8 @@ from typing import Any
 import pytest
 
 import portfotrack.storage.json_store.target_store as store_mod
-from portfotrack.domain.target_allocation import TargetAllocation
 from portfotrack.storage.json_store.errors import TargetNotFoundError
-from portfotrack.storage.serialization.target_json import AssetDTO, TargetAllocationDTO
+from portfotrack.storage.serialization.target_json import TargetAllocationDTO
 
 
 @pytest.fixture()
@@ -121,15 +120,6 @@ def test_load_asset_not_list_raise_type_error(invalid_data, targets_dir: Path):
         store_mod.load(file_path.name)
 
 
-def test_load_asset_list_contains_non_dict_raises_type_error(targets_dir: Path):
-    invalid_data = {"assets": ["invalid_data"]}
-    file_path = targets_dir / "invalid.json"
-    _write_json(file_path, invalid_data)
-
-    with pytest.raises(TypeError):
-        store_mod.load(file_path.name)
-
-
 def test_load_reconstruct_target(targets_dir: Path):
     dto = _valid_target_dto()
     file_path = targets_dir / "ok.json"
@@ -137,110 +127,14 @@ def test_load_reconstruct_target(targets_dir: Path):
 
     target = store_mod.load(file_path.name)
 
-    assert isinstance(target, TargetAllocation)
+    assert isinstance(target, dict)
 
-    assets = target.target_assets
-    assert isinstance(assets, dict)
+    assets = target["assets"]
+    assert isinstance(assets, list)
 
     for asset, asset_dto in zip(assets, dto["assets"], strict=True):
-        assert asset.id == asset_dto["id"]
-        assert asset.name == asset_dto["name"]
-        assert asset.purpose == asset_dto["purpose"]
-
-        target_ratio, tolerance = assets[asset]
-
-        assert target_ratio == asset_dto["target_ratio"]
-        assert tolerance == asset_dto["tolerance"]
-
-
-@pytest.mark.parametrize("bad_input", ["bad_input", ["bad_input"], 123, True, False])
-def test_parse_asset_dto_not_dict_raise_type_error(bad_input):
-    with pytest.raises(TypeError):
-        store_mod._parse_asset_dto(bad_input)
-
-
-@pytest.mark.parametrize(
-    "missing_key", ["id", "name", "purpose", "target_ratio", "tolerance"]
-)
-def test_parse_asset_dto_missing_required_keys_raise_runtime_error(missing_key):
-    asset_dto: AssetDTO = {
-        "id": "test_id",
-        "name": "test_name",
-        "purpose": "test_purpose",
-        "target_ratio": 1.0,
-        "tolerance": {"lower": 0.0, "upper": 1.0},
-    }
-    del asset_dto[missing_key]
-
-    with pytest.raises(RuntimeError):
-        store_mod._parse_asset_dto(asset_dto)
-
-
-@pytest.mark.parametrize("invalid_id", [1, True, False])
-def test_parse_asset_dto_invalid_id_type_raise_type_error(invalid_id):
-    asset_dto: AssetDTO = {
-        "id": invalid_id,
-        "name": "test_name",
-        "purpose": "test_purpose",
-        "target_ratio": 1.0,
-        "tolerance": {"lower": 0.0, "upper": 1.0},
-    }
-
-    with pytest.raises(TypeError):
-        store_mod._parse_asset_dto(asset_dto)
-
-
-@pytest.mark.parametrize("invalid_name", [1, True, False])
-def test_parse_asset_dto_invalid_name_type_raise_type_error(invalid_name):
-    asset_dto: AssetDTO = {
-        "id": "test_id",
-        "name": invalid_name,
-        "purpose": "test_purpose",
-        "target_ratio": 1.0,
-        "tolerance": {"lower": 0.0, "upper": 1.0},
-    }
-
-    with pytest.raises(TypeError):
-        store_mod._parse_asset_dto(asset_dto)
-
-
-@pytest.mark.parametrize("invalid_purpose", [1, True, False])
-def test_parse_asset_dto_invalid_purpose_type_raise_type_error(invalid_purpose):
-    asset_dto: AssetDTO = {
-        "id": "test_id",
-        "name": "test_name",
-        "purpose": invalid_purpose,
-        "target_ratio": 1.0,
-        "tolerance": {"lower": 0.0, "upper": 1.0},
-    }
-
-    with pytest.raises(TypeError):
-        store_mod._parse_asset_dto(asset_dto)
-
-
-@pytest.mark.parametrize("invalid_ratio", ["ratio", False, True])
-def test_parse_asset_dto_invalid_ratio_type_raise_type_error(invalid_ratio):
-    asset_dto: AssetDTO = {
-        "id": "test_id",
-        "name": "test_name",
-        "purpose": "test_purpose",
-        "target_ratio": invalid_ratio,
-        "tolerance": {"lower": 0.0, "upper": 1.0},
-    }
-
-    with pytest.raises(TypeError):
-        store_mod._parse_asset_dto(asset_dto)
-
-
-@pytest.mark.parametrize("invalid_tolerance", ["test", 1, False, True, ["test"]])
-def test_parse_asset_dto_invalid_tolerance_type_raise_type_error(invalid_tolerance):
-    asset_dto: AssetDTO = {
-        "id": "test_id",
-        "name": "test_name",
-        "purpose": "test_purpose",
-        "target_ratio": 1.0,
-        "tolerance": invalid_tolerance,
-    }
-
-    with pytest.raises(TypeError):
-        store_mod._parse_asset_dto(asset_dto)
+        assert asset["id"] == asset_dto["id"]
+        assert asset["name"] == asset_dto["name"]
+        assert asset["purpose"] == asset_dto["purpose"]
+        assert asset["target_ratio"] == asset_dto["target_ratio"]
+        assert asset["tolerance"] == asset_dto["tolerance"]
