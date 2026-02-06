@@ -29,5 +29,9 @@ def print_help() -> None:
         "  add-asset <id> <name> <purpose> --ratio <r> --lower <l> --upper <u>\n"
         "      Add an asset to the current target allocation.\n"
         "      Example:\n"
-        '        add-asset us-stock "US Equity" core --ratio 0.4 --lower 0.35 --upper 0.45\n'
+        '        add-asset us-stock "US Equity" core --ratio 0.4 --lower 0.35 --upper 0.45\n\n'
+        "  save-target\n"
+        "      Save the current target allocation to disk.\n\n"
+        "  load-target\n"
+        "      Load the most recently saved target allocation.\n"
     )
