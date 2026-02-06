@@ -344,21 +344,25 @@ def test_run_add_asset_unknown_flag_raises(state_with_target: ReplState) -> None
 # ---------------------------
 
 
-def test_register_target_commands_registers_two_commands() -> None:
+def test_register_target_commands_registers_four_commands() -> None:
     registry = Mock()
 
     from portfotrack.cli.target_cli.target import (
         register_target_commands,
         run_add_asset,
         run_init_target,
+        run_load_target,
+        run_save_target,
     )
 
     register_target_commands(registry)
 
-    assert registry.register.call_count == 2
+    assert registry.register.call_count == 4
 
     first_spec = registry.register.call_args_list[0].args[0]
     second_spec = registry.register.call_args_list[1].args[0]
+    third_spec = registry.register.call_args_list[2].args[0]
+    fourth_spec = registry.register.call_args_list[3].args[0]
 
     assert first_spec.name == "init-target"
     assert first_spec.handler is run_init_target
@@ -367,3 +371,11 @@ def test_register_target_commands_registers_two_commands() -> None:
     assert second_spec.name == "add-asset"
     assert second_spec.handler is run_add_asset
     assert second_spec.help == "Add asset to the active target"
+
+    assert third_spec.name == "save-target"
+    assert third_spec.handler is run_save_target
+    assert third_spec.help == "Save current target allocation"
+
+    assert fourth_spec.name == "load-target"
+    assert fourth_spec.handler is run_load_target
+    assert fourth_spec.help == "Load latest target allocation"

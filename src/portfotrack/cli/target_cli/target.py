@@ -1,7 +1,13 @@
 from portfotrack.cli.parsing.flags import parse_flags, pop_required_float
 from portfotrack.cli.registry import CommandRegistry, CommandSpec
 from portfotrack.cli.state import ReplState
-from portfotrack.services.target_services import add_asset_to_target, init_target
+from portfotrack.common.errors import AppError
+from portfotrack.services.target_services import (
+    add_asset_to_target,
+    init_target,
+    load_latest_target,
+    save_target,
+)
 
 
 def run_init_target(state: ReplState, args: list[str]) -> None:
@@ -42,6 +48,31 @@ def run_add_asset(state: ReplState, args: list[str]) -> None:
     print("Asset added.")
 
 
+def run_save_target(state: ReplState, args: list[str]) -> None:
+    """Save Target Allocation."""
+    target = state.target
+
+    if target is None:
+        print("No target. Run `init-target` first.")
+        return
+
+    try:
+        target.validate_total()
+    except AppError as e:
+        print(e)
+        return
+
+    save_target(target)
+    print("Target allocation saved successfully.")
+
+
+def run_load_target(state: ReplState, args: list[str]) -> None:
+    """Load latest Target Allocation."""
+    target = load_latest_target()
+    print("Target allocation loaded successfully.")
+    state.target = target
+
+
 def register_target_commands(registry: CommandRegistry) -> None:
     """Register target-related CLI commands.
 
@@ -68,5 +99,19 @@ def register_target_commands(registry: CommandRegistry) -> None:
             name="add-asset",
             handler=run_add_asset,
             help="Add asset to the active target",
+        )
+    )
+    registry.register(
+        CommandSpec(
+            name="save-target",
+            handler=run_save_target,
+            help="Save current target allocation",
+        )
+    )
+    registry.register(
+        CommandSpec(
+            name="load-target",
+            handler=run_load_target,
+            help="Load latest target allocation",
         )
     )
