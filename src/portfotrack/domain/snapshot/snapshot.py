@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import datetime
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -27,28 +28,40 @@ class SnapshotItem:
     amount: int
 
 
-@dataclass(frozen=True)
+@dataclass
 class Snapshot:
-    """An immutable snapshot of the portfolio state at a specific point in time.
+    """A snapshot of the portfolio state at a specific point in time.
 
     A Snapshot represents an observational record of the portfolio, capturing
     what assets are held and in what absolute amounts on a given date.
     It serves as the factual input for progress tracking, drift detection,
     and rebalancing analysis.
 
-    This class is intentionally immutable. Once created and persisted, a
-    snapshot must not change, ensuring historical accuracy and reproducibility.
+    Snapshots are built incrementally by adding SnapshotItems. The date is
+    automatically set to today when instantiated. Once persisted to storage,
+    historical snapshots should not be modified to ensure reproducibility.
     Asset-level aggregation (by asset_id) and ratio calculations are performed
     in service-layer logic and are not stored in this object.
 
     Attributes:
-        date: Snapshot date in ISO format (YYYY-MM-DD), interpreted in the
-            local timezone context (e.g., Asia/Seoul).
+        date: Snapshot date in ISO format (YYYY-MM-DD), automatically set
+            to today in the local timezone context (e.g., Asia/Seoul).
         currency: Base currency of the snapshot amounts. Defaults to "KRW".
         items: Collection of snapshot line items representing individual
             holdings. Multiple items may share the same asset_id.
     """
 
-    date: str
+    date: str = datetime.date.today().isoformat()
     currency: str = "KRW"
-    items: tuple[SnapshotItem, ...] = ()
+    items: list[SnapshotItem] = field(default_factory=list)
+
+    def add_snapshot_item(self, asset_id: str, label: str, amount: int) -> None:
+        """Add a new line item to this snapshot.
+
+        Args:
+            asset_id: Identifier of the asset class this item belongs to.
+            label: Human-readable label for this specific holding.
+            amount: Absolute amount in the snapshot currency.
+        """
+        item = SnapshotItem(asset_id, label, amount)
+        self.items.append(item)
