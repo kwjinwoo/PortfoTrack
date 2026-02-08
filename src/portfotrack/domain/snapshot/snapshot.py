@@ -28,7 +28,7 @@ class SnapshotItem:
 
 
 @dataclass(frozen=True)
-class SnapsShot:
+class Snapshot:
     """An immutable snapshot of the portfolio state at a specific point in time.
 
     A Snapshot represents an observational record of the portfolio, capturing
