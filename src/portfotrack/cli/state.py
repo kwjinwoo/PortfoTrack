@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from portfotrack.domain.snapshot import Snapshot
 from portfotrack.domain.target_allocation import TargetAllocation
 
 
@@ -13,6 +14,9 @@ class ReplState:
     Attributes:
         target: The currently active target allocation. None means no target
             has been initialized or loaded yet.
+        snapshot: The currently active snapshot. None means no snapshot has been
+            initialized or loaded yet.
     """
 
     target: TargetAllocation | None = None
+    snapshot: Snapshot | None = None

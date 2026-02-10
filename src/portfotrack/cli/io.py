@@ -34,4 +34,10 @@ def print_help() -> None:
         "      Save the current target allocation to disk.\n\n"
         "  load-target\n"
         "      Load the most recently saved target allocation.\n"
+        "  init-snapshot\n"
+        "      Initialize a new empty snapshot for recording holdings.\n"
+        "\n"
+        "  add-snapshot <id> <label> --amount <n>\n"
+        "      Add an item to the active snapshot. Example:\n"
+        '        add-snapshot cash "KRW Deposit" --amount 1000000\n'
     )
