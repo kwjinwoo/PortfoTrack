@@ -5,6 +5,7 @@ import pytest
 from portfotrack.cli.parsing.flags import FlagParseResult
 from portfotrack.cli.state import ReplState
 from portfotrack.domain.snapshot import Snapshot
+from portfotrack.storage.json_store.errors import SnapshotNotFoundError
 
 MODULE = "portfotrack.cli.snapshot_cli.snapshot"
 
@@ -212,3 +213,115 @@ def test_run_add_snapshot_parameterized_happy_paths(
     add_item_mock.assert_called_once_with(
         state_with_snapshot.snapshot, asset_id, label, amount_int
     )
+
+
+# ---------------------------
+# run_save_snapshot
+# ---------------------------
+
+
+def test_run_save_snapshot_no_snapshot_prints_guard_and_returns(
+    state_without_snapshot: ReplState, monkeypatch, capsys
+) -> None:
+    save_snapshot_mock = Mock()
+    monkeypatch.setattr(f"{MODULE}.save_snapshot", save_snapshot_mock)
+
+    from portfotrack.cli.snapshot_cli.snapshot import run_save_snapshot
+
+    run_save_snapshot(state_without_snapshot, args=[])
+
+    out = capsys.readouterr().out
+    assert "No snapshot" in out
+    assert "init-snapshot" in out
+    save_snapshot_mock.assert_not_called()
+
+
+def test_run_save_snapshot_happy_path_calls_service_and_prints(
+    state_with_snapshot: ReplState, monkeypatch, capsys
+) -> None:
+    save_snapshot_mock = Mock()
+    monkeypatch.setattr(f"{MODULE}.save_snapshot", save_snapshot_mock)
+
+    from portfotrack.cli.snapshot_cli.snapshot import run_save_snapshot
+
+    run_save_snapshot(state_with_snapshot, args=[])
+
+    save_snapshot_mock.assert_called_once_with(state_with_snapshot.snapshot)
+    out = capsys.readouterr().out
+    assert "Snapshot saved successfully." in out
+
+
+# ---------------------------
+# run_load_snapshot
+# ---------------------------
+
+
+def test_run_load_snapshot_sets_state_and_prints(monkeypatch, capsys) -> None:
+    sentinel_snapshot = Snapshot()
+    load_latest_snapshot_mock = Mock(return_value=sentinel_snapshot)
+    monkeypatch.setattr(f"{MODULE}.load_latest_snapshot", load_latest_snapshot_mock)
+
+    from portfotrack.cli.snapshot_cli.snapshot import run_load_snapshot
+
+    state = ReplState(snapshot=None)
+    run_load_snapshot(state, args=[])
+
+    load_latest_snapshot_mock.assert_called_once_with()
+    assert state.snapshot is sentinel_snapshot
+    out = capsys.readouterr().out
+    assert "Snapshot loaded successfully." in out
+
+
+def test_run_load_snapshot_propagates_not_found(monkeypatch) -> None:
+    def _raise() -> None:
+        raise SnapshotNotFoundError(file_name="snapshot_*.json")
+
+    monkeypatch.setattr(f"{MODULE}.load_latest_snapshot", _raise)
+
+    from portfotrack.cli.snapshot_cli.snapshot import run_load_snapshot
+
+    state = ReplState(snapshot=None)
+    with pytest.raises(SnapshotNotFoundError):
+        run_load_snapshot(state, args=[])
+
+
+# ---------------------------
+# register_snapshot_commands
+# ---------------------------
+
+
+def test_register_snapshot_commands_registers_four_commands() -> None:
+    registry = Mock()
+
+    from portfotrack.cli.snapshot_cli.snapshot import (
+        register_snapshot_commands,
+        run_add_snapshot,
+        run_init_snapshot,
+        run_load_snapshot,
+        run_save_snapshot,
+    )
+
+    register_snapshot_commands(registry)
+
+    assert registry.register.call_count == 4
+
+    first_spec = registry.register.call_args_list[0].args[0]
+    second_spec = registry.register.call_args_list[1].args[0]
+    third_spec = registry.register.call_args_list[2].args[0]
+    fourth_spec = registry.register.call_args_list[3].args[0]
+
+    assert first_spec.name == "init-snapshot"
+    assert first_spec.handler is run_init_snapshot
+    assert first_spec.help == "Initialize snapshot"
+
+    assert second_spec.name == "add-snapshot"
+    assert second_spec.handler is run_add_snapshot
+    assert second_spec.help == "Add snapshot item to the active snapshot"
+
+    assert third_spec.name == "save-snapshot"
+    assert third_spec.handler is run_save_snapshot
+    assert third_spec.help == "Save current snapshot"
+
+    assert fourth_spec.name == "load-snapshot"
+    assert fourth_spec.handler is run_load_snapshot
+    assert fourth_spec.help == "Load latest snapshot"

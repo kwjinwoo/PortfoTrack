@@ -1,7 +1,12 @@
 from portfotrack.cli.parsing.flags import parse_flags, pop_required_int
 from portfotrack.cli.registry import CommandRegistry, CommandSpec
 from portfotrack.cli.state import ReplState
-from portfotrack.services.snapshot_services import add_item_to_snapshot, init_snapshot
+from portfotrack.services.snapshot_services import (
+    add_item_to_snapshot,
+    init_snapshot,
+    load_latest_snapshot,
+    save_snapshot,
+)
 
 
 def run_init_snapshot(state: ReplState, args: list[str]) -> None:
@@ -57,6 +62,45 @@ def run_add_snapshot(state: ReplState, args: list[str]) -> None:
     add_item_to_snapshot(state.snapshot, asset_id, label, amount)
 
 
+def run_save_snapshot(state: ReplState, args: list[str]) -> None:
+    """Handle the `save-snapshot` command.
+
+    Persists the active snapshot to disk. This handler ensures a snapshot
+    exists in the REPL state and delegates persistence to the service layer.
+
+    Args:
+        state (ReplState): Current REPL state containing the active snapshot.
+        args (list[str]): Ignored positional arguments passed from the CLI.
+
+    Returns:
+        None
+    """
+    snapshot = state.snapshot
+    if snapshot is None:
+        print("No snapshot. Run `init-snapshot` first.")
+        return
+
+    save_snapshot(snapshot)
+    print("Snapshot saved successfully.")
+
+
+def run_load_snapshot(state: ReplState, args: list[str]) -> None:
+    """Handle the `load-snapshot` command.
+
+    Loads the latest snapshot from storage and assigns it to REPL state.
+
+    Args:
+        state (ReplState): REPL session state to mutate (snapshot will be set).
+        args (list[str]): Ignored positional arguments passed from the CLI.
+
+    Returns:
+        None
+    """
+    snapshot = load_latest_snapshot()
+    state.snapshot = snapshot
+    print("Snapshot loaded successfully.")
+
+
 def register_snapshot_commands(registry: CommandRegistry) -> None:
     """Register snapshot-related commands on a `CommandRegistry`.
 
@@ -80,5 +124,19 @@ def register_snapshot_commands(registry: CommandRegistry) -> None:
             name="add-snapshot",
             handler=run_add_snapshot,
             help="Add snapshot item to the active snapshot",
+        )
+    )
+    registry.register(
+        CommandSpec(
+            name="save-snapshot",
+            handler=run_save_snapshot,
+            help="Save current snapshot",
+        )
+    )
+    registry.register(
+        CommandSpec(
+            name="load-snapshot",
+            handler=run_load_snapshot,
+            help="Load latest snapshot",
         )
     )

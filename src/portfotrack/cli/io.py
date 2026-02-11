@@ -40,4 +40,9 @@ def print_help() -> None:
         "  add-snapshot <id> <label> --amount <n>\n"
         "      Add an item to the active snapshot. Example:\n"
         '        add-snapshot cash "KRW Deposit" --amount 1000000\n'
+        "\n"
+        "  save-snapshot\n"
+        "      Save the current snapshot to disk.\n\n"
+        "  load-snapshot\n"
+        "      Load the most recently saved snapshot.\n"
     )
