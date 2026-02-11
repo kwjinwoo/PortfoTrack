@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pytest
 
 from portfotrack.domain.snapshot import Snapshot
@@ -52,7 +50,7 @@ def test_snapshot_to_dto_multiple_items_preserves_order() -> None:
     snapshot = Snapshot(date="2026-02-11", currency="KRW")
     snapshot.add_snapshot_item("us_equity", "S&P500", 3_000_000)
     snapshot.add_snapshot_item("us_equity", "Nasdaq100", 2_000_000)
-    snapshot.add_snapshot_item("kr_bond", "국채 10년", 5_000_000)
+    snapshot.add_snapshot_item("kr_bond", "10-Year Government Bond", 5_000_000)
 
     dto = snapshot_to_dto(snapshot)
 
@@ -108,7 +106,9 @@ def test_dto_to_snapshot_multiple_items_preserves_order() -> None:
         "items": [
             make_item_dto(asset_id="us_equity", label="S&P500", amount=3_000_000),
             make_item_dto(asset_id="us_equity", label="Nasdaq100", amount=2_000_000),
-            make_item_dto(asset_id="kr_bond", label="국채 10년", amount=5_000_000),
+            make_item_dto(
+                asset_id="kr_bond", label="10-Year Government Bond", amount=5_000_000
+            ),
         ],
     }
     snapshot = dto_to_snapshot(dto)
@@ -116,7 +116,7 @@ def test_dto_to_snapshot_multiple_items_preserves_order() -> None:
     assert len(snapshot.items) == 3
     assert snapshot.items[0].label == "S&P500"
     assert snapshot.items[1].label == "Nasdaq100"
-    assert snapshot.items[2].label == "국채 10년"
+    assert snapshot.items[2].label == "10-Year Government Bond"
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ def test_dto_to_snapshot_item_invalid_amount_type_raises() -> None:
 def test_roundtrip_snapshot_to_dto_to_snapshot() -> None:
     original = Snapshot(date="2026-02-11", currency="KRW")
     original.add_snapshot_item("us_equity", "S&P500", 3_000_000)
-    original.add_snapshot_item("kr_bond", "국채 10년", 5_000_000)
+    original.add_snapshot_item("kr_bond", "10-Year Government Bond", 5_000_000)
 
     dto = snapshot_to_dto(original)
     restored = dto_to_snapshot(dto)
