@@ -30,3 +30,31 @@ class TargetNotFoundError(StorageError):
             cause=cause,
         )
         self.details.update({"file_name": file_name})
+
+
+class SnapshotNotFoundError(StorageError):
+    """Raised when a snapshot file cannot be found.
+
+    This error indicates that a requested snapshot file does not exist in the
+    storage location. Unlike schema or invariant violations, this error is
+    considered user-facing and typically results from an invalid file name
+    or an attempt to load a snapshot that has not been created yet.
+
+    Attributes:
+        file_name: Name of the snapshot file that could not be found.
+    """
+
+    def __init__(
+        self,
+        *,
+        file_name: str,
+        details: dict[str, Any] | None = None,
+        cause: BaseException | None = None,
+    ) -> None:
+        super().__init__(
+            code=StoreJsonErrorcodes.STORE_SNAPSHOT_NOT_FOUND,
+            message=f"Snapshot file '{file_name}' was not found.",
+            details=details,
+            cause=cause,
+        )
+        self.details.update({"file_name": file_name})
