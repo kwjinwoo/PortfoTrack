@@ -2,7 +2,7 @@ import datetime
 from dataclasses import dataclass, field
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class SnapshotItem:
     """A single line item representing a concrete holding within an asset class.
 
@@ -13,6 +13,10 @@ class SnapshotItem:
     This class intentionally stores absolute amounts only. Allocation ratios
     are derived later during aggregation and comparison against a target
     allocation.
+
+    Equality is determined by asset_id and label only. Two items with the
+    same asset_id and label are considered equal regardless of amount,
+    supporting the merge-on-add pattern in Snapshot.
 
     Attributes:
         asset_id: Identifier of the asset class this item belongs to.
@@ -26,6 +30,23 @@ class SnapshotItem:
     asset_id: str
     label: str
     amount: int
+
+    def __eq__(self, other: object) -> bool:
+        """Compare equality based on asset_id and label only.
+
+        Amount is excluded from comparison so that items representing the
+        same holding can be identified for merge-on-add regardless of their
+        amount values.
+
+        Args:
+            other: Object to compare against.
+
+        Returns:
+            True if other is a SnapshotItem with the same asset_id and label.
+        """
+        if not isinstance(other, SnapshotItem):
+            return NotImplemented
+        return self.asset_id == other.asset_id and self.label == other.label
 
 
 @dataclass
@@ -56,12 +77,21 @@ class Snapshot:
     items: list[SnapshotItem] = field(default_factory=list)
 
     def add_snapshot_item(self, asset_id: str, label: str, amount: int) -> None:
-        """Add a new line item to this snapshot.
+        """Add a new line item to this snapshot, merging if a matching item exists.
+
+        If an item with the same asset_id and label already exists, the amount
+        is accumulated into the existing item. Otherwise, a new item is appended.
 
         Args:
             asset_id: Identifier of the asset class this item belongs to.
             label: Human-readable label for this specific holding.
             amount: Absolute amount in the snapshot currency.
         """
-        item = SnapshotItem(asset_id, label, amount)
-        self.items.append(item)
+        new_item = SnapshotItem(asset_id, label, amount)
+        for idx, existing in enumerate(self.items):
+            if existing == new_item:
+                self.items[idx] = SnapshotItem(
+                    asset_id, label, existing.amount + amount
+                )
+                return
+        self.items.append(new_item)
