@@ -24,6 +24,7 @@ def run_init_snapshot(state: ReplState, args: list[str]) -> None:
     """
 
     state.snapshot = init_snapshot()
+    print("Snapshot initialized.")
 
 
 def run_add_snapshot(state: ReplState, args: list[str]) -> None:
@@ -60,6 +61,7 @@ def run_add_snapshot(state: ReplState, args: list[str]) -> None:
     asset_id, label = results.rest
     amount = pop_required_int(results.flags, "amount")
     add_item_to_snapshot(state.snapshot, asset_id, label, amount)
+    print("Snapshot item added.")
 
 
 def run_save_snapshot(state: ReplState, args: list[str]) -> None:
