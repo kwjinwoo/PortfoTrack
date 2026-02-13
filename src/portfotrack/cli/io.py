@@ -44,5 +44,8 @@ def print_help() -> None:
         "  save-snapshot\n"
         "      Save the current snapshot to disk.\n\n"
         "  load-snapshot\n"
-        "      Load the most recently saved snapshot.\n"
+        "      Load the most recently saved snapshot.\n\n"
+        "  report\n"
+        "      Generate and display portfolio allocation report.\n"
+        "      Compares current snapshot against target allocation.\n"
     )
