@@ -1,5 +1,6 @@
 """Tests for the web CLI command handler."""
 
+import threading
 from unittest.mock import MagicMock, patch
 
 from portfotrack.cli.registry import CommandRegistry
@@ -71,3 +72,111 @@ class TestWebCommandHandler:
 
         captured = capsys.readouterr()
         assert "Usage" in captured.out or "usage" in captured.out.lower()
+
+
+class TestWebBackgroundExecution:
+    """web start should run Flask in a background thread.
+
+    This ensures that the REPL loop continues after 'web start'
+    is invoked, rather than blocking on app.run().
+    """
+
+    @patch("portfotrack.cli.web_cli.web.create_app")
+    def test_web_start_runs_in_background_thread(self, mock_create_app):
+        """'web start' should start Flask server in a background thread."""
+        from portfotrack.cli.web_cli.web import handle_web
+
+        mock_app = MagicMock()
+        mock_create_app.return_value = mock_app
+
+        state = ReplState()
+        handle_web(state, ["start"])
+
+        # The function should return immediately without blocking
+        # (test completes quickly instead of waiting for app.run() to block)
+
+        # Verify that app.run() was called
+        assert mock_app.run.called
+
+    @patch("portfotrack.cli.web_cli.web.create_app")
+    def test_web_start_server_thread_is_daemon(self, mock_create_app):
+        """The server thread should be a daemon thread.
+
+        This ensures the program can exit cleanly even if the server
+        thread is still running.
+        """
+        from portfotrack.cli.web_cli.web import handle_web
+
+        mock_app = MagicMock()
+        mock_create_app.return_value = mock_app
+
+        # Track which thread runs app.run
+        app_run_thread = None
+
+        def capture_run_thread(*args, **kwargs):
+            nonlocal app_run_thread
+            app_run_thread = threading.current_thread()
+
+        mock_app.run.side_effect = capture_run_thread
+
+        state = ReplState()
+        handle_web(state, ["start"])
+
+        # Verify app.run was called in a different thread than main
+        assert app_run_thread is not None
+        assert app_run_thread != threading.current_thread()
+        assert app_run_thread.daemon is True
+
+    @patch("portfotrack.cli.web_cli.web.create_app")
+    def test_web_start_server_thread_stores_in_state(self, mock_create_app):
+        """The server thread reference should be stored in ReplState.
+
+        This allows other commands to access or stop the running server.
+        """
+        from portfotrack.cli.web_cli.web import handle_web
+
+        mock_app = MagicMock()
+        mock_create_app.return_value = mock_app
+
+        state = ReplState()
+        handle_web(state, ["start"])
+
+        # Verify that state has a reference to the running server thread
+        assert hasattr(state, "web_server_thread")
+        assert state.web_server_thread is not None
+        assert isinstance(state.web_server_thread, threading.Thread)
+        assert state.web_server_thread.daemon is True
+
+
+class TestWebStop:
+    """web stop should cleanly terminate the running server thread."""
+
+    def test_web_stop_no_server_running(self, capsys):
+        """'web stop' with no running server should print message."""
+        from portfotrack.cli.web_cli.web import handle_web
+
+        state = ReplState()
+        state.web_server_thread = None
+
+        handle_web(state, ["stop"])
+
+        captured = capsys.readouterr()
+        assert (
+            "not running" in captured.out.lower() or "no server" in captured.out.lower()
+        )
+
+    def test_web_stop_terminates_running_server(self):
+        """'web stop' should terminate the running server thread."""
+        from portfotrack.cli.web_cli.web import handle_web
+
+        # Create a mock server thread
+        mock_thread = MagicMock(spec=threading.Thread)
+        mock_thread.is_alive.return_value = True
+
+        state = ReplState()
+        state.web_server_thread = mock_thread
+
+        handle_web(state, ["stop"])
+
+        # After stop, the state should have web_server_thread set to None
+        assert state.web_server_thread is None
