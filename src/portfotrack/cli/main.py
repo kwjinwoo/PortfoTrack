@@ -26,10 +26,12 @@ def build_registry() -> CommandRegistry:
     from portfotrack.cli.report_cli.report import register_report_commands
     from portfotrack.cli.snapshot_cli.snapshot import register_snapshot_commands
     from portfotrack.cli.target_cli.target import register_target_commands
+    from portfotrack.cli.web_cli.web import register_web_commands
 
     register_target_commands(registry)
     register_snapshot_commands(registry)
     register_report_commands(registry)
+    register_web_commands(registry)
 
     return registry
 
