@@ -34,7 +34,9 @@ def create_app(test_config: dict | None = None) -> Flask:
         return render_template("index.html")
 
     from portfotrack.web.routes.snapshot_routes import snapshot_bp
+    from portfotrack.web.routes.target_routes import target_bp
 
     app.register_blueprint(snapshot_bp)
+    app.register_blueprint(target_bp)
 
     return app
