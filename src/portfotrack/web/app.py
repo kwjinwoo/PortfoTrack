@@ -33,6 +33,21 @@ def create_app(test_config: dict | None = None) -> Flask:
         """Render the main dashboard page."""
         return render_template("index.html")
 
+    @app.route("/snapshots")
+    def snapshots_page():
+        """Render the snapshots management page."""
+        return render_template("snapshots.html")
+
+    @app.route("/targets")
+    def targets_page():
+        """Render the target allocation management page."""
+        return render_template("targets.html")
+
+    @app.route("/reports")
+    def reports_page():
+        """Render the allocation report page."""
+        return render_template("reports.html")
+
     from portfotrack.web.routes.report_routes import report_bp
     from portfotrack.web.routes.snapshot_routes import snapshot_bp
     from portfotrack.web.routes.target_routes import target_bp
