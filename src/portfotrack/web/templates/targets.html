@@ -3,8 +3,59 @@
 {% block content %}
 <section class="targets-page">
   <h2>타겟 배분 관리</h2>
-  <div id="target-detail">
-    <p>로딩 중...</p>
+
+  <div class="card">
+    <h3>현재 타겟</h3>
+    <div id="target-status"></div>
+    <table id="target-table" style="display:none;">
+      <thead>
+        <tr>
+          <th>자산 ID</th>
+          <th>이름</th>
+          <th>용도</th>
+          <th>목표 비율</th>
+          <th>허용 범위</th>
+        </tr>
+      </thead>
+      <tbody id="target-assets"></tbody>
+    </table>
+    <button type="button" id="create-target-btn" class="btn btn-primary" style="display:none;">새 타겟 생성</button>
+  </div>
+
+  <div class="card" id="add-asset-card">
+    <h3>자산 추가</h3>
+    <form id="add-asset-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="asset-id">자산 ID</label>
+          <input type="text" id="asset-id" name="asset_id" required placeholder="예: us_equity">
+        </div>
+        <div class="form-group">
+          <label for="asset-name">이름</label>
+          <input type="text" id="asset-name" name="asset_name" required placeholder="예: US Equity">
+        </div>
+        <div class="form-group">
+          <label for="asset-purpose">용도</label>
+          <input type="text" id="asset-purpose" name="purpose" required placeholder="예: growth">
+        </div>
+        <div class="form-group">
+          <label for="target-ratio">목표 비율</label>
+          <input type="number" id="target-ratio" name="target_ratio" step="0.01" min="0" max="1" required placeholder="예: 0.6">
+        </div>
+        <div class="form-group">
+          <label for="lower-bound">하한</label>
+          <input type="number" id="lower-bound" name="lower" step="0.01" min="0" max="1" required placeholder="예: 0.5">
+        </div>
+        <div class="form-group">
+          <label for="upper-bound">상한</label>
+          <input type="number" id="upper-bound" name="upper" step="0.01" min="0" max="1" required placeholder="예: 0.7">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">자산 추가</button>
+      <div id="target-message" class="message"></div>
+    </form>
   </div>
 </section>
+
+<script src="{{ url_for('static', filename='js/targets-ui.js') }}"></script>
 {% endblock %}
