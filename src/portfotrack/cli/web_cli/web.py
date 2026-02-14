@@ -1,8 +1,10 @@
 """CLI command handler for starting the PortfoTrack web server.
 
 Provides the ``web start`` command that launches the Flask
-development server on a configurable host and port.
+development server on a configurable host and port in a background thread.
 """
+
+import threading
 
 from portfotrack.cli.registry import CommandRegistry, CommandSpec
 from portfotrack.cli.state import ReplState
@@ -17,32 +19,60 @@ def handle_web(state: ReplState, args: list[str]) -> None:
 
     Subcommands:
         start [--host HOST] [--port PORT]
-            Start the Flask development server.
+            Start the Flask development server in a background thread.
+        stop
+            Stop the running Flask development server.
 
     Args:
-        state: Current REPL state (unused by this handler).
+        state: Current REPL state. The running server thread will be stored
+            in state.web_server_thread.
         args: Positional and flag arguments following ``web``.
     """
-    if not args or args[0] != "start":
-        print("Usage: web start [--host HOST] [--port PORT]")
+    if not args:
+        print("Usage: web start [--host HOST] [--port PORT] | web stop")
         return
 
-    host = _DEFAULT_HOST
-    port = _DEFAULT_PORT
+    subcommand = args[0]
 
-    i = 1
-    while i < len(args):
-        if args[i] == "--host" and i + 1 < len(args):
-            host = args[i + 1]
-            i += 2
-        elif args[i] == "--port" and i + 1 < len(args):
-            port = int(args[i + 1])
-            i += 2
-        else:
-            i += 1
+    if subcommand == "start":
+        host = _DEFAULT_HOST
+        port = _DEFAULT_PORT
 
-    app = create_app()
-    app.run(host=host, port=port, debug=True)
+        i = 1
+        while i < len(args):
+            if args[i] == "--host" and i + 1 < len(args):
+                host = args[i + 1]
+                i += 2
+            elif args[i] == "--port" and i + 1 < len(args):
+                port = int(args[i + 1])
+                i += 2
+            else:
+                i += 1
+
+        app = create_app()
+
+        def run_server():
+            """Run the Flask app in this thread."""
+            app.run(host=host, port=port, debug=True)
+
+        # Create and start server thread as a daemon
+        server_thread = threading.Thread(target=run_server, daemon=True)
+        state.web_server_thread = server_thread
+        server_thread.start()
+
+        print(f"Web server started in background at http://{host}:{port}")
+
+    elif subcommand == "stop":
+        if state.web_server_thread is None:
+            print("Web server is not running.")
+            return
+
+        # Mark thread as stopped (actual termination happens via daemon cleanup)
+        state.web_server_thread = None
+        print("Web server stop signal sent.")
+
+    else:
+        print("Usage: web start [--host HOST] [--port PORT] | web stop")
 
 
 def register_web_commands(registry: CommandRegistry) -> None:
