@@ -33,4 +33,8 @@ def create_app(test_config: dict | None = None) -> Flask:
         """Render the main dashboard page."""
         return render_template("index.html")
 
+    from portfotrack.web.routes.snapshot_routes import snapshot_bp
+
+    app.register_blueprint(snapshot_bp)
+
     return app
