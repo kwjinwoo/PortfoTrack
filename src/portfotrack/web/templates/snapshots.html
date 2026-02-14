@@ -3,8 +3,56 @@
 {% block content %}
 <section class="snapshots-page">
   <h2>스냅샷 관리</h2>
-  <div id="snapshot-list">
-    <p>로딩 중...</p>
+
+  <div class="card">
+    <h3>스냅샷 목록</h3>
+    <table id="snapshot-table">
+      <thead>
+        <tr>
+          <th>날짜</th>
+          <th>파일명</th>
+          <th>액션</th>
+        </tr>
+      </thead>
+      <tbody id="snapshot-list">
+        <tr><td colspan="3">로딩 중...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>새 스냅샷 생성</h3>
+    <form id="create-snapshot-form">
+      <div id="snapshot-items-container">
+        <div class="item-row">
+          <label>자산 ID</label>
+          <input type="text" name="asset_id" required placeholder="예: us_equity">
+          <label>라벨</label>
+          <input type="text" name="label" required placeholder="예: S&P500">
+          <label>금액 (KRW)</label>
+          <input type="number" name="amount" required placeholder="예: 5000000">
+        </div>
+      </div>
+      <button type="button" id="add-item-btn" class="btn btn-secondary">+ 항목 추가</button>
+      <button type="submit" class="btn btn-primary">스냅샷 저장</button>
+      <div id="snapshot-message" class="message"></div>
+    </form>
+  </div>
+
+  <div class="card" id="snapshot-detail-card" style="display:none;">
+    <h3>스냅샷 상세 — <span id="snapshot-detail-date"></span></h3>
+    <table>
+      <thead>
+        <tr>
+          <th>자산 ID</th>
+          <th>라벨</th>
+          <th>금액 (KRW)</th>
+        </tr>
+      </thead>
+      <tbody id="snapshot-detail-items"></tbody>
+    </table>
   </div>
 </section>
+
+<script src="{{ url_for('static', filename='js/snapshots-ui.js') }}"></script>
 {% endblock %}
