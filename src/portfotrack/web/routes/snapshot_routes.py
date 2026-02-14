@@ -17,6 +17,7 @@ from portfotrack.services.snapshot_services import (
 from portfotrack.storage.json_store.errors import SnapshotNotFoundError
 from portfotrack.storage.json_store.snapshot_store import load as store_load
 from portfotrack.storage.serialization.snapshot_json import (
+    dto_to_snapshot,
     snapshot_to_dto,
 )
 
@@ -111,3 +112,74 @@ def create_snapshot():
     save_snapshot(snapshot)
     dto = snapshot_to_dto(snapshot)
     return jsonify(dto), 201
+
+
+def _validate_item_fields(body: dict) -> tuple[str, str, int] | tuple[None, None, None]:
+    """Extract and validate item fields from a request body.
+
+    Returns:
+        (asset_id, label, amount) if valid, or (None, None, None) if invalid.
+    """
+    asset_id = body.get("asset_id")
+    label = body.get("label")
+    amount = body.get("amount")
+
+    if not asset_id or not isinstance(asset_id, str):
+        return None, None, None
+    if not label or not isinstance(label, str):
+        return None, None, None
+    if amount is None or not isinstance(amount, int) or isinstance(amount, bool):
+        return None, None, None
+
+    return asset_id, label, amount
+
+
+@snapshot_bp.route("/<date>/items", methods=["POST"])
+def add_item(date: str):
+    """Add an item to an existing snapshot.
+
+    Loads the snapshot for the given date, adds the new item (merging
+    if asset_id+label match), saves back to disk, and returns the
+    updated snapshot.
+
+    Args:
+        date: ISO date string (YYYY-MM-DD).
+
+    Returns:
+        200 with updated snapshot DTO, or 400/404 error.
+    """
+    if not _DATE_PATTERN.match(date):
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({"error": "Request body must be valid JSON."}), 400
+
+    asset_id, label, amount = _validate_item_fields(body)
+    if asset_id is None:
+        return (
+            jsonify(
+                {
+                    "error": "Item must have 'asset_id' (str), 'label' (str), and 'amount' (int)."
+                }
+            ),
+            400,
+        )
+
+    # Load existing snapshot
+    matching = list(path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{date}_v*.json"))
+    if not matching:
+        return jsonify({"error": f"Snapshot for {date} not found."}), 404
+
+    latest_file = sorted(matching)[-1]
+    try:
+        dto = store_load(latest_file.name)
+    except SnapshotNotFoundError:
+        return jsonify({"error": f"Snapshot for {date} not found."}), 404
+
+    snapshot = dto_to_snapshot(dto)
+    add_item_to_snapshot(snapshot, asset_id, label, amount)
+    save_snapshot(snapshot)
+
+    updated_dto = snapshot_to_dto(snapshot)
+    return jsonify(updated_dto)
