@@ -5,7 +5,7 @@ No external network calls; all data is read from and written to local
 JSON files.
 """
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -27,5 +27,10 @@ def create_app(test_config: dict | None = None) -> Flask:
     def health():
         """Return a simple health-check response."""
         return jsonify({"status": "ok"})
+
+    @app.route("/")
+    def index():
+        """Render the main dashboard page."""
+        return render_template("index.html")
 
     return app
