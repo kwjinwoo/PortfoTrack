@@ -35,7 +35,7 @@ class TestWebCommandHandler:
         state = ReplState()
         handle_web(state, ["start"])
 
-        mock_app.run.assert_called_once_with(host="127.0.0.1", port=5000, debug=True)
+        mock_app.run.assert_called_once_with(host="127.0.0.1", port=5000, debug=False)
 
     @patch("portfotrack.cli.web_cli.web.create_app")
     def test_web_start_custom_port(self, mock_create_app):
@@ -48,7 +48,7 @@ class TestWebCommandHandler:
         state = ReplState()
         handle_web(state, ["start", "--port", "8080"])
 
-        mock_app.run.assert_called_once_with(host="127.0.0.1", port=8080, debug=True)
+        mock_app.run.assert_called_once_with(host="127.0.0.1", port=8080, debug=False)
 
     @patch("portfotrack.cli.web_cli.web.create_app")
     def test_web_start_custom_host(self, mock_create_app):
@@ -61,7 +61,7 @@ class TestWebCommandHandler:
         state = ReplState()
         handle_web(state, ["start", "--host", "0.0.0.0"])
 
-        mock_app.run.assert_called_once_with(host="0.0.0.0", port=5000, debug=True)
+        mock_app.run.assert_called_once_with(host="0.0.0.0", port=5000, debug=False)
 
     def test_web_no_subcommand_prints_usage(self, capsys):
         """'web' without subcommand should print usage."""
@@ -72,6 +72,56 @@ class TestWebCommandHandler:
 
         captured = capsys.readouterr()
         assert "Usage" in captured.out or "usage" in captured.out.lower()
+
+
+class TestWebDebugMode:
+    """Flask debug mode must be disabled for thread safety.
+
+    Flask's debug=True activates Werkzeug's reloader, which calls
+    signal.signal() internally.  signal handlers can only be set in
+    the main thread, so running app.run(debug=True) in a background
+    thread raises ``ValueError: signal only works in main thread``.
+    """
+
+    @patch("portfotrack.cli.web_cli.web.create_app")
+    def test_web_start_debug_disabled_for_thread_safety(self, mock_create_app):
+        """app.run must be called with debug=False to avoid signal error."""
+        from portfotrack.cli.web_cli.web import handle_web
+
+        mock_app = MagicMock()
+        mock_create_app.return_value = mock_app
+
+        state = ReplState()
+        handle_web(state, ["start"])
+
+        _, kwargs = mock_app.run.call_args
+        assert kwargs.get("debug") is False, (
+            "debug must be False when running Flask in a background thread "
+            "to prevent signal.signal() ValueError"
+        )
+
+
+class TestWebServerErrorHandling:
+    """run_server should surface unexpected errors to stderr."""
+
+    @patch("portfotrack.cli.web_cli.web.create_app")
+    def test_run_server_prints_to_stderr_on_exception(self, mock_create_app, capsys):
+        """If app.run raises, the error message must appear on stderr."""
+        from portfotrack.cli.web_cli.web import handle_web
+
+        mock_app = MagicMock()
+        mock_app.run.side_effect = OSError("Address already in use")
+        mock_create_app.return_value = mock_app
+
+        state = ReplState()
+        handle_web(state, ["start"])
+
+        # Wait briefly for the daemon thread to execute and crash
+        if state.web_server_thread is not None:
+            state.web_server_thread.join(timeout=2)
+
+        captured = capsys.readouterr()
+        assert "Web server encountered an error" in captured.err
 
 
 class TestWebBackgroundExecution:

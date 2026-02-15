@@ -2,8 +2,17 @@
 
 Provides the ``web start`` command that launches the Flask
 development server on a configurable host and port in a background thread.
+
+Note:
+    Flask's ``debug=True`` mode activates Werkzeug's reloader, which
+    registers signal handlers via ``signal.signal()``.  Since Python
+    only allows signal handlers in the **main thread**, running
+    ``app.run(debug=True)`` inside a daemon thread raises
+    ``ValueError: signal only works in main thread``.
+    Therefore ``debug`` is always set to ``False``.
 """
 
+import sys
 import threading
 
 from portfotrack.cli.registry import CommandRegistry, CommandSpec
@@ -52,8 +61,21 @@ def handle_web(state: ReplState, args: list[str]) -> None:
         app = create_app()
 
         def run_server():
-            """Run the Flask app in this thread."""
-            app.run(host=host, port=port, debug=True)
+            """Run the Flask app in this thread.
+
+            Catches unexpected exceptions so that a background-thread
+            crash is surfaced to stderr instead of silently swallowed.
+            """
+            try:
+                # debug=False is required: Werkzeug's reloader calls
+                # signal.signal(), which raises ValueError in non-main threads.
+                app.run(host=host, port=port, debug=False)
+            except Exception:
+                print(
+                    "Web server encountered an error.",
+                    file=sys.stderr,
+                )
+                raise
 
         # Create and start server thread as a daemon
         server_thread = threading.Thread(target=run_server, daemon=True)
