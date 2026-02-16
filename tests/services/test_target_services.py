@@ -1,6 +1,12 @@
 import pytest
 
+from portfotrack.domain.asset import Asset
+from portfotrack.domain.target_allocation import TargetAllocation, Tolerance
 from portfotrack.services import target_services
+from portfotrack.services.target_services import (
+    get_available_assets_from_target,
+    validate_asset_id_in_target,
+)
 
 
 def _create_files(directory, names):
@@ -57,3 +63,77 @@ def test_load_latest_target_empty_directory_raises(monkeypatch, tmp_path):
         target_services.load_latest_target()
 
     assert str(exc.value).startswith("No target files found under")
+
+
+# ---------------------------
+# get_available_assets_from_target
+# ---------------------------
+
+
+@pytest.fixture()
+def tol() -> Tolerance:
+    return {"lower": 0.2, "upper": 0.4}
+
+
+class TestGetAvailableAssetsFromTarget:
+    """Tests for get_available_assets_from_target function."""
+
+    def test_returns_empty_list_for_empty_target(self) -> None:
+        target = TargetAllocation()
+
+        result = get_available_assets_from_target(target)
+
+        assert result == []
+
+    def test_returns_asset_info_for_single_asset(self, tol: Tolerance) -> None:
+        target = TargetAllocation()
+        target.add_asset(Asset("us_equity", "US Equity", "growth"), 0.5, tol)
+
+        result = get_available_assets_from_target(target)
+
+        assert len(result) == 1
+        assert result[0] == {
+            "id": "us_equity",
+            "name": "US Equity",
+            "purpose": "growth",
+        }
+
+    def test_returns_all_assets_for_multiple(self, tol: Tolerance) -> None:
+        target = TargetAllocation()
+        target.add_asset(Asset("us_equity", "US Equity", "growth"), 0.3, tol)
+        target.add_asset(Asset("gold", "Gold", "hedge"), 0.3, tol)
+        target.add_asset(Asset("kr_bond", "KR Bond", "stability"), 0.4, tol)
+
+        result = get_available_assets_from_target(target)
+
+        assert len(result) == 3
+        ids = [a["id"] for a in result]
+        assert "us_equity" in ids
+        assert "gold" in ids
+        assert "kr_bond" in ids
+
+
+# ---------------------------
+# validate_asset_id_in_target
+# ---------------------------
+
+
+class TestValidateAssetIdInTarget:
+    """Tests for validate_asset_id_in_target function."""
+
+    def test_returns_true_for_existing_asset(self, tol: Tolerance) -> None:
+        target = TargetAllocation()
+        target.add_asset(Asset("us_equity", "US Equity", "growth"), 0.5, tol)
+
+        assert validate_asset_id_in_target(target, "us_equity") is True
+
+    def test_returns_false_for_missing_asset(self, tol: Tolerance) -> None:
+        target = TargetAllocation()
+        target.add_asset(Asset("us_equity", "US Equity", "growth"), 0.5, tol)
+
+        assert validate_asset_id_in_target(target, "kr_bond") is False
+
+    def test_returns_false_for_empty_target(self) -> None:
+        target = TargetAllocation()
+
+        assert validate_asset_id_in_target(target, "us_equity") is False

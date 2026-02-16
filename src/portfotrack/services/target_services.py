@@ -102,3 +102,39 @@ def load_latest_target() -> TargetAllocation:
     latest_target_path = targets[-1]
     latest_target_dto = load(latest_target_path.name)
     return dto_to_target(latest_target_dto)
+
+
+def get_available_assets_from_target(
+    target: TargetAllocation,
+) -> list[dict[str, str]]:
+    """Returns asset information from a target allocation.
+
+    Each asset is represented as a dict with id, name, and purpose fields.
+    This provides the data needed for UI components like dropdowns.
+
+    Args:
+        target: The target allocation to extract assets from.
+
+    Returns:
+        List of dicts, each containing 'id', 'name', and 'purpose' keys.
+        Empty list if no assets are defined.
+    """
+    return [
+        {"id": asset.id, "name": asset.name, "purpose": asset.purpose}
+        for asset in target.target_assets
+    ]
+
+
+def validate_asset_id_in_target(target: TargetAllocation, asset_id: str) -> bool:
+    """Check whether an asset_id exists in the given target allocation.
+
+    Thin service wrapper around TargetAllocation.is_valid_asset_id.
+
+    Args:
+        target: The target allocation to check against.
+        asset_id: The asset identifier to validate.
+
+    Returns:
+        True if the asset_id exists in the target, False otherwise.
+    """
+    return target.is_valid_asset_id(asset_id)
