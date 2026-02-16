@@ -13,6 +13,7 @@ from portfotrack.domain.target_allocation.errors import (
 )
 from portfotrack.services.target_services import (
     add_asset_to_target,
+    get_available_assets_from_target,
     init_target,
     load_latest_target,
     save_target,
@@ -119,3 +120,20 @@ def add_asset():
     save_target(target)
     dto = target_to_dto(target)
     return jsonify(dto)
+
+
+@target_bp.route("/assets", methods=["GET"])
+def list_target_assets():
+    """List asset ids from the latest target allocation.
+
+    Returns:
+        JSON array of asset objects with id, name, and purpose fields,
+        or 404 if no target allocation exists.
+    """
+    try:
+        target = load_latest_target()
+    except FileNotFoundError:
+        return jsonify({"error": "No target allocation found."}), 404
+
+    assets = get_available_assets_from_target(target)
+    return jsonify(assets)

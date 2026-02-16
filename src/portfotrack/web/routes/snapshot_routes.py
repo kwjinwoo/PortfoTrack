@@ -14,6 +14,10 @@ from portfotrack.services.snapshot_services import (
     init_snapshot,
     save_snapshot,
 )
+from portfotrack.services.target_services import (
+    load_latest_target,
+    validate_asset_id_in_target,
+)
 from portfotrack.storage.json_store.errors import SnapshotNotFoundError
 from portfotrack.storage.json_store.snapshot_store import load as store_load
 from portfotrack.storage.serialization.snapshot_json import (
@@ -107,7 +111,29 @@ def create_snapshot():
         if amount is None or not isinstance(amount, int) or isinstance(amount, bool):
             return jsonify({"error": "Each item must have an integer 'amount'."}), 400
 
-        add_item_to_snapshot(snapshot, asset_id, label, amount)
+    # Validate asset_ids against latest target (if target exists)
+    try:
+        target = load_latest_target()
+    except FileNotFoundError:
+        target = None
+
+    if target is not None:
+        for item in items:
+            aid = item["asset_id"]
+            if not validate_asset_id_in_target(target, aid):
+                valid_ids = target.get_asset_ids()
+                return (
+                    jsonify(
+                        {
+                            "error": f"Invalid asset_id '{aid}'. "
+                            f"Valid asset ids: {valid_ids}"
+                        }
+                    ),
+                    400,
+                )
+
+    for item in items:
+        add_item_to_snapshot(snapshot, item["asset_id"], item["label"], item["amount"])
 
     save_snapshot(snapshot)
     dto = snapshot_to_dto(snapshot)

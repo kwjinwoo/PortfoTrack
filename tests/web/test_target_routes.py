@@ -192,3 +192,27 @@ class TestAddAssetToTarget:
         )
 
         assert response.status_code == 400
+
+
+class TestGetTargetAssets:
+    """GET /api/targets/assets — list asset ids from latest target."""
+
+    def test_returns_asset_list_when_target_exists(self, client, tmp_data_dir):
+        """When a target exists, returns list of assets."""
+        _write_target_file(tmp_data_dir, "2026-02-07")
+
+        response = client.get("/api/targets/assets")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["id"] == "us_equity"
+        assert data[0]["name"] == "US Equity"
+        assert data[0]["purpose"] == "growth"
+
+    def test_returns_404_when_no_target_exists(self, client):
+        """When no target files exist, returns 404."""
+        response = client.get("/api/targets/assets")
+
+        assert response.status_code == 404

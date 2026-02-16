@@ -14,19 +14,32 @@ import pytest
 
 @pytest.fixture()
 def tmp_data_dir(tmp_path, monkeypatch):
-    """Redirect SNAPSHOTS_DIR to a temporary directory for isolation."""
+    """Redirect SNAPSHOTS_DIR and TARGETS_DIR to temporary directories."""
     snapshots_dir = tmp_path / "snapshots"
     snapshots_dir.mkdir()
+    targets_dir = tmp_path / "targets"
+    targets_dir.mkdir()
 
     import portfotrack.path as path_mod
     import portfotrack.services.snapshot_services as svc_mod
+    import portfotrack.services.target_services as target_svc_mod
     import portfotrack.storage.json_store.snapshot_store as store_mod
+    import portfotrack.storage.json_store.target_store as target_store_mod
 
     monkeypatch.setattr(path_mod, "SNAPSHOTS_DIR", snapshots_dir)
     monkeypatch.setattr(svc_mod, "SNAPSHOTS_DIR", snapshots_dir)
     monkeypatch.setattr(store_mod, "SNAPSHOTS_DIR", snapshots_dir)
+    monkeypatch.setattr(path_mod, "TARGETS_DIR", targets_dir)
+    monkeypatch.setattr(target_svc_mod, "TARGETS_DIR", targets_dir)
+    monkeypatch.setattr(target_store_mod, "TARGETS_DIR", targets_dir)
 
     return snapshots_dir
+
+
+@pytest.fixture()
+def tmp_targets_dir(tmp_data_dir, tmp_path):
+    """Return the targets directory created by tmp_data_dir."""
+    return tmp_path / "targets"
 
 
 @pytest.fixture()
@@ -178,3 +191,86 @@ class TestCreateSnapshot:
         )
 
         assert response.status_code == 400
+
+
+def _write_target_file(targets_dir: Path, date: str) -> None:
+    """Write a minimal valid target JSON file."""
+    dto = {
+        "assets": [
+            {
+                "id": "us_equity",
+                "name": "US Equity",
+                "purpose": "growth",
+                "target_ratio": 0.6,
+                "tolerance": {"lower": 0.5, "upper": 0.7},
+            },
+            {
+                "id": "kr_bond",
+                "name": "KR Bond",
+                "purpose": "stability",
+                "target_ratio": 0.4,
+                "tolerance": {"lower": 0.3, "upper": 0.5},
+            },
+        ]
+    }
+    file_name = f"target_{date}_v1.json"
+    with open(targets_dir / file_name, "w", encoding="utf-8") as f:
+        json.dump(dto, f, ensure_ascii=False, indent=2)
+
+
+class TestCreateSnapshotAssetValidation:
+    """POST /api/snapshots — asset_id validation against target."""
+
+    def test_valid_asset_id_returns_201(self, client, tmp_targets_dir):
+        """Snapshot with asset_id matching target returns 201."""
+        _write_target_file(tmp_targets_dir, "2026-02-07")
+
+        payload = {
+            "items": [
+                {"asset_id": "us_equity", "label": "S&P500", "amount": 5_000_000},
+            ]
+        }
+
+        response = client.post(
+            "/api/snapshots",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 201
+
+    def test_invalid_asset_id_returns_400(self, client, tmp_targets_dir):
+        """Snapshot with asset_id not in target returns 400."""
+        _write_target_file(tmp_targets_dir, "2026-02-07")
+
+        payload = {
+            "items": [
+                {"asset_id": "nonexistent", "label": "Bad", "amount": 1_000_000},
+            ]
+        }
+
+        response = client.post(
+            "/api/snapshots",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "nonexistent" in data["error"]
+
+    def test_no_target_skips_validation_and_returns_201(self, client):
+        """When no target exists, asset_id validation is skipped."""
+        payload = {
+            "items": [
+                {"asset_id": "anything", "label": "Test", "amount": 1_000_000},
+            ]
+        }
+
+        response = client.post(
+            "/api/snapshots",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 201
