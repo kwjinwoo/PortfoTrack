@@ -274,3 +274,47 @@ class TestCreateSnapshotAssetValidation:
         )
 
         assert response.status_code == 201
+
+    def test_invalid_asset_id_error_includes_valid_ids(self, client, tmp_targets_dir):
+        """Error response for invalid asset_id should list valid ids."""
+        _write_target_file(tmp_targets_dir, "2026-02-07")
+
+        payload = {
+            "items": [
+                {"asset_id": "bad_id", "label": "Bad", "amount": 1_000_000},
+            ]
+        }
+
+        response = client.post(
+            "/api/snapshots",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "us_equity" in data["error"]
+        assert "kr_bond" in data["error"]
+
+    def test_mixed_valid_and_invalid_asset_ids_returns_400(
+        self, client, tmp_targets_dir
+    ):
+        """If any item has invalid asset_id, entire request fails."""
+        _write_target_file(tmp_targets_dir, "2026-02-07")
+
+        payload = {
+            "items": [
+                {"asset_id": "us_equity", "label": "S&P500", "amount": 5_000_000},
+                {"asset_id": "invalid", "label": "Bad", "amount": 1_000_000},
+            ]
+        }
+
+        response = client.post(
+            "/api/snapshots",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "invalid" in data["error"]
