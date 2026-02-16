@@ -1,9 +1,9 @@
-"""Tests for trend analysis service — load_all_snapshots.
+"""Tests for trend analysis service.
 
 Covers:
-- Loading all snapshots from disk sorted by date
-- Empty directory returns empty list
-- Multiple snapshots sorted ascending
+- load_all_snapshots: loading and sorting snapshots from disk
+- compute_asset_trends: per-asset time-series computation
+- compute_portfolio_trend: full portfolio trend with totals
 """
 
 import json
@@ -15,7 +15,11 @@ import portfotrack.path as path_mod
 import portfotrack.services.trend_analysis as trend_svc
 import portfotrack.storage.json_store.snapshot_store as snap_store
 from portfotrack.domain.snapshot import Snapshot
-from portfotrack.services.trend_analysis import compute_asset_trends, load_all_snapshots
+from portfotrack.services.trend_analysis import (
+    compute_asset_trends,
+    compute_portfolio_trend,
+    load_all_snapshots,
+)
 
 
 @pytest.fixture()
@@ -208,3 +212,69 @@ class TestComputeAssetTrends:
 
         asset_ids = [t.asset_id for t in result]
         assert asset_ids == sorted(asset_ids)
+
+
+class TestComputePortfolioTrend:
+    """Tests for compute_portfolio_trend function."""
+
+    def test_empty_snapshots_returns_empty_trend(self) -> None:
+        """No snapshots yields empty asset_trends and total_data_points."""
+        result = compute_portfolio_trend([])
+
+        assert result.asset_trends == []
+        assert result.total_data_points == []
+
+    def test_single_snapshot_total_amount(self) -> None:
+        """One snapshot produces one total data point with correct sum."""
+        snapshot = Snapshot(date="2026-02-12")
+        snapshot.add_snapshot_item("us-etf", "S&P500", 6_000_000)
+        snapshot.add_snapshot_item("gold", "GOLD", 4_000_000)
+
+        result = compute_portfolio_trend([snapshot])
+
+        assert len(result.total_data_points) == 1
+        assert result.total_data_points[0].date == "2026-02-12"
+        assert result.total_data_points[0].total_amount == 10_000_000
+
+    def test_multiple_snapshots_track_total_changes(self) -> None:
+        """Multiple snapshots track total portfolio value over time."""
+        snap1 = Snapshot(date="2026-02-12")
+        snap1.add_snapshot_item("us-etf", "S&P500", 5_000_000)
+        snap1.add_snapshot_item("gold", "GOLD", 1_000_000)
+
+        snap2 = Snapshot(date="2026-02-14")
+        snap2.add_snapshot_item("us-etf", "S&P500", 5_500_000)
+        snap2.add_snapshot_item("gold", "GOLD", 1_200_000)
+
+        result = compute_portfolio_trend([snap1, snap2])
+
+        assert len(result.total_data_points) == 2
+        assert result.total_data_points[0].total_amount == 6_000_000
+        assert result.total_data_points[1].total_amount == 6_700_000
+
+    def test_includes_asset_trends(self) -> None:
+        """PortfolioTrend includes per-asset trends alongside totals."""
+        snapshot = Snapshot(date="2026-02-12")
+        snapshot.add_snapshot_item("us-etf", "S&P500", 6_000_000)
+        snapshot.add_snapshot_item("gold", "GOLD", 4_000_000)
+
+        result = compute_portfolio_trend([snapshot])
+
+        assert len(result.asset_trends) == 2
+        asset_ids = [t.asset_id for t in result.asset_trends]
+        assert "us-etf" in asset_ids
+        assert "gold" in asset_ids
+
+    def test_total_data_points_sorted_by_date(self) -> None:
+        """Total data points are chronologically ordered."""
+        snap1 = Snapshot(date="2026-02-14")
+        snap1.add_snapshot_item("us-etf", "S&P500", 5_500_000)
+
+        snap2 = Snapshot(date="2026-02-12")
+        snap2.add_snapshot_item("us-etf", "S&P500", 5_000_000)
+
+        # Snapshots passed pre-sorted (service contract)
+        result = compute_portfolio_trend([snap2, snap1])
+
+        assert result.total_data_points[0].date == "2026-02-12"
+        assert result.total_data_points[1].date == "2026-02-14"

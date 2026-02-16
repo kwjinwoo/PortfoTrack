@@ -5,7 +5,12 @@ for per-asset and portfolio-level analysis.
 """
 
 from portfotrack.domain.snapshot import Snapshot
-from portfotrack.domain.trend import AssetTrend, AssetTrendPoint
+from portfotrack.domain.trend import (
+    AssetTrend,
+    AssetTrendPoint,
+    PortfolioTrend,
+    PortfolioTrendPoint,
+)
 from portfotrack.path import SNAPSHOTS_DIR
 from portfotrack.services.snapshot_services import aggregate_snapshot
 from portfotrack.storage.json_store.snapshot_store import load as store_load
@@ -104,3 +109,33 @@ def _resolve_asset_name(asset_id: str, snapshots: list[Snapshot]) -> str:
         The asset_id string as a fallback name.
     """
     return asset_id
+
+
+def compute_portfolio_trend(snapshots: list[Snapshot]) -> PortfolioTrend:
+    """Compute complete portfolio trend data from a list of snapshots.
+
+    Combines per-asset trends with total portfolio value observations
+    to produce a single PortfolioTrend suitable for rendering all
+    three chart types (asset percentage, asset amount, total amount).
+
+    Args:
+        snapshots: Chronologically ordered list of snapshots.
+
+    Returns:
+        A PortfolioTrend containing per-asset trends and total
+        portfolio data points. Returns empty collections if no
+        snapshots are provided.
+    """
+    asset_trends = compute_asset_trends(snapshots)
+
+    total_data_points: list[PortfolioTrendPoint] = []
+    for snapshot in snapshots:
+        agg = aggregate_snapshot(snapshot)
+        total = sum(agg.values())
+        total_data_points.append(
+            PortfolioTrendPoint(date=snapshot.date, total_amount=total)
+        )
+
+    return PortfolioTrend(
+        asset_trends=asset_trends, total_data_points=total_data_points
+    )
