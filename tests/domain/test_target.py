@@ -206,3 +206,62 @@ def test_validate_total_boundary(tol_ok: Tolerance) -> None:
 
     # no raises
     target_allocation.validate_total()
+
+
+# ---------------------------
+# get_asset_ids
+# ---------------------------
+
+
+def test_get_asset_ids_empty_target() -> None:
+    target_allocation = TargetAllocation()
+
+    assert target_allocation.get_asset_ids() == []
+
+
+def test_get_asset_ids_single_asset(tol_ok: Tolerance) -> None:
+    target_allocation = TargetAllocation()
+    target_allocation.add_asset(Asset("us_equity", "US Equity", "growth"), 0.5, tol_ok)
+
+    result = target_allocation.get_asset_ids()
+
+    assert result == ["us_equity"]
+
+
+def test_get_asset_ids_multiple_assets(tol_ok: Tolerance) -> None:
+    target_allocation = TargetAllocation()
+    target_allocation.add_asset(Asset("us_equity", "US Equity", "growth"), 0.3, tol_ok)
+    target_allocation.add_asset(Asset("kr_bond", "KR Bond", "stability"), 0.3, tol_ok)
+    target_allocation.add_asset(Asset("gold", "Gold", "hedge"), 0.4, tol_ok)
+
+    result = target_allocation.get_asset_ids()
+
+    assert len(result) == 3
+    assert "us_equity" in result
+    assert "kr_bond" in result
+    assert "gold" in result
+
+
+# ---------------------------
+# is_valid_asset_id
+# ---------------------------
+
+
+def test_is_valid_asset_id_returns_true_for_existing(tol_ok: Tolerance) -> None:
+    target_allocation = TargetAllocation()
+    target_allocation.add_asset(Asset("us_equity", "US Equity", "growth"), 0.5, tol_ok)
+
+    assert target_allocation.is_valid_asset_id("us_equity") is True
+
+
+def test_is_valid_asset_id_returns_false_for_missing(tol_ok: Tolerance) -> None:
+    target_allocation = TargetAllocation()
+    target_allocation.add_asset(Asset("us_equity", "US Equity", "growth"), 0.5, tol_ok)
+
+    assert target_allocation.is_valid_asset_id("kr_bond") is False
+
+
+def test_is_valid_asset_id_returns_false_for_empty_target() -> None:
+    target_allocation = TargetAllocation()
+
+    assert target_allocation.is_valid_asset_id("us_equity") is False

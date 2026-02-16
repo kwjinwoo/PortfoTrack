@@ -113,3 +113,25 @@ class TargetAllocation:
         total = self.total_ratio()
         if abs(total - 1.0) > eps:
             raise TotalRatioMismatchError(total=total, expected=1.0, eps=eps)
+
+    def get_asset_ids(self) -> list[str]:
+        """Returns a list of all asset identifiers in this allocation.
+
+        The order of IDs reflects the current iteration order of the
+        internal dictionary and should not be relied upon.
+
+        Returns:
+            List of asset id strings. Empty list if no assets are defined.
+        """
+        return [asset.id for asset in self.target_assets]
+
+    def is_valid_asset_id(self, asset_id: str) -> bool:
+        """Checks whether a given asset_id exists in this allocation.
+
+        Args:
+            asset_id: The asset identifier to look up.
+
+        Returns:
+            True if an asset with the given id exists, False otherwise.
+        """
+        return any(asset.id == asset_id for asset in self.target_assets)
