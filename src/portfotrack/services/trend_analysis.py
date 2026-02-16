@@ -5,7 +5,9 @@ for per-asset and portfolio-level analysis.
 """
 
 from portfotrack.domain.snapshot import Snapshot
+from portfotrack.domain.trend import AssetTrend, AssetTrendPoint
 from portfotrack.path import SNAPSHOTS_DIR
+from portfotrack.services.snapshot_services import aggregate_snapshot
 from portfotrack.storage.json_store.snapshot_store import load as store_load
 from portfotrack.storage.serialization.snapshot_json import dto_to_snapshot
 
@@ -30,3 +32,75 @@ def load_all_snapshots() -> list[Snapshot]:
         snapshots.append(snapshot)
 
     return snapshots
+
+
+def compute_asset_trends(snapshots: list[Snapshot]) -> list[AssetTrend]:
+    """Compute per-asset time-series trend data from a list of snapshots.
+
+    For each snapshot, items are aggregated by asset_id. Each asset's
+    amount and allocation ratio are tracked across all snapshot dates.
+    Assets that appear in some snapshots but not others receive a zero
+    amount and zero ratio for the missing dates.
+
+    Args:
+        snapshots: Chronologically ordered list of snapshots.
+
+    Returns:
+        A list of AssetTrend objects sorted by asset_id, each containing
+        one data point per snapshot date. Returns an empty list if no
+        snapshots are provided.
+    """
+    if not snapshots:
+        return []
+
+    # Collect all unique asset_ids across all snapshots
+    all_asset_ids: set[str] = set()
+    aggregated: list[dict[str, int]] = []
+    totals: list[int] = []
+
+    for snapshot in snapshots:
+        agg = aggregate_snapshot(snapshot)
+        aggregated.append(agg)
+        all_asset_ids.update(agg.keys())
+        totals.append(sum(agg.values()))
+
+    sorted_asset_ids = sorted(all_asset_ids)
+
+    # Build per-asset trend data
+    asset_trends: list[AssetTrend] = []
+    for asset_id in sorted_asset_ids:
+        data_points: list[AssetTrendPoint] = []
+        for i, snapshot in enumerate(snapshots):
+            amount = aggregated[i].get(asset_id, 0)
+            total = totals[i]
+            ratio = amount / total if total > 0 else 0.0
+            data_points.append(
+                AssetTrendPoint(date=snapshot.date, amount=amount, ratio=ratio)
+            )
+
+        # Derive asset_name from the first snapshot item that has this asset_id
+        asset_name = _resolve_asset_name(asset_id, snapshots)
+        asset_trends.append(
+            AssetTrend(
+                asset_id=asset_id, asset_name=asset_name, data_points=data_points
+            )
+        )
+
+    return asset_trends
+
+
+def _resolve_asset_name(asset_id: str, snapshots: list[Snapshot]) -> str:
+    """Resolve a human-readable name for an asset_id from snapshot items.
+
+    Uses the asset_id itself as the name since snapshots do not carry
+    asset-level metadata beyond label. This keeps the domain pure;
+    richer names can be derived from target allocations at the web layer.
+
+    Args:
+        asset_id: The asset class identifier.
+        snapshots: Available snapshots (unused in current implementation).
+
+    Returns:
+        The asset_id string as a fallback name.
+    """
+    return asset_id
