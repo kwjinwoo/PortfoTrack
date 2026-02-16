@@ -4,6 +4,7 @@
 
 document.addEventListener("DOMContentLoaded", function () {
   loadSnapshots();
+  loadTargetAssets();
   setupCreateForm();
   setupAddItemButton();
 });
@@ -76,6 +77,66 @@ async function viewSnapshot(date) {
 }
 
 /**
+ * Cached target assets for building select dropdowns.
+ * @type {Array<{id: string, name: string, purpose: string}>}
+ */
+let _cachedAssets = [];
+
+/**
+ * Load target assets and populate all asset_id dropdowns.
+ */
+async function loadTargetAssets() {
+  const warning = document.getElementById("no-target-warning");
+
+  try {
+    const response = await fetch("/api/targets/assets");
+    if (!response.ok) {
+      warning.style.display = "block";
+      _cachedAssets = [];
+      _updateAllAssetSelects();
+      return;
+    }
+
+    _cachedAssets = await response.json();
+    warning.style.display = "none";
+    _updateAllAssetSelects();
+  } catch (err) {
+    warning.style.display = "block";
+    _cachedAssets = [];
+    _updateAllAssetSelects();
+  }
+}
+
+/**
+ * Build option HTML for asset select dropdowns.
+ */
+function _buildAssetOptions() {
+  if (_cachedAssets.length === 0) {
+    return '<option value="">사용 가능한 자산 없음</option>';
+  }
+  const opts = ['<option value="">-- 자산 선택 --</option>'];
+  for (const a of _cachedAssets) {
+    opts.push(`<option value="${a.id}">${a.name} (${a.id})</option>`);
+  }
+  return opts.join("");
+}
+
+/**
+ * Update all asset_id select elements with current cached assets.
+ */
+function _updateAllAssetSelects() {
+  const selects = document.querySelectorAll(
+    '#snapshot-items-container select[name="asset_id"]'
+  );
+  const html = _buildAssetOptions();
+  for (const sel of selects) {
+    const current = sel.value;
+    sel.innerHTML = html;
+    if (current) sel.value = current;
+  }
+}
+
+/**
  * Set up the create snapshot form submission.
  */
 function setupCreateForm() {
@@ -137,7 +198,9 @@ function setupAddItemButton() {
     row.className = "item-row";
     row.innerHTML = `
       <label>자산 ID</label>
-      <input type="text" name="asset_id" required placeholder="예: us_equity">
+      <select name="asset_id" required>
+        ${_buildAssetOptions()}
+      </select>
       <label>라벨</label>
       <input type="text" name="label" required placeholder="예: S&P500">
       <label>금액 (KRW)</label>

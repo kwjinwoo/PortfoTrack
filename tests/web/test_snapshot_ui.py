@@ -56,3 +56,18 @@ class TestSnapshotsPageStructure:
         response = client.get("/static/js/snapshots-ui.js")
 
         assert response.status_code == 200
+
+    def test_contains_asset_select_dropdown(self, client):
+        """Page should have a select dropdown for asset_id."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'name="asset_id"' in html
+        assert "<select" in html
+
+    def test_contains_no_target_warning(self, client):
+        """Page should have a warning element for missing target."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'id="no-target-warning"' in html

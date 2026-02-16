@@ -22,11 +22,14 @@
 
   <div class="card">
     <h3>새 스냅샷 생성</h3>
+    <div id="no-target-warning" class="message error" style="display:none;">타겟 배분이 설정되지 않았습니다. 먼저 타겟을 생성하세요.</div>
     <form id="create-snapshot-form">
       <div id="snapshot-items-container">
         <div class="item-row">
           <label>자산 ID</label>
-          <input type="text" name="asset_id" required placeholder="예: us_equity">
+          <select name="asset_id" required>
+            <option value="">로딩 중...</option>
+          </select>
           <label>라벨</label>
           <input type="text" name="label" required placeholder="예: S&P500">
           <label>금액 (KRW)</label>
