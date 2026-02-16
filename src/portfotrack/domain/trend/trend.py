@@ -43,3 +43,34 @@ class AssetTrend:
     asset_id: str
     asset_name: str
     data_points: list[AssetTrendPoint]
+
+
+@dataclass(frozen=True)
+class PortfolioTrendPoint:
+    """A single observation of the total portfolio value at a point in time.
+
+    Attributes:
+        date: ISO-format date string (YYYY-MM-DD) of the observation.
+        total_amount: Total portfolio value in the snapshot currency (KRW).
+    """
+
+    date: str
+    total_amount: int
+
+
+@dataclass(frozen=True)
+class PortfolioTrend:
+    """Complete portfolio trend data combining per-asset and total trends.
+
+    Aggregates all AssetTrends together with overall portfolio total
+    observations, providing the data needed to render percentage,
+    amount, and total value charts.
+
+    Attributes:
+        asset_trends: Per-asset time-series data.
+        total_data_points: Chronologically ordered total portfolio
+            value observations.
+    """
+
+    asset_trends: list[AssetTrend]
+    total_data_points: list[PortfolioTrendPoint]
