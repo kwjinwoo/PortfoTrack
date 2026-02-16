@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="trends-page">
+  <h2>추이 분석</h2>
+
+  <div class="card">
+    <h3>자산별 비율 추이</h3>
+    <canvas id="ratio-chart" width="800" height="300"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>자산별 평가 금액 추이</h3>
+    <canvas id="amount-chart" width="800" height="300"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>전체 포트폴리오 추이</h3>
+    <canvas id="total-chart" width="800" height="300"></canvas>
+  </div>
+
+  <div id="trends-message" class="message"></div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/trends-ui.js') }}"></script>
+{% endblock %}

@@ -48,6 +48,11 @@ def create_app(test_config: dict | None = None) -> Flask:
         """Render the allocation report page."""
         return render_template("reports.html")
 
+    @app.route("/trends")
+    def trends_page():
+        """Render the trend analysis page."""
+        return render_template("trends.html")
+
     from portfotrack.web.routes.report_routes import report_bp
     from portfotrack.web.routes.snapshot_routes import snapshot_bp
     from portfotrack.web.routes.target_routes import target_bp
