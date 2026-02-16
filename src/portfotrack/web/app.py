@@ -51,9 +51,11 @@ def create_app(test_config: dict | None = None) -> Flask:
     from portfotrack.web.routes.report_routes import report_bp
     from portfotrack.web.routes.snapshot_routes import snapshot_bp
     from portfotrack.web.routes.target_routes import target_bp
+    from portfotrack.web.routes.trend_routes import trend_bp
 
     app.register_blueprint(snapshot_bp)
     app.register_blueprint(target_bp)
     app.register_blueprint(report_bp)
+    app.register_blueprint(trend_bp)
 
     return app
