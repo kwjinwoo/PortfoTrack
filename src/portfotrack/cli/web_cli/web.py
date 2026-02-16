@@ -1,19 +1,10 @@
 """CLI command handler for starting the PortfoTrack web server.
 
 Provides the ``web start`` command that launches the Flask
-development server on a configurable host and port in a background thread.
-
-Note:
-    Flask's ``debug=True`` mode activates Werkzeug's reloader, which
-    registers signal handlers via ``signal.signal()``.  Since Python
-    only allows signal handlers in the **main thread**, running
-    ``app.run(debug=True)`` inside a daemon thread raises
-    ``ValueError: signal only works in main thread``.
-    Therefore ``debug`` is always set to ``False``.
+development server on a configurable host and port.  The server
+runs in the foreground — Ctrl+C terminates both the server and
+the REPL process.
 """
-
-import sys
-import threading
 
 from portfotrack.cli.registry import CommandRegistry, CommandSpec
 from portfotrack.cli.state import ReplState
@@ -28,17 +19,15 @@ def handle_web(state: ReplState, args: list[str]) -> None:
 
     Subcommands:
         start [--host HOST] [--port PORT]
-            Start the Flask development server in a background thread.
-        stop
-            Stop the running Flask development server.
+            Start the Flask development server in the foreground.
+            Press Ctrl+C to stop.
 
     Args:
-        state: Current REPL state. The running server thread will be stored
-            in state.web_server_thread.
+        state: Current REPL state (unused, required by handler signature).
         args: Positional and flag arguments following ``web``.
     """
     if not args:
-        print("Usage: web start [--host HOST] [--port PORT] | web stop")
+        print("Usage: web start [--host HOST] [--port PORT]")
         return
 
     subcommand = args[0]
@@ -59,42 +48,11 @@ def handle_web(state: ReplState, args: list[str]) -> None:
                 i += 1
 
         app = create_app()
-
-        def run_server():
-            """Run the Flask app in this thread.
-
-            Catches unexpected exceptions so that a background-thread
-            crash is surfaced to stderr instead of silently swallowed.
-            """
-            try:
-                # debug=False is required: Werkzeug's reloader calls
-                # signal.signal(), which raises ValueError in non-main threads.
-                app.run(host=host, port=port, debug=False)
-            except Exception:
-                print(
-                    "Web server encountered an error.",
-                    file=sys.stderr,
-                )
-                raise
-
-        # Create and start server thread as a daemon
-        server_thread = threading.Thread(target=run_server, daemon=True)
-        state.web_server_thread = server_thread
-        server_thread.start()
-
-        print(f"Web server started in background at http://{host}:{port}")
-
-    elif subcommand == "stop":
-        if state.web_server_thread is None:
-            print("Web server is not running.")
-            return
-
-        # Mark thread as stopped (actual termination happens via daemon cleanup)
-        state.web_server_thread = None
-        print("Web server stop signal sent.")
+        print(f"Starting web server at http://{host}:{port}  (Ctrl+C to stop)")
+        app.run(host=host, port=port, debug=False)
 
     else:
-        print("Usage: web start [--host HOST] [--port PORT] | web stop")
+        print("Usage: web start [--host HOST] [--port PORT]")
 
 
 def register_web_commands(registry: CommandRegistry) -> None:
