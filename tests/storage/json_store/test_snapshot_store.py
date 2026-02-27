@@ -155,3 +155,60 @@ def test_load_valid_snapshot_dto_returns_dto(snapshots_dir: Path) -> None:
         assert item["asset_id"] == item_dto["asset_id"]
         assert item["label"] == item_dto["label"]
         assert item["amount"] == item_dto["amount"]
+
+
+# ---------------------------------------------------------------------------
+# save_to_file
+# ---------------------------------------------------------------------------
+
+
+class TestSaveToFile:
+    """Tests for save_to_file: persist a snapshot to a specific filename."""
+
+    def test_save_to_file_creates_file_with_given_name(
+        self, snapshots_dir: Path
+    ) -> None:
+        """save_to_file should create a file with the exact given name."""
+        dto = _valid_snapshot_dto()
+        store_mod.save_to_file(dto, "snapshot_2026-02-12_v1.json")
+
+        file_path = snapshots_dir / "snapshot_2026-02-12_v1.json"
+        assert file_path.exists()
+        assert _read_json(file_path) == dto
+
+    def test_save_to_file_overwrites_existing(self, snapshots_dir: Path) -> None:
+        """save_to_file should overwrite an existing file with the same name."""
+        dto1 = _valid_snapshot_dto()
+        dto2 = _valid_snapshot_dto()
+        dto2["items"][0]["label"] = "Updated Label"
+
+        store_mod.save_to_file(dto1, "snapshot_2026-02-12_v1.json")
+        store_mod.save_to_file(dto2, "snapshot_2026-02-12_v1.json")
+
+        file_path = snapshots_dir / "snapshot_2026-02-12_v1.json"
+        assert _read_json(file_path) == dto2
+
+    def test_save_to_file_creates_directory_if_missing(
+        self, snapshots_dir: Path
+    ) -> None:
+        """save_to_file should create the snapshots directory if it does not exist."""
+        # snapshots_dir doesn't physically exist yet since fixture only sets attr
+        assert not snapshots_dir.exists()
+
+        dto = _valid_snapshot_dto()
+        store_mod.save_to_file(dto, "snapshot_2026-02-12_v1.json")
+
+        assert snapshots_dir.exists()
+        assert (snapshots_dir / "snapshot_2026-02-12_v1.json").exists()
+
+    def test_save_to_file_preserves_original_date_in_dto(
+        self, snapshots_dir: Path
+    ) -> None:
+        """save_to_file should write exactly the DTO content without altering date."""
+        dto = _valid_snapshot_dto()
+        dto["date"] = "2026-01-15"
+
+        store_mod.save_to_file(dto, "snapshot_2026-01-15_v1.json")
+
+        result = _read_json(snapshots_dir / "snapshot_2026-01-15_v1.json")
+        assert result["date"] == "2026-01-15"

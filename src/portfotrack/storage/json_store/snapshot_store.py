@@ -9,6 +9,26 @@ from portfotrack.storage.serialization.snapshot_json import SnapshotDTO
 CURRENT_SNAPSHOT_SCHEMA_VERSION = 1
 
 
+def save_to_file(snapshot: SnapshotDTO, file_name: str) -> None:
+    """Persist a snapshot to a JSON file with the given file name.
+
+    Writes the snapshot DTO to the snapshots directory using the exact
+    file name provided. This enables overwriting a specific existing
+    snapshot file (e.g., when editing a historical snapshot).
+
+    The snapshots directory is created automatically if it does not exist.
+    Existing files with the same name will be overwritten.
+
+    Args:
+        snapshot: Snapshot data transfer object to persist.
+        file_name: Target file name within the snapshots directory.
+    """
+    SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    with open(SNAPSHOTS_DIR / file_name, "w", encoding="utf-8") as f:
+        json.dump(snapshot, f, ensure_ascii=False, indent=2)
+
+
 def save(snapshot: SnapshotDTO) -> None:
     """Persist a snapshot to a JSON file.
 
@@ -25,13 +45,9 @@ def save(snapshot: SnapshotDTO) -> None:
             This object must be JSON-serializable and is expected to be
             represented as a dictionary.
     """
-    SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
-
     today = datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
     file_name = f"snapshot_{today}_v{CURRENT_SNAPSHOT_SCHEMA_VERSION}.json"
-
-    with open(SNAPSHOTS_DIR / file_name, "w", encoding="utf-8") as f:
-        json.dump(snapshot, f, ensure_ascii=False, indent=2)
+    save_to_file(snapshot, file_name)
 
 
 def load(file_name: str) -> SnapshotDTO:
