@@ -9,7 +9,10 @@ from portfotrack.services.snapshot_services import (
     aggregate_snapshot,
     init_snapshot,
     load_latest_snapshot,
+    remove_item_from_snapshot,
+    replace_item_in_snapshot,
     save_snapshot,
+    save_snapshot_overwrite,
 )
 from portfotrack.storage.json_store.errors import SnapshotNotFoundError
 
@@ -310,3 +313,112 @@ class TestLoadLatestSnapshot:
             assert loaded_item.asset_id == orig_item.asset_id
             assert loaded_item.label == orig_item.label
             assert loaded_item.amount == orig_item.amount
+
+
+class TestRemoveItemFromSnapshot:
+    """Tests for remove_item_from_snapshot function."""
+
+    def test_removes_item_and_returns_same_instance(self):
+        """remove_item_from_snapshot should mutate and return the same snapshot."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item("US_EQUITY", "S&P500", 100000)
+        snapshot.add_snapshot_item("KR_BOND", "Treasury", 50000)
+
+        result = remove_item_from_snapshot(snapshot, 0)
+
+        assert result is snapshot
+        assert len(snapshot.items) == 1
+        assert snapshot.items[0].asset_id == "KR_BOND"
+
+    def test_remove_out_of_range_raises_index_error(self):
+        """remove_item_from_snapshot should propagate IndexError for invalid index."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item("US_EQUITY", "S&P500", 100000)
+
+        with pytest.raises(IndexError):
+            remove_item_from_snapshot(snapshot, 5)
+
+
+class TestReplaceItemInSnapshot:
+    """Tests for replace_item_in_snapshot function."""
+
+    def test_replaces_item_and_returns_same_instance(self):
+        """replace_item_in_snapshot should mutate and return the same snapshot."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item("US_EQUITY", "S&P500", 100000)
+
+        result = replace_item_in_snapshot(snapshot, 0, "GOLD", "Gold ETF", 500000)
+
+        assert result is snapshot
+        assert len(snapshot.items) == 1
+        assert snapshot.items[0].asset_id == "GOLD"
+        assert snapshot.items[0].label == "Gold ETF"
+        assert snapshot.items[0].amount == 500000
+
+    def test_replace_out_of_range_raises_index_error(self):
+        """replace_item_in_snapshot should propagate IndexError for invalid index."""
+        snapshot = Snapshot()
+
+        with pytest.raises(IndexError):
+            replace_item_in_snapshot(snapshot, 0, "GOLD", "Gold", 500000)
+
+
+class TestSaveSnapshotOverwrite:
+    """Tests for save_snapshot_overwrite function."""
+
+    def test_saves_to_specified_file(self, tmp_path, monkeypatch):
+        """save_snapshot_overwrite should save to the exact file name given."""
+        from portfotrack.storage.json_store import snapshot_store
+
+        monkeypatch.setattr(snapshot_store, "SNAPSHOTS_DIR", tmp_path)
+
+        snapshot = Snapshot(date="2026-02-12", currency="KRW")
+        snapshot.add_snapshot_item("US_EQUITY", "S&P500", 100000)
+
+        save_snapshot_overwrite(snapshot, "snapshot_2026-02-12_v1.json")
+
+        file_path = tmp_path / "snapshot_2026-02-12_v1.json"
+        assert file_path.exists()
+
+        with open(file_path) as f:
+            data = json.load(f)
+        assert data["date"] == "2026-02-12"
+        assert len(data["items"]) == 1
+
+    def test_overwrites_existing_file(self, tmp_path, monkeypatch):
+        """save_snapshot_overwrite should overwrite existing file content."""
+        from portfotrack.storage.json_store import snapshot_store
+
+        monkeypatch.setattr(snapshot_store, "SNAPSHOTS_DIR", tmp_path)
+
+        file_name = "snapshot_2026-02-12_v1.json"
+
+        # First save
+        snapshot1 = Snapshot(date="2026-02-12")
+        snapshot1.add_snapshot_item("US_EQUITY", "S&P500", 100000)
+        save_snapshot_overwrite(snapshot1, file_name)
+
+        # Second save (overwrite)
+        snapshot2 = Snapshot(date="2026-02-12")
+        snapshot2.add_snapshot_item("GOLD", "Gold ETF", 500000)
+        save_snapshot_overwrite(snapshot2, file_name)
+
+        with open(tmp_path / file_name) as f:
+            data = json.load(f)
+        assert len(data["items"]) == 1
+        assert data["items"][0]["asset_id"] == "GOLD"
+
+    def test_preserves_original_date(self, tmp_path, monkeypatch):
+        """save_snapshot_overwrite should keep snapshot date unchanged."""
+        from portfotrack.storage.json_store import snapshot_store
+
+        monkeypatch.setattr(snapshot_store, "SNAPSHOTS_DIR", tmp_path)
+
+        snapshot = Snapshot(date="2026-01-15")
+        snapshot.add_snapshot_item("CASH", "KRW", 10000)
+
+        save_snapshot_overwrite(snapshot, "snapshot_2026-01-15_v1.json")
+
+        with open(tmp_path / "snapshot_2026-01-15_v1.json") as f:
+            data = json.load(f)
+        assert data["date"] == "2026-01-15"

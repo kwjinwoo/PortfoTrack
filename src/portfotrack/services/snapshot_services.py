@@ -5,6 +5,9 @@ from portfotrack.path import SNAPSHOTS_DIR
 from portfotrack.storage.json_store.errors import SnapshotNotFoundError
 from portfotrack.storage.json_store.snapshot_store import load as store_load
 from portfotrack.storage.json_store.snapshot_store import save as store_save
+from portfotrack.storage.json_store.snapshot_store import (
+    save_to_file as store_save_to_file,
+)
 from portfotrack.storage.serialization.snapshot_json import (
     dto_to_snapshot,
     snapshot_to_dto,
@@ -102,3 +105,66 @@ def aggregate_snapshot(snapshot: Snapshot) -> dict[str, int]:
     for item in snapshot.items:
         totals[item.asset_id] += item.amount
     return dict(totals)
+
+
+def remove_item_from_snapshot(snapshot: Snapshot, index: int) -> Snapshot:
+    """Remove the item at the given index from the snapshot.
+
+    This is a thin convenience wrapper around ``Snapshot.remove_item``.
+
+    Args:
+        snapshot: The ``Snapshot`` to modify.
+        index: Zero-based position of the item to remove.
+
+    Returns:
+        The same ``Snapshot`` instance passed in (mutated).
+
+    Raises:
+        IndexError: If the index is out of range.
+    """
+    snapshot.remove_item(index)
+    return snapshot
+
+
+def replace_item_in_snapshot(
+    snapshot: Snapshot,
+    index: int,
+    asset_id: str,
+    label: str,
+    amount: int,
+) -> Snapshot:
+    """Replace the item at the given index in the snapshot.
+
+    This is a thin convenience wrapper around ``Snapshot.replace_item``.
+
+    Args:
+        snapshot: The ``Snapshot`` to modify.
+        index: Zero-based position of the item to replace.
+        asset_id: Asset class identifier for the replacement item.
+        label: Human-readable label for the replacement item.
+        amount: Absolute amount in the snapshot currency.
+
+    Returns:
+        The same ``Snapshot`` instance passed in (mutated).
+
+    Raises:
+        IndexError: If the index is out of range.
+    """
+    snapshot.replace_item(index, asset_id, label, amount)
+    return snapshot
+
+
+def save_snapshot_overwrite(snapshot: Snapshot, file_name: str) -> None:
+    """Persist a snapshot to a specifically named file, overwriting if it exists.
+
+    Converts the Snapshot domain object to a DTO and delegates to the
+    storage layer to save it under the exact given file name. This is
+    used when editing an existing snapshot and choosing to overwrite
+    the original file.
+
+    Args:
+        snapshot: The Snapshot object to persist.
+        file_name: Target file name within the snapshots directory.
+    """
+    dto = snapshot_to_dto(snapshot)
+    store_save_to_file(dto, file_name)
