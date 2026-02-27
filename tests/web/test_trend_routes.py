@@ -130,7 +130,7 @@ class TestTrendAnalysisEndpoint:
         assert "ratio" in point
 
     def test_portfolio_trend_structure(self, client, tmp_data_dir) -> None:
-        """Each portfolio trend point contains date and total_amount."""
+        """Each portfolio trend point contains date, total_amount, and change_pct."""
         _write_snapshot(
             tmp_data_dir["snapshots"],
             "2026-02-12",
@@ -143,3 +143,23 @@ class TestTrendAnalysisEndpoint:
         point = data["portfolio_trend"][0]
         assert "date" in point
         assert "total_amount" in point
+        assert "change_pct" in point
+
+    def test_portfolio_trend_change_pct_values(self, client, tmp_data_dir) -> None:
+        """change_pct reflects percentage change from previous snapshot."""
+        _write_snapshot(
+            tmp_data_dir["snapshots"],
+            "2026-02-12",
+            [{"asset_id": "us-etf", "label": "S&P500", "amount": 10_000_000}],
+        )
+        _write_snapshot(
+            tmp_data_dir["snapshots"],
+            "2026-02-14",
+            [{"asset_id": "us-etf", "label": "S&P500", "amount": 12_000_000}],
+        )
+
+        response = client.get("/api/trends/analysis")
+
+        data = response.get_json()
+        assert data["portfolio_trend"][0]["change_pct"] == pytest.approx(0.0)
+        assert data["portfolio_trend"][1]["change_pct"] == pytest.approx(20.0)

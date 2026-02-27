@@ -41,7 +41,11 @@ def trend_analysis():
 
     # Serialize portfolio total trend
     portfolio_trend_json = [
-        {"date": tp.date, "total_amount": tp.total_amount}
+        {
+            "date": tp.date,
+            "total_amount": tp.total_amount,
+            "change_pct": tp.change_pct,
+        }
         for tp in portfolio_trend.total_data_points
     ]
 
