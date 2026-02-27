@@ -278,3 +278,42 @@ class TestComputePortfolioTrend:
 
         assert result.total_data_points[0].date == "2026-02-12"
         assert result.total_data_points[1].date == "2026-02-14"
+
+    def test_single_snapshot_change_pct_is_zero(self) -> None:
+        """First (and only) snapshot has change_pct of 0.0."""
+        snapshot = Snapshot(date="2026-02-12")
+        snapshot.add_snapshot_item("us-etf", "S&P500", 6_000_000)
+
+        result = compute_portfolio_trend([snapshot])
+
+        assert result.total_data_points[0].change_pct == pytest.approx(0.0)
+
+    def test_multi_snapshot_change_pct(self) -> None:
+        """change_pct reflects percentage change from previous snapshot total."""
+        snap1 = Snapshot(date="2026-02-12")
+        snap1.add_snapshot_item("us-etf", "S&P500", 100)
+
+        snap2 = Snapshot(date="2026-02-14")
+        snap2.add_snapshot_item("us-etf", "S&P500", 120)
+
+        snap3 = Snapshot(date="2026-02-16")
+        snap3.add_snapshot_item("us-etf", "S&P500", 90)
+
+        result = compute_portfolio_trend([snap1, snap2, snap3])
+
+        assert result.total_data_points[0].change_pct == pytest.approx(0.0)
+        assert result.total_data_points[1].change_pct == pytest.approx(20.0)
+        assert result.total_data_points[2].change_pct == pytest.approx(-25.0)
+
+    def test_zero_total_snapshot_change_pct(self) -> None:
+        """change_pct is 0.0 when previous snapshot total is zero."""
+        snap1 = Snapshot(date="2026-02-12")
+        # Empty snapshot has total 0
+
+        snap2 = Snapshot(date="2026-02-14")
+        snap2.add_snapshot_item("us-etf", "S&P500", 5_000_000)
+
+        result = compute_portfolio_trend([snap1, snap2])
+
+        assert result.total_data_points[0].change_pct == pytest.approx(0.0)
+        assert result.total_data_points[1].change_pct == pytest.approx(0.0)

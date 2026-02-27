@@ -10,6 +10,7 @@ from portfotrack.domain.trend import (
     AssetTrendPoint,
     PortfolioTrend,
     PortfolioTrendPoint,
+    compute_change_pct,
 )
 from portfotrack.path import SNAPSHOTS_DIR
 from portfotrack.services.snapshot_services import aggregate_snapshot
@@ -129,12 +130,17 @@ def compute_portfolio_trend(snapshots: list[Snapshot]) -> PortfolioTrend:
     asset_trends = compute_asset_trends(snapshots)
 
     total_data_points: list[PortfolioTrendPoint] = []
-    for snapshot in snapshots:
+    prev_total = 0
+    for i, snapshot in enumerate(snapshots):
         agg = aggregate_snapshot(snapshot)
         total = sum(agg.values())
+        change_pct = compute_change_pct(prev_total, total) if i > 0 else 0.0
         total_data_points.append(
-            PortfolioTrendPoint(date=snapshot.date, total_amount=total)
+            PortfolioTrendPoint(
+                date=snapshot.date, total_amount=total, change_pct=change_pct
+            )
         )
+        prev_total = total
 
     return PortfolioTrend(
         asset_trends=asset_trends, total_data_points=total_data_points
