@@ -17,11 +17,27 @@
   <div class="card">
     <h3>전체 포트폴리오 추이</h3>
     <canvas id="total-chart" width="800" height="300"></canvas>
+
+    <div class="comparison-section" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+      <h4>스냅샷 비교</h4>
+      <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <label for="compare-from">기준:</label>
+        <select id="compare-from">
+          <option value="">선택</option>
+        </select>
+        <label for="compare-to">비교:</label>
+        <select id="compare-to">
+          <option value="">선택</option>
+        </select>
+      </div>
+      <div id="comparison-result" style="margin-top: 0.5rem;"></div>
+    </div>
   </div>
 
   <div id="trends-message" class="message"></div>
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="{{ url_for('static', filename='js/trends-ui.js') }}"></script>
 {% endblock %}

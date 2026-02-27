@@ -57,3 +57,22 @@ class TestTrendsPage:
         response = client.get("/")
         html = response.data.decode("utf-8")
         assert "/trends" in html
+
+    def test_trends_page_includes_datalabels_plugin(self, client) -> None:
+        """Trends page should load the chartjs-plugin-datalabels script."""
+        response = client.get("/trends")
+        html = response.data.decode("utf-8")
+        assert "chartjs-plugin-datalabels" in html
+
+    def test_trends_page_has_comparison_dropdowns(self, client) -> None:
+        """Trends page should contain two select elements for snapshot comparison."""
+        response = client.get("/trends")
+        html = response.data.decode("utf-8")
+        assert 'id="compare-from"' in html
+        assert 'id="compare-to"' in html
+
+    def test_trends_page_has_comparison_result(self, client) -> None:
+        """Trends page should contain a comparison result display area."""
+        response = client.get("/trends")
+        html = response.data.decode("utf-8")
+        assert 'id="comparison-result"' in html
