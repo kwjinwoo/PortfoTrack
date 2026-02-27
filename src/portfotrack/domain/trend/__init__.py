@@ -3,6 +3,13 @@ from portfotrack.domain.trend.trend import (
     AssetTrendPoint,
     PortfolioTrend,
     PortfolioTrendPoint,
+    compute_change_pct,
 )
 
-__all__ = ["AssetTrendPoint", "AssetTrend", "PortfolioTrendPoint", "PortfolioTrend"]
+__all__ = [
+    "AssetTrendPoint",
+    "AssetTrend",
+    "PortfolioTrendPoint",
+    "PortfolioTrend",
+    "compute_change_pct",
+]

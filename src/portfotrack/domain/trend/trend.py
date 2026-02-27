@@ -52,10 +52,14 @@ class PortfolioTrendPoint:
     Attributes:
         date: ISO-format date string (YYYY-MM-DD) of the observation.
         total_amount: Total portfolio value in the snapshot currency (KRW).
+        change_pct: Percentage change from the previous snapshot's
+            total_amount. 0.0 for the first data point or when the
+            previous total is zero.
     """
 
     date: str
     total_amount: int
+    change_pct: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -74,3 +78,22 @@ class PortfolioTrend:
 
     asset_trends: list[AssetTrend]
     total_data_points: list[PortfolioTrendPoint]
+
+
+def compute_change_pct(previous_amount: int, current_amount: int) -> float:
+    """Compute percentage change between two amounts.
+
+    Calculates ``(current - previous) / previous * 100``. Returns
+    0.0 when ``previous_amount`` is zero to avoid division by zero.
+
+    Args:
+        previous_amount: The earlier total amount in KRW.
+        current_amount: The later total amount in KRW.
+
+    Returns:
+        Percentage change as a float. Positive values indicate
+        growth, negative values indicate decline.
+    """
+    if previous_amount == 0:
+        return 0.0
+    return (current_amount - previous_amount) / previous_amount * 100

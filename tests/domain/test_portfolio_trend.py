@@ -4,6 +4,7 @@ Covers:
 - PortfolioTrendPoint creation and immutability
 - PortfolioTrend creation with asset trends and total data points
 - Edge cases: empty asset trends, empty total data points
+- compute_change_pct utility function
 """
 
 import pytest
@@ -13,6 +14,7 @@ from portfotrack.domain.trend import (
     AssetTrendPoint,
     PortfolioTrend,
     PortfolioTrendPoint,
+    compute_change_pct,
 )
 
 
@@ -38,6 +40,28 @@ class TestPortfolioTrendPoint:
         point = PortfolioTrendPoint(date="2026-02-12", total_amount=0)
 
         assert point.total_amount == 0
+
+    def test_create_with_explicit_change_pct(self) -> None:
+        """PortfolioTrendPoint accepts an explicit change_pct value."""
+        point = PortfolioTrendPoint(
+            date="2026-02-14", total_amount=72_000_000, change_pct=5.0
+        )
+
+        assert point.change_pct == 5.0
+
+    def test_change_pct_defaults_to_zero(self) -> None:
+        """change_pct defaults to 0.0 when not provided."""
+        point = PortfolioTrendPoint(date="2026-02-12", total_amount=60_000_000)
+
+        assert point.change_pct == 0.0
+
+    def test_negative_change_pct(self) -> None:
+        """PortfolioTrendPoint accepts negative change_pct."""
+        point = PortfolioTrendPoint(
+            date="2026-02-14", total_amount=50_000_000, change_pct=-16.67
+        )
+
+        assert point.change_pct == -16.67
 
 
 class TestPortfolioTrend:
@@ -85,3 +109,35 @@ class TestPortfolioTrend:
 
         with pytest.raises(AttributeError):
             trend.asset_trends = []  # type: ignore[misc]
+
+
+class TestComputeChangePct:
+    """Tests for compute_change_pct pure function."""
+
+    def test_positive_change(self) -> None:
+        """Returns positive percentage when current exceeds previous."""
+        assert compute_change_pct(100, 120) == pytest.approx(20.0)
+
+    def test_negative_change(self) -> None:
+        """Returns negative percentage when current is less than previous."""
+        assert compute_change_pct(100, 80) == pytest.approx(-20.0)
+
+    def test_no_change(self) -> None:
+        """Returns 0.0 when current equals previous."""
+        assert compute_change_pct(100, 100) == pytest.approx(0.0)
+
+    def test_zero_previous_returns_zero(self) -> None:
+        """Returns 0.0 when previous amount is zero (avoids division by zero)."""
+        assert compute_change_pct(0, 100) == pytest.approx(0.0)
+
+    def test_both_zero(self) -> None:
+        """Returns 0.0 when both previous and current are zero."""
+        assert compute_change_pct(0, 0) == pytest.approx(0.0)
+
+    def test_large_increase(self) -> None:
+        """Handles large percentage increases correctly."""
+        assert compute_change_pct(1_000_000, 3_000_000) == pytest.approx(200.0)
+
+    def test_fractional_result(self) -> None:
+        """Returns fractional percentage values."""
+        assert compute_change_pct(300, 301) == pytest.approx(1 / 3, rel=1e-4)
