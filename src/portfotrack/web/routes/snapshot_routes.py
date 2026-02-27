@@ -13,6 +13,7 @@ from portfotrack.services.snapshot_services import (
     add_item_to_snapshot,
     init_snapshot,
     save_snapshot,
+    save_snapshot_overwrite,
 )
 from portfotrack.services.target_services import (
     load_latest_target,
@@ -94,8 +95,32 @@ def create_snapshot():
     if not items or not isinstance(items, list) or len(items) == 0:
         return jsonify({"error": "'items' must be a non-empty list."}), 400
 
-    snapshot = init_snapshot()
+    error_resp, status = _validate_items(items)
+    if error_resp is not None:
+        return error_resp, status
 
+    error_resp, status = _validate_asset_ids_against_target(items)
+    if error_resp is not None:
+        return error_resp, status
+
+    snapshot = init_snapshot()
+    for item in items:
+        add_item_to_snapshot(snapshot, item["asset_id"], item["label"], item["amount"])
+
+    save_snapshot(snapshot)
+    dto = snapshot_to_dto(snapshot)
+    return jsonify(dto), 201
+
+
+def _validate_items(items: list) -> tuple[None, None] | tuple[object, int]:
+    """Validate a list of item dicts for required fields and types.
+
+    Args:
+        items: List of item dicts to validate.
+
+    Returns:
+        (None, None) if valid, or (error_response, status_code) if invalid.
+    """
     for item in items:
         if not isinstance(item, dict):
             return jsonify({"error": "Each item must be an object."}), 400
@@ -111,7 +136,22 @@ def create_snapshot():
         if amount is None or not isinstance(amount, int) or isinstance(amount, bool):
             return jsonify({"error": "Each item must have an integer 'amount'."}), 400
 
-    # Validate asset_ids against latest target (if target exists)
+    return None, None
+
+
+def _validate_asset_ids_against_target(
+    items: list,
+) -> tuple[None, None] | tuple[object, int]:
+    """Validate item asset_ids against the latest target allocation.
+
+    If no target exists, validation is skipped and items are accepted.
+
+    Args:
+        items: List of item dicts with 'asset_id' keys.
+
+    Returns:
+        (None, None) if valid or no target, or (error_response, status_code) if invalid.
+    """
     try:
         target = load_latest_target()
     except FileNotFoundError:
@@ -132,12 +172,72 @@ def create_snapshot():
                     400,
                 )
 
+    return None, None
+
+
+@snapshot_bp.route("/<date>", methods=["PUT"])
+def update_snapshot(date: str):
+    """Update an existing snapshot with full replacement.
+
+    Expects JSON body with ``mode`` and ``items`` fields.
+    Mode determines save behavior:
+    - ``"overwrite"``: replaces the original file, preserving its date.
+    - ``"new"``: saves as a new snapshot with today's date.
+
+    Args:
+        date: ISO date string (YYYY-MM-DD) of the snapshot to update.
+
+    Returns:
+        200 with updated snapshot DTO for overwrite mode,
+        201 with new snapshot DTO for new mode,
+        or 400/404 on validation failure.
+    """
+    if not _DATE_PATTERN.match(date):
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({"error": "Request body must be valid JSON."}), 400
+
+    mode = body.get("mode")
+    if mode not in ("overwrite", "new"):
+        return (
+            jsonify({"error": "'mode' must be 'overwrite' or 'new'."}),
+            400,
+        )
+
+    items = body.get("items")
+    if not items or not isinstance(items, list) or len(items) == 0:
+        return jsonify({"error": "'items' must be a non-empty list."}), 400
+
+    error_resp, status = _validate_items(items)
+    if error_resp is not None:
+        return error_resp, status
+
+    # Verify the source snapshot exists
+    matching = list(path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{date}_v*.json"))
+    if not matching:
+        return jsonify({"error": f"Snapshot for {date} not found."}), 404
+
+    error_resp, status = _validate_asset_ids_against_target(items)
+    if error_resp is not None:
+        return error_resp, status
+
+    # Build the updated snapshot
+    snapshot = init_snapshot()
     for item in items:
         add_item_to_snapshot(snapshot, item["asset_id"], item["label"], item["amount"])
 
-    save_snapshot(snapshot)
-    dto = snapshot_to_dto(snapshot)
-    return jsonify(dto), 201
+    if mode == "overwrite":
+        snapshot.date = date
+        latest_file = sorted(matching)[-1]
+        save_snapshot_overwrite(snapshot, latest_file.name)
+        dto = snapshot_to_dto(snapshot)
+        return jsonify(dto), 200
+    else:  # mode == "new"
+        save_snapshot(snapshot)
+        dto = snapshot_to_dto(snapshot)
+        return jsonify(dto), 201
 
 
 def _validate_item_fields(body: dict) -> tuple[str, str, int] | tuple[None, None, None]:

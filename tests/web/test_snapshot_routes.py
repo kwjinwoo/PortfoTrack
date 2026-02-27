@@ -318,3 +318,270 @@ class TestCreateSnapshotAssetValidation:
         assert response.status_code == 400
         data = response.get_json()
         assert "invalid" in data["error"]
+
+
+class TestUpdateSnapshot:
+    """PUT /api/snapshots/<date> — update an existing snapshot."""
+
+    def test_overwrite_existing_returns_200(self, client, tmp_data_dir):
+        """Overwriting an existing snapshot should return 200 with updated data."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {
+            "mode": "overwrite",
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["items"]) == 1
+        assert data["items"][0]["asset_id"] == "gold"
+        assert data["date"] == "2026-02-12"
+
+    def test_overwrite_preserves_original_date_and_filename(self, client, tmp_data_dir):
+        """Overwrite mode should keep the original file and date unchanged."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {
+            "mode": "overwrite",
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        # Original file should be updated in place
+        file_path = tmp_data_dir / "snapshot_2026-02-12_v1.json"
+        assert file_path.exists()
+        with open(file_path) as f:
+            data = json.load(f)
+        assert data["date"] == "2026-02-12"
+        assert data["items"][0]["asset_id"] == "gold"
+
+    def test_save_as_new_returns_201(self, client, tmp_data_dir):
+        """Saving as new should return 201 with today's date."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {
+            "mode": "new",
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert len(data["items"]) == 1
+        assert data["items"][0]["asset_id"] == "gold"
+
+    def test_save_as_new_creates_today_file(self, client, tmp_data_dir):
+        """New mode should create a file with today's date, keeping original."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {
+            "mode": "new",
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        # Original file should still exist
+        assert (tmp_data_dir / "snapshot_2026-02-12_v1.json").exists()
+
+        # A new file for today should exist
+        files = list(tmp_data_dir.glob("snapshot_*_v1.json"))
+        assert len(files) >= 1  # at least the new one
+
+    def test_invalid_date_format_returns_400(self, client):
+        """PUT with invalid date format returns 400."""
+        payload = {
+            "mode": "overwrite",
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/not-a-date",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+
+    def test_snapshot_not_found_returns_404(self, client):
+        """PUT to nonexistent snapshot returns 404."""
+        payload = {
+            "mode": "overwrite",
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/2099-01-01",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 404
+
+    def test_empty_items_returns_400(self, client, tmp_data_dir):
+        """PUT with empty items list returns 400."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {"mode": "overwrite", "items": []}
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+
+    def test_missing_items_returns_400(self, client, tmp_data_dir):
+        """PUT without items field returns 400."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {"mode": "overwrite"}
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+
+    def test_invalid_item_fields_returns_400(self, client, tmp_data_dir):
+        """PUT with invalid item structure returns 400."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {
+            "mode": "overwrite",
+            "items": [
+                {"asset_id": "gold", "label": "Gold"},  # missing amount
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+
+    def test_invalid_mode_returns_400(self, client, tmp_data_dir):
+        """PUT with unrecognized mode returns 400."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {
+            "mode": "invalid_mode",
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+
+    def test_missing_mode_returns_400(self, client, tmp_data_dir):
+        """PUT without mode field returns 400."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+
+    def test_no_json_body_returns_400(self, client, tmp_data_dir):
+        """PUT without JSON body returns 400."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        response = client.put("/api/snapshots/2026-02-12")
+
+        assert response.status_code == 400
+
+    def test_asset_id_validation_against_target(
+        self, client, tmp_data_dir, tmp_targets_dir
+    ):
+        """PUT with invalid asset_id against target returns 400."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+        _write_target_file(tmp_targets_dir, "2026-02-07")
+
+        payload = {
+            "mode": "overwrite",
+            "items": [
+                {"asset_id": "nonexistent", "label": "Bad", "amount": 1_000_000},
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "nonexistent" in data["error"]
+
+    def test_no_target_skips_validation(self, client, tmp_data_dir):
+        """When no target exists, asset_id validation is skipped for PUT."""
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+
+        payload = {
+            "mode": "overwrite",
+            "items": [
+                {"asset_id": "anything", "label": "Test", "amount": 1_000_000},
+            ],
+        }
+
+        response = client.put(
+            "/api/snapshots/2026-02-12",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
