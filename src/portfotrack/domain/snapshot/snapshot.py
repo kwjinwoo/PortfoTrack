@@ -95,3 +95,47 @@ class Snapshot:
                 )
                 return
         self.items.append(new_item)
+
+    def remove_item(self, index: int) -> None:
+        """Remove the snapshot item at the given index.
+
+        Only non-negative indices are accepted. Negative indices are
+        rejected to prevent ambiguous reverse-indexing in user-facing
+        edit operations.
+
+        Args:
+            index: Zero-based position of the item to remove.
+                Must be a non-negative integer within range.
+
+        Raises:
+            IndexError: If index is negative or out of range.
+        """
+        if index < 0 or index >= len(self.items):
+            raise IndexError(
+                f"Item index {index} out of range for snapshot "
+                f"with {len(self.items)} items."
+            )
+        self.items.pop(index)
+
+    def replace_item(self, index: int, asset_id: str, label: str, amount: int) -> None:
+        """Replace the snapshot item at the given index with new values.
+
+        Creates a new SnapshotItem from the provided fields and places it
+        at the specified position. Only non-negative indices are accepted.
+
+        Args:
+            index: Zero-based position of the item to replace.
+                Must be a non-negative integer within range.
+            asset_id: Identifier of the asset class for the replacement item.
+            label: Human-readable label for the replacement item.
+            amount: Absolute amount in the snapshot currency.
+
+        Raises:
+            IndexError: If index is negative or out of range.
+        """
+        if index < 0 or index >= len(self.items):
+            raise IndexError(
+                f"Item index {index} out of range for snapshot "
+                f"with {len(self.items)} items."
+            )
+        self.items[index] = SnapshotItem(asset_id, label, amount)

@@ -147,3 +147,153 @@ class TestSnapshot:
         assert snapshot.items[0].asset_id == "us_equity"
         assert snapshot.items[0].label == "S&P500"
         assert snapshot.items[0].amount == 150
+
+
+class TestRemoveSnapshotItem:
+    """Tests for Snapshot.remove_item behavior."""
+
+    def test_remove_single_item(self):
+        """remove_item should remove the item at the given index."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+        snapshot.add_snapshot_item(asset_id="kr_bond", label="KTB", amount=200)
+
+        snapshot.remove_item(0)
+
+        assert len(snapshot.items) == 1
+        assert snapshot.items[0].asset_id == "kr_bond"
+
+    def test_remove_last_item(self):
+        """remove_item should remove the last item when given the last index."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+        snapshot.add_snapshot_item(asset_id="kr_bond", label="KTB", amount=200)
+
+        snapshot.remove_item(1)
+
+        assert len(snapshot.items) == 1
+        assert snapshot.items[0].asset_id == "us_equity"
+
+    def test_remove_middle_item(self):
+        """remove_item should remove the middle item and shift remaining items."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+        snapshot.add_snapshot_item(asset_id="kr_bond", label="KTB", amount=200)
+        snapshot.add_snapshot_item(asset_id="cash", label="KRW Cash", amount=300)
+
+        snapshot.remove_item(1)
+
+        assert len(snapshot.items) == 2
+        assert snapshot.items[0].asset_id == "us_equity"
+        assert snapshot.items[1].asset_id == "cash"
+
+    def test_remove_only_item_leaves_empty_list(self):
+        """Removing the only item should leave items list empty."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+
+        snapshot.remove_item(0)
+
+        assert snapshot.items == []
+
+    def test_remove_negative_index_raises_index_error(self):
+        """remove_item with a negative index should raise IndexError."""
+        import pytest
+
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+
+        with pytest.raises(IndexError):
+            snapshot.remove_item(-1)
+
+    def test_remove_out_of_range_index_raises_index_error(self):
+        """remove_item with an out-of-range index should raise IndexError."""
+        import pytest
+
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+
+        with pytest.raises(IndexError):
+            snapshot.remove_item(1)
+
+    def test_remove_from_empty_snapshot_raises_index_error(self):
+        """remove_item on an empty snapshot should raise IndexError."""
+        import pytest
+
+        snapshot = Snapshot()
+
+        with pytest.raises(IndexError):
+            snapshot.remove_item(0)
+
+
+class TestReplaceSnapshotItem:
+    """Tests for Snapshot.replace_item behavior."""
+
+    def test_replace_item_updates_all_fields(self):
+        """replace_item should update asset_id, label, and amount at the given index."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+        snapshot.add_snapshot_item(asset_id="kr_bond", label="KTB", amount=200)
+
+        snapshot.replace_item(0, asset_id="gold", label="Gold ETF", amount=500)
+
+        assert len(snapshot.items) == 2
+        assert snapshot.items[0].asset_id == "gold"
+        assert snapshot.items[0].label == "Gold ETF"
+        assert snapshot.items[0].amount == 500
+        assert snapshot.items[1].asset_id == "kr_bond"
+
+    def test_replace_item_changes_only_amount(self):
+        """replace_item should allow changing only the amount while keeping id and label."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+
+        snapshot.replace_item(0, asset_id="us_equity", label="S&P500", amount=999)
+
+        assert len(snapshot.items) == 1
+        assert snapshot.items[0].amount == 999
+
+    def test_replace_item_does_not_affect_other_items(self):
+        """replace_item should not modify items at other indices."""
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+        snapshot.add_snapshot_item(asset_id="kr_bond", label="KTB", amount=200)
+        snapshot.add_snapshot_item(asset_id="cash", label="KRW Cash", amount=300)
+
+        snapshot.replace_item(1, asset_id="gold", label="Gold ETF", amount=500)
+
+        assert snapshot.items[0].asset_id == "us_equity"
+        assert snapshot.items[0].amount == 100
+        assert snapshot.items[1].asset_id == "gold"
+        assert snapshot.items[1].amount == 500
+        assert snapshot.items[2].asset_id == "cash"
+        assert snapshot.items[2].amount == 300
+
+    def test_replace_negative_index_raises_index_error(self):
+        """replace_item with a negative index should raise IndexError."""
+        import pytest
+
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+
+        with pytest.raises(IndexError):
+            snapshot.replace_item(-1, asset_id="gold", label="Gold", amount=500)
+
+    def test_replace_out_of_range_index_raises_index_error(self):
+        """replace_item with an out-of-range index should raise IndexError."""
+        import pytest
+
+        snapshot = Snapshot()
+        snapshot.add_snapshot_item(asset_id="us_equity", label="S&P500", amount=100)
+
+        with pytest.raises(IndexError):
+            snapshot.replace_item(1, asset_id="gold", label="Gold", amount=500)
+
+    def test_replace_on_empty_snapshot_raises_index_error(self):
+        """replace_item on an empty snapshot should raise IndexError."""
+        import pytest
+
+        snapshot = Snapshot()
+
+        with pytest.raises(IndexError):
+            snapshot.replace_item(0, asset_id="gold", label="Gold", amount=500)
