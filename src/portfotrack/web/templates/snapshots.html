@@ -55,6 +55,19 @@
       <tbody id="snapshot-detail-items"></tbody>
     </table>
   </div>
+
+  <div class="card" id="snapshot-edit-card" style="display:none;">
+    <h3>스냅샷 편집 — <span id="edit-snapshot-date"></span></h3>
+    <div id="edit-items-container"></div>
+    <button type="button" id="edit-add-item-btn" class="btn btn-secondary">+ 항목 추가</button>
+    <div class="form-group" style="margin-top: 1rem;">
+      <label>저장 방식</label>
+      <label><input type="radio" name="save-mode" value="overwrite" checked> 기존 파일 덮어쓰기</label>
+      <label><input type="radio" name="save-mode" value="new"> 새 스냅샷으로 저장</label>
+    </div>
+    <button type="button" id="edit-save-btn" class="btn btn-primary">저장</button>
+    <div id="edit-message" class="message"></div>
+  </div>
 </section>
 
 <script src="{{ url_for('static', filename='js/snapshots-ui.js') }}"></script>

@@ -71,3 +71,51 @@ class TestSnapshotsPageStructure:
         html = response.data.decode("utf-8")
 
         assert 'id="no-target-warning"' in html
+
+
+class TestSnapshotEditUI:
+    """Snapshot page should contain UI elements for editing snapshots."""
+
+    def test_contains_edit_card(self, client):
+        """Page should have an edit snapshot card."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'id="snapshot-edit-card"' in html
+
+    def test_edit_card_has_items_container(self, client):
+        """Edit card should have a container for editable items."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'id="edit-items-container"' in html
+
+    def test_edit_card_has_add_item_button(self, client):
+        """Edit card should have a button to add new items."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'id="edit-add-item-btn"' in html
+
+    def test_edit_card_has_save_mode_selector(self, client):
+        """Edit card should have radio buttons for save mode selection."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'name="save-mode"' in html
+        assert 'value="overwrite"' in html
+        assert 'value="new"' in html
+
+    def test_edit_card_has_save_button(self, client):
+        """Edit card should have a save button."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'id="edit-save-btn"' in html
+
+    def test_edit_card_has_message_area(self, client):
+        """Edit card should have a message display area."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'id="edit-message"' in html

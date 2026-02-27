@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   loadTargetAssets();
   setupCreateForm();
   setupAddItemButton();
+  setupEditButtons();
 });
 
 /**
@@ -30,7 +31,10 @@ async function loadSnapshots() {
       <tr>
         <td>${s.date}</td>
         <td>${s.filename}</td>
-        <td><button class="btn btn-small" onclick="viewSnapshot('${s.date}')">보기</button></td>
+        <td>
+          <button class="btn btn-small" onclick="viewSnapshot('${s.date}')">보기</button>
+          <button class="btn btn-small btn-secondary" onclick="editSnapshot('${s.date}')">편집</button>
+        </td>
       </tr>
     `
       )
@@ -208,6 +212,134 @@ function setupAddItemButton() {
       <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.remove()">삭제</button>
     `;
     container.appendChild(row);
+  });
+}
+
+/* --- Edit snapshot --- */
+
+/** Date of the snapshot currently being edited. */
+let _editingDate = null;
+
+/**
+ * Load a snapshot for editing.
+ */
+async function editSnapshot(date) {
+  const card = document.getElementById("snapshot-edit-card");
+  const dateSpan = document.getElementById("edit-snapshot-date");
+  const container = document.getElementById("edit-items-container");
+
+  try {
+    const response = await fetch(`/api/snapshots/${date}`);
+    if (!response.ok) {
+      showMessage("edit-message", "스냅샷을 불러올 수 없습니다.", "error");
+      return;
+    }
+
+    const data = await response.json();
+    _editingDate = date;
+    dateSpan.textContent = data.date;
+
+    container.innerHTML = data.items
+      .map(
+        (item) => `
+      <div class="item-row">
+        <label>자산 ID</label>
+        <select name="asset_id" required>${_buildAssetOptionsWithSelected(item.asset_id)}</select>
+        <label>라벨</label>
+        <input type="text" name="label" required value="${item.label}">
+        <label>금액 (KRW)</label>
+        <input type="number" name="amount" required value="${item.amount}">
+        <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.remove()">삭제</button>
+      </div>
+    `
+      )
+      .join("");
+
+    card.style.display = "block";
+  } catch (err) {
+    showMessage("edit-message", "오류가 발생했습니다.", "error");
+  }
+}
+
+/**
+ * Build asset select options with a pre-selected value.
+ */
+function _buildAssetOptionsWithSelected(selectedId) {
+  if (_cachedAssets.length === 0) {
+    return `<option value="${selectedId}" selected>${selectedId}</option>`;
+  }
+  const opts = ['<option value="">-- 자산 선택 --</option>'];
+  for (const a of _cachedAssets) {
+    const sel = a.id === selectedId ? " selected" : "";
+    opts.push(`<option value="${a.id}"${sel}>${a.name} (${a.id})</option>`);
+  }
+  return opts.join("");
+}
+
+/**
+ * Set up the edit card buttons (add item and save).
+ */
+function setupEditButtons() {
+  document.getElementById("edit-add-item-btn").addEventListener("click", function () {
+    const container = document.getElementById("edit-items-container");
+    const row = document.createElement("div");
+    row.className = "item-row";
+    row.innerHTML = `
+      <label>자산 ID</label>
+      <select name="asset_id" required>${_buildAssetOptions()}</select>
+      <label>라벨</label>
+      <input type="text" name="label" required placeholder="예: S&P500">
+      <label>금액 (KRW)</label>
+      <input type="number" name="amount" required placeholder="예: 5000000">
+      <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.remove()">삭제</button>
+    `;
+    container.appendChild(row);
+  });
+
+  document.getElementById("edit-save-btn").addEventListener("click", async function () {
+    if (!_editingDate) return;
+
+    const container = document.getElementById("edit-items-container");
+    const rows = container.querySelectorAll(".item-row");
+    const items = [];
+
+    for (const row of rows) {
+      const assetId = row.querySelector('[name="asset_id"]').value.trim();
+      const label = row.querySelector('[name="label"]').value.trim();
+      const amount = parseInt(row.querySelector('[name="amount"]').value, 10);
+
+      if (!assetId || !label || isNaN(amount)) {
+        showMessage("edit-message", "모든 필드를 올바르게 입력하세요.", "error");
+        return;
+      }
+
+      items.push({ asset_id: assetId, label: label, amount: amount });
+    }
+
+    if (items.length === 0) {
+      showMessage("edit-message", "최소 하나의 항목이 필요합니다.", "error");
+      return;
+    }
+
+    const mode = document.querySelector('input[name="save-mode"]:checked').value;
+
+    try {
+      const response = await fetch(`/api/snapshots/${_editingDate}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: mode, items: items }),
+      });
+
+      if (response.ok) {
+        showMessage("edit-message", "스냅샷이 저장되었습니다.", "success");
+        loadSnapshots();
+      } else {
+        const err = await response.json();
+        showMessage("edit-message", err.error || "저장에 실패했습니다.", "error");
+      }
+    } catch (err) {
+      showMessage("edit-message", "네트워크 오류가 발생했습니다.", "error");
+    }
   });
 }
 
