@@ -21,6 +21,7 @@ from portfotrack.services.optional_bet_services import (
     remove_item,
     save_optional_bet,
     save_optional_bet_overwrite,
+    update_item,
 )
 from portfotrack.storage.json_store.errors import OptionalBetNotFoundError
 
@@ -127,6 +128,58 @@ class TestRemoveItem:
             match=OptionalBetErrorCode.OPTIONAL_BET_ASSET_NOT_FOUND,
         ):
             remove_item(snapshot, "ethereum")
+
+
+# ---------------------------------------------------------------------------
+# update_item
+# ---------------------------------------------------------------------------
+
+
+class TestUpdateItem:
+    """Tests for update_item service function."""
+
+    def test_updates_name_and_returns_same_instance(self) -> None:
+        """Partial update of name only keeps other fields unchanged."""
+        snapshot = OptionalBetSnapshot(date="2026-03-01")
+        snapshot.add_item("bitcoin", "Bitcoin", 0.05, 1_000_000)
+
+        result = update_item(snapshot, "bitcoin", name="BTC")
+
+        assert result is snapshot
+        assert snapshot.items[0].name == "BTC"
+        assert snapshot.items[0].cap_ratio == 0.05
+        assert snapshot.items[0].amount == 1_000_000
+
+    def test_updates_cap_ratio_and_amount(self) -> None:
+        """Multiple fields can be updated at once."""
+        snapshot = OptionalBetSnapshot(date="2026-03-01")
+        snapshot.add_item("bitcoin", "Bitcoin", 0.05, 1_000_000)
+
+        update_item(snapshot, "bitcoin", cap_ratio=0.10, amount=2_000_000)
+
+        assert snapshot.items[0].cap_ratio == 0.10
+        assert snapshot.items[0].amount == 2_000_000
+
+    def test_nonexistent_asset_raises_error(self) -> None:
+        """Updating a non-existent asset_id raises OptionalBetAssetNotFoundError."""
+        snapshot = OptionalBetSnapshot(date="2026-03-01")
+
+        with pytest.raises(
+            OptionalBetAssetNotFoundError,
+            match=OptionalBetErrorCode.OPTIONAL_BET_ASSET_NOT_FOUND,
+        ):
+            update_item(snapshot, "ethereum", name="ETH")
+
+    def test_invalid_cap_ratio_raises_error(self) -> None:
+        """Updating with an invalid cap_ratio raises InvalidCapRatioError."""
+        snapshot = OptionalBetSnapshot(date="2026-03-01")
+        snapshot.add_item("bitcoin", "Bitcoin", 0.05, 1_000_000)
+
+        with pytest.raises(
+            InvalidCapRatioError,
+            match=OptionalBetErrorCode.OPTIONAL_BET_INVALID_CAP_RATIO,
+        ):
+            update_item(snapshot, "bitcoin", cap_ratio=1.5)
 
 
 # ---------------------------------------------------------------------------

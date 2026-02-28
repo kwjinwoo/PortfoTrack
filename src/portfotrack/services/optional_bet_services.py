@@ -78,6 +78,39 @@ def remove_item(
     return snapshot
 
 
+def update_item(
+    snapshot: OptionalBetSnapshot,
+    asset_id: str,
+    *,
+    name: str | None = None,
+    cap_ratio: float | None = None,
+    amount: int | None = None,
+) -> OptionalBetSnapshot:
+    """Update fields of an existing optional bet item.
+
+    Only the provided keyword arguments are updated; others retain
+    their current values. Delegates validation to the domain model.
+
+    Args:
+        snapshot: The OptionalBetSnapshot to modify.
+        asset_id: The identifier of the item to update.
+        name: New display name, or None to keep current.
+        cap_ratio: New cap ratio in (0.0, 1.0), or None to keep current.
+        amount: New amount (non-negative), or None to keep current.
+
+    Returns:
+        The same OptionalBetSnapshot instance (mutated).
+
+    Raises:
+        OptionalBetAssetNotFoundError: If no item with the given
+            asset_id exists.
+        InvalidCapRatioError: If cap_ratio is not in (0.0, 1.0).
+        ValueError: If amount is negative.
+    """
+    snapshot.update_item(asset_id, name=name, cap_ratio=cap_ratio, amount=amount)
+    return snapshot
+
+
 def save_optional_bet(snapshot: OptionalBetSnapshot) -> None:
     """Persist an optional bet snapshot to disk.
 
