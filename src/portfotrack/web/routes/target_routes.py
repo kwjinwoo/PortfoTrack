@@ -34,15 +34,22 @@ def get_target():
     """Load the latest target allocation.
 
     Returns:
-        JSON representation of the target allocation, or 404 if none exists.
+        JSON representation of the target allocation with a ``date`` field
+        extracted from the source filename, or 404 if none exists.
     """
     try:
         target = load_latest_target()
     except FileNotFoundError:
         return jsonify({"error": "No target allocation found."}), 404
 
+    # Extract date from the latest target filename
+    target_files = sorted(path_mod.TARGETS_DIR.glob("*.json"))
+    latest_name = target_files[-1].name if target_files else ""
+    date_match = re.search(r"target_(\d{4}-\d{2}-\d{2})_v", latest_name)
+    target_date = date_match.group(1) if date_match else ""
+
     dto = target_to_dto(target)
-    return jsonify(dto)
+    return jsonify({**dto, "date": target_date})
 
 
 @target_bp.route("", methods=["POST"])

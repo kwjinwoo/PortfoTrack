@@ -66,3 +66,51 @@ class TestTargetsPageStructure:
         html = response.data.decode("utf-8")
 
         assert "form-grid" in html
+
+
+class TestTargetEditUI:
+    """Targets page should contain UI elements for editing target allocations."""
+
+    def test_contains_edit_card(self, client):
+        """Page should have an edit target card."""
+        response = client.get("/targets")
+        html = response.data.decode("utf-8")
+
+        assert 'id="target-edit-card"' in html
+
+    def test_edit_card_has_assets_container(self, client):
+        """Edit card should have a container for editable assets."""
+        response = client.get("/targets")
+        html = response.data.decode("utf-8")
+
+        assert 'id="edit-assets-container"' in html
+
+    def test_edit_card_has_add_asset_button(self, client):
+        """Edit card should have a button to add new assets."""
+        response = client.get("/targets")
+        html = response.data.decode("utf-8")
+
+        assert 'id="edit-add-asset-btn"' in html
+
+    def test_edit_card_has_save_mode_selector(self, client):
+        """Edit card should have radio buttons for save mode selection."""
+        response = client.get("/targets")
+        html = response.data.decode("utf-8")
+
+        assert 'name="target-save-mode"' in html
+        assert 'value="overwrite"' in html
+        assert 'value="new"' in html
+
+    def test_edit_card_has_save_button(self, client):
+        """Edit card should have a save button."""
+        response = client.get("/targets")
+        html = response.data.decode("utf-8")
+
+        assert 'id="edit-target-save-btn"' in html
+
+    def test_edit_card_has_message_area(self, client):
+        """Edit card should have a message display area."""
+        response = client.get("/targets")
+        html = response.data.decode("utf-8")
+
+        assert 'id="edit-target-message"' in html
