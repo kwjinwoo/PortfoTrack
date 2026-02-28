@@ -138,3 +138,51 @@ def test_load_reconstruct_target(targets_dir: Path):
         assert asset["purpose"] == asset_dto["purpose"]
         assert asset["target_ratio"] == asset_dto["target_ratio"]
         assert asset["tolerance"] == asset_dto["tolerance"]
+
+
+# ---------------------------
+# save_to_file
+# ---------------------------
+
+
+class TestSaveToFile:
+    """Tests for save_to_file which writes to an explicit filename."""
+
+    def test_save_to_file_creates_file(self, targets_dir: Path) -> None:
+        dto = _valid_target_dto()
+        file_name = "target_2026-01-15_v1.json"
+
+        store_mod.save_to_file(dto, file_name)
+
+        file_path = targets_dir / file_name
+        assert file_path.exists()
+        assert _read_json(file_path) == dto
+
+    def test_save_to_file_overwrites_existing(self, targets_dir: Path) -> None:
+        file_name = "target_2026-01-15_v1.json"
+        dto1 = _valid_target_dto()
+        dto2 = _valid_target_dto()
+        dto2["assets"][0]["name"] = "Updated Name"
+
+        store_mod.save_to_file(dto1, file_name)
+        store_mod.save_to_file(dto2, file_name)
+
+        file_path = targets_dir / file_name
+        assert _read_json(file_path) == dto2
+
+    def test_save_to_file_creates_directory(self, targets_dir: Path) -> None:
+        dto = _valid_target_dto()
+        file_name = "target_2026-01-15_v1.json"
+
+        assert not targets_dir.exists()
+        store_mod.save_to_file(dto, file_name)
+        assert targets_dir.exists()
+
+    def test_save_to_file_content_loadable(self, targets_dir: Path) -> None:
+        dto = _valid_target_dto()
+        file_name = "target_2026-01-15_v1.json"
+
+        store_mod.save_to_file(dto, file_name)
+        loaded = store_mod.load(file_name)
+
+        assert loaded == dto

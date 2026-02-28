@@ -9,6 +9,26 @@ from portfotrack.storage.serialization.target_json import TargetAllocationDTO
 CURRENT_TARGET_SCHEMA_VERSION = 1
 
 
+def save_to_file(target: TargetAllocationDTO, file_name: str) -> None:
+    """Persist a target allocation to a JSON file with the given file name.
+
+    Writes the target allocation DTO to the targets directory using the exact
+    file name provided. This enables overwriting a specific existing
+    target file (e.g., when editing a historical target).
+
+    The targets directory is created automatically if it does not exist.
+    Existing files with the same name will be overwritten.
+
+    Args:
+        target: Target allocation data transfer object to persist.
+        file_name: Target file name within the targets directory.
+    """
+    TARGETS_DIR.mkdir(parents=True, exist_ok=True)
+
+    with open(TARGETS_DIR / file_name, "w", encoding="utf-8") as f:
+        json.dump(target, f, ensure_ascii=False, indent=2)
+
+
 def save(target: TargetAllocationDTO) -> None:
     """Persist the current target allocation to a JSON file.
 
@@ -25,13 +45,9 @@ def save(target: TargetAllocationDTO) -> None:
             This object must be JSON-serializable and is expected to be
             represented as a dictionary.
     """
-    TARGETS_DIR.mkdir(parents=True, exist_ok=True)
-
     today = datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
     file_name = f"target_{today}_v{CURRENT_TARGET_SCHEMA_VERSION}.json"
-
-    with open(TARGETS_DIR / file_name, "w", encoding="utf-8") as f:
-        json.dump(target, f, ensure_ascii=False, indent=2)
+    save_to_file(target, file_name)
 
 
 def load(file_name: str) -> TargetAllocationDTO:
