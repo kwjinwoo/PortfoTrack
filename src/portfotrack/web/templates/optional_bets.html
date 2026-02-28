@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="optional-bets-page">
+  <h2>옵셔널 벳 관리</h2>
+
+  <div class="card">
+    <h3>현재 옵셔널 벳</h3>
+    <div id="ob-status"></div>
+    <table id="ob-table" style="display:none;">
+      <thead>
+        <tr>
+          <th>자산 ID</th>
+          <th>이름</th>
+          <th>캡 비율</th>
+          <th>금액 (KRW)</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody id="ob-items"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3"><strong>합계</strong></td>
+          <td id="ob-total"><strong>0</strong></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    <button type="button" id="create-ob-btn" class="btn btn-primary" style="display:none;">새 옵셔널 벳 생성</button>
+    <button type="button" id="edit-ob-btn" class="btn btn-secondary" style="display:none;">편집</button>
+  </div>
+
+  <div class="card" id="ob-edit-card" style="display:none;">
+    <h3>옵셔널 벳 편집</h3>
+    <div id="edit-ob-container"></div>
+    <button type="button" id="edit-add-ob-btn" class="btn btn-secondary">+ 아이템 추가</button>
+    <div class="form-group" style="margin-top: 1rem;">
+      <label>저장 방식</label>
+      <label><input type="radio" name="ob-save-mode" value="overwrite" checked> 기존 파일 덮어쓰기</label>
+      <label><input type="radio" name="ob-save-mode" value="new"> 새 파일로 저장</label>
+    </div>
+    <button type="button" id="edit-ob-save-btn" class="btn btn-primary">저장</button>
+    <button type="button" id="edit-ob-cancel-btn" class="btn btn-secondary">취소</button>
+    <div id="edit-ob-message" class="message"></div>
+  </div>
+
+  <div class="card" id="add-ob-card">
+    <h3>아이템 추가</h3>
+    <form id="add-ob-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="ob-asset-id">자산 ID</label>
+          <input type="text" id="ob-asset-id" name="asset_id" required placeholder="예: bitcoin">
+        </div>
+        <div class="form-group">
+          <label for="ob-name">이름</label>
+          <input type="text" id="ob-name" name="name" required placeholder="예: Bitcoin">
+        </div>
+        <div class="form-group">
+          <label for="ob-cap-ratio">캡 비율</label>
+          <input type="number" id="ob-cap-ratio" name="cap_ratio" step="0.01" min="0.01" max="0.99" required placeholder="예: 0.05">
+        </div>
+        <div class="form-group">
+          <label for="ob-amount">금액 (KRW)</label>
+          <input type="number" id="ob-amount" name="amount" min="0" required placeholder="예: 1000000">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">아이템 추가</button>
+      <div id="ob-message" class="message"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>캡 초과 체크</h3>
+    <form id="breach-form">
+      <div class="form-group">
+        <label for="main-total">메인 포트폴리오 총액 (KRW)</label>
+        <input type="number" id="main-total" name="main_portfolio_total" min="0" required placeholder="예: 100000000">
+      </div>
+      <button type="submit" class="btn btn-primary">체크</button>
+    </form>
+    <div id="breach-result"></div>
+  </div>
+
+  <div class="card">
+    <h3>파일 목록</h3>
+    <ul id="ob-file-list"></ul>
+  </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/optional-bets-ui.js') }}"></script>
+{% endblock %}

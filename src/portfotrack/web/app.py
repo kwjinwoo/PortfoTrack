@@ -59,6 +59,11 @@ def create_app(test_config: dict | None = None) -> Flask:
         """Render the trend analysis page."""
         return render_template("trends.html")
 
+    @app.route("/optional-bets")
+    def optional_bets_page():
+        """Render the optional bets management page."""
+        return render_template("optional_bets.html")
+
     from portfotrack.web.routes.optional_bet_routes import optional_bet_bp
     from portfotrack.web.routes.report_routes import report_bp
     from portfotrack.web.routes.snapshot_routes import snapshot_bp

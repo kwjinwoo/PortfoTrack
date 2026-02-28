@@ -48,11 +48,24 @@ class TestPageRoutes:
         html = response.data.decode("utf-8")
         assert "리포트" in html
 
+    def test_optional_bets_page_returns_200(self, client):
+        """GET /optional-bets should return 200."""
+        response = client.get("/optional-bets")
+        assert response.status_code == 200
+
+    def test_optional_bets_page_contains_title(self, client):
+        """Optional bets page should contain section heading."""
+        response = client.get("/optional-bets")
+        html = response.data.decode("utf-8")
+        assert "옵셔널 벳" in html
+
 
 class TestNavigation:
     """Navigation links should be present on all pages."""
 
-    @pytest.mark.parametrize("path", ["/", "/snapshots", "/targets", "/reports"])
+    @pytest.mark.parametrize(
+        "path", ["/", "/snapshots", "/targets", "/reports", "/optional-bets"]
+    )
     def test_nav_links_present(self, client, path):
         """Each page should contain navigation links to all sections."""
         response = client.get(path)
@@ -61,3 +74,4 @@ class TestNavigation:
         assert "/snapshots" in html
         assert "/targets" in html
         assert "/reports" in html
+        assert "/optional-bets" in html
