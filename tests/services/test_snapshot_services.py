@@ -9,6 +9,7 @@ from portfotrack.services.snapshot_services import (
     aggregate_snapshot,
     init_snapshot,
     load_latest_snapshot,
+    load_snapshot_by_filename,
     remove_item_from_snapshot,
     replace_item_in_snapshot,
     save_snapshot,
@@ -422,3 +423,46 @@ class TestSaveSnapshotOverwrite:
         with open(tmp_path / "snapshot_2026-01-15_v1.json") as f:
             data = json.load(f)
         assert data["date"] == "2026-01-15"
+
+
+class TestLoadSnapshotByFilename:
+    """Tests for load_snapshot_by_filename function."""
+
+    def test_loads_snapshot_by_filename(self, tmp_path, monkeypatch):
+        """load_snapshot_by_filename should load the specified snapshot file."""
+        from portfotrack.services import snapshot_services
+        from portfotrack.storage.json_store import snapshot_store
+
+        monkeypatch.setattr(snapshot_store, "SNAPSHOTS_DIR", tmp_path)
+        monkeypatch.setattr(snapshot_services, "SNAPSHOTS_DIR", tmp_path)
+
+        file_name = "snapshot_2026-02-14_v1.json"
+        (tmp_path / file_name).write_text(
+            json.dumps(
+                {
+                    "date": "2026-02-14",
+                    "currency": "KRW",
+                    "items": [
+                        {"asset_id": "US_EQUITY", "label": "S&P500", "amount": 100000}
+                    ],
+                },
+                ensure_ascii=False,
+            )
+        )
+
+        snapshot = load_snapshot_by_filename(file_name)
+
+        assert isinstance(snapshot, Snapshot)
+        assert snapshot.date == "2026-02-14"
+        assert len(snapshot.items) == 1
+        assert snapshot.items[0].asset_id == "US_EQUITY"
+        assert snapshot.items[0].amount == 100000
+
+    def test_nonexistent_file_raises_error(self, tmp_path, monkeypatch):
+        """load_snapshot_by_filename should raise SnapshotNotFoundError for missing file."""
+        from portfotrack.storage.json_store import snapshot_store
+
+        monkeypatch.setattr(snapshot_store, "SNAPSHOTS_DIR", tmp_path)
+
+        with pytest.raises(SnapshotNotFoundError):
+            load_snapshot_by_filename("snapshot_9999-12-31_v1.json")

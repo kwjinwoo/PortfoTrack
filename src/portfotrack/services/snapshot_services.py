@@ -85,6 +85,28 @@ def load_latest_snapshot() -> Snapshot:
     return dto_to_snapshot(dto)
 
 
+def load_snapshot_by_filename(file_name: str) -> Snapshot:
+    """Load a specific snapshot from disk by file name.
+
+    Delegates to the storage layer to read and validate the file, then
+    converts the DTO to a domain object.
+
+    Args:
+        file_name: Name of the snapshot file to load (e.g.
+            ``snapshot_2026-02-14_v1.json``).
+
+    Returns:
+        The Snapshot object loaded from the specified file.
+
+    Raises:
+        SnapshotNotFoundError: If the file does not exist.
+        RuntimeError: If the snapshot file structure is invalid.
+        TypeError: If snapshot data has unexpected types.
+    """
+    dto = store_load(file_name)
+    return dto_to_snapshot(dto)
+
+
 def aggregate_snapshot(snapshot: Snapshot) -> dict[str, int]:
     """Aggregate snapshot items by asset_id, summing their amounts.
 
