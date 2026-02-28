@@ -59,6 +59,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         """Render the trend analysis page."""
         return render_template("trends.html")
 
+    from portfotrack.web.routes.optional_bet_routes import optional_bet_bp
     from portfotrack.web.routes.report_routes import report_bp
     from portfotrack.web.routes.snapshot_routes import snapshot_bp
     from portfotrack.web.routes.target_routes import target_bp
@@ -68,6 +69,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.register_blueprint(target_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(trend_bp)
+    app.register_blueprint(optional_bet_bp)
 
     return app
 
