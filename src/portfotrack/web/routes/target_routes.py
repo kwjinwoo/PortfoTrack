@@ -4,8 +4,11 @@ Provides endpoints for loading, creating, and managing target allocations.
 All endpoints delegate to the services layer.
 """
 
+import re
+
 from flask import Blueprint, jsonify, request
 
+import portfotrack.path as path_mod
 from portfotrack.domain.target_allocation.errors import (
     DuplicateAssetError,
     InvalidTargetRatioError,
@@ -17,10 +20,13 @@ from portfotrack.services.target_services import (
     init_target,
     load_latest_target,
     save_target,
+    save_target_overwrite,
 )
 from portfotrack.storage.serialization.target_json import target_to_dto
 
 target_bp = Blueprint("targets", __name__, url_prefix="/api/targets")
+
+_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 @target_bp.route("", methods=["GET"])
@@ -137,3 +143,123 @@ def list_target_assets():
 
     assets = get_available_assets_from_target(target)
     return jsonify(assets)
+
+
+def _validate_asset_entry(entry: dict) -> tuple | None:
+    """Validate a single asset entry from the request payload.
+
+    Returns:
+        None if valid, or a (response, status_code) tuple on error.
+    """
+    required = ["asset_id", "asset_name", "purpose", "target_ratio", "lower", "upper"]
+    for field in required:
+        if field not in entry:
+            return jsonify({"error": f"Missing required field: '{field}'."}), 400
+
+    if not isinstance(entry["asset_id"], str) or not entry["asset_id"]:
+        return jsonify({"error": "'asset_id' must be a non-empty string."}), 400
+    if not isinstance(entry["asset_name"], str) or not entry["asset_name"]:
+        return jsonify({"error": "'asset_name' must be a non-empty string."}), 400
+    if not isinstance(entry["purpose"], str) or not entry["purpose"]:
+        return jsonify({"error": "'purpose' must be a non-empty string."}), 400
+
+    for num_field in ("target_ratio", "lower", "upper"):
+        val = entry[num_field]
+        if not isinstance(val, (int, float)) or isinstance(val, bool):
+            return jsonify({"error": f"'{num_field}' must be a number."}), 400
+
+    return None
+
+
+@target_bp.route("/<date>", methods=["PUT"])
+def update_target(date: str):
+    """Update an existing target allocation with full replacement.
+
+    Expects JSON body with ``mode`` and ``assets`` fields.
+    Mode determines save behavior:
+    - ``"overwrite"``: replaces the original file, preserving its date.
+    - ``"new"``: saves as a new target with today's date.
+
+    Args:
+        date: ISO date string (YYYY-MM-DD) of the target to update.
+
+    Returns:
+        200 with updated target DTO for overwrite mode,
+        201 with new target DTO for new mode,
+        or 400/404 on validation failure.
+    """
+    if not _DATE_PATTERN.match(date):
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({"error": "Request body must be valid JSON."}), 400
+
+    mode = body.get("mode")
+    if mode not in ("overwrite", "new"):
+        return (
+            jsonify({"error": "'mode' must be 'overwrite' or 'new'."}),
+            400,
+        )
+
+    assets = body.get("assets")
+    if not assets or not isinstance(assets, list) or len(assets) == 0:
+        return jsonify({"error": "'assets' must be a non-empty list."}), 400
+
+    # Validate each asset entry
+    for entry in assets:
+        error = _validate_asset_entry(entry)
+        if error is not None:
+            return error
+
+    # Verify the source target exists
+    matching = list(path_mod.TARGETS_DIR.glob(f"target_{date}_v*.json"))
+    if not matching:
+        return jsonify({"error": f"Target for {date} not found."}), 404
+
+    # Build the new target allocation
+    target = init_target()
+    for entry in assets:
+        try:
+            add_asset_to_target(
+                target,
+                entry["asset_id"],
+                entry["asset_name"],
+                entry["purpose"],
+                float(entry["target_ratio"]),
+                float(entry["lower"]),
+                float(entry["upper"]),
+            )
+        except DuplicateAssetError:
+            return (
+                jsonify({"error": f"Duplicate asset_id '{entry['asset_id']}'."}),
+                400,
+            )
+        except InvalidTargetRatioError:
+            return (
+                jsonify({"error": "target_ratio must be between 0.0 and 1.0."}),
+                400,
+            )
+        except InvalidToleranceBoundsError as e:
+            return jsonify({"error": f"Invalid tolerance bounds: {e}"}), 400
+
+    # Check total ratio — warn but allow save
+    warnings = []
+    total = target.total_ratio()
+    if abs(total - 1.0) > 1e-6:
+        warnings.append(
+            f"Total target ratio is {total:.4f}, expected 1.0. "
+            "Consider adjusting ratios."
+        )
+
+    # Save based on mode
+    dto = target_to_dto(target)
+    if mode == "overwrite":
+        latest_file = sorted(matching)[-1]
+        save_target_overwrite(target, latest_file.name)
+        result = {**dto, "warnings": warnings} if warnings else dto
+        return jsonify(result), 200
+    else:  # mode == "new"
+        save_target(target)
+        result = {**dto, "warnings": warnings} if warnings else dto
+        return jsonify(result), 201
