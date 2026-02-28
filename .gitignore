@@ -209,6 +209,3 @@ __marimo__/
 .vscode/
 
 data/
-
-# copilot instructions
-.github/copilot-instructions.md
