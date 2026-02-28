@@ -4,6 +4,7 @@ from portfotrack.domain.asset import Asset
 from portfotrack.domain.target_allocation import TargetAllocation, Tolerance
 from portfotrack.domain.target_allocation.error_codes import TargetErrorCode
 from portfotrack.domain.target_allocation.errors import (
+    AssetNotFoundError,
     DuplicateAssetError,
     InvalidTargetRatioError,
     InvalidToleranceBoundsError,
@@ -265,3 +266,149 @@ def test_is_valid_asset_id_returns_false_for_empty_target() -> None:
     target_allocation = TargetAllocation()
 
     assert target_allocation.is_valid_asset_id("us_equity") is False
+
+
+# ---------------------------
+# remove_asset
+# ---------------------------
+
+
+class TestRemoveAsset:
+    """Tests for TargetAllocation.remove_asset method."""
+
+    def test_remove_existing_asset(self, tol_ok: Tolerance) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        asset_b = Asset("b", "Asset B", "stability")
+        target.add_asset(asset_a, 0.4, tol_ok)
+        target.add_asset(asset_b, 0.6, tol_ok)
+
+        target.remove_asset("a")
+
+        assert len(target.target_assets) == 1
+        assert not target.is_valid_asset_id("a")
+        assert target.is_valid_asset_id("b")
+
+    def test_remove_only_asset_leaves_empty(self, tol_ok: Tolerance) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        target.add_asset(asset_a, 0.5, tol_ok)
+
+        target.remove_asset("a")
+
+        assert len(target.target_assets) == 0
+
+    def test_remove_nonexistent_asset_raises_error(self, tol_ok: Tolerance) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        target.add_asset(asset_a, 0.5, tol_ok)
+
+        with pytest.raises(
+            AssetNotFoundError, match=TargetErrorCode.TARGET_ASSET_NOT_FOUND
+        ):
+            target.remove_asset("nonexistent")
+
+    def test_remove_from_empty_allocation_raises_error(self) -> None:
+        target = TargetAllocation()
+
+        with pytest.raises(
+            AssetNotFoundError, match=TargetErrorCode.TARGET_ASSET_NOT_FOUND
+        ):
+            target.remove_asset("a")
+
+
+# ---------------------------
+# update_asset
+# ---------------------------
+
+
+class TestUpdateAsset:
+    """Tests for TargetAllocation.update_asset method."""
+
+    def test_update_ratio_and_tolerance(self, tol_ok: Tolerance) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        target.add_asset(asset_a, 0.3, tol_ok)
+
+        new_tol: Tolerance = {"lower": 0.10, "upper": 0.50}
+        target.update_asset("a", 0.5, new_tol)
+
+        assert target.target_assets[asset_a][0] == pytest.approx(0.5)
+        assert target.target_assets[asset_a][1] == new_tol
+
+    def test_update_preserves_other_assets(self, tol_ok: Tolerance) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        asset_b = Asset("b", "Asset B", "stability")
+        target.add_asset(asset_a, 0.3, tol_ok)
+        target.add_asset(asset_b, 0.7, tol_ok)
+
+        new_tol: Tolerance = {"lower": 0.10, "upper": 0.50}
+        target.update_asset("a", 0.4, new_tol)
+
+        assert target.target_assets[asset_a] == (0.4, new_tol)
+        assert target.target_assets[asset_b] == (0.7, tol_ok)
+
+    def test_update_nonexistent_asset_raises_error(self, tol_ok: Tolerance) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        target.add_asset(asset_a, 0.3, tol_ok)
+
+        with pytest.raises(
+            AssetNotFoundError, match=TargetErrorCode.TARGET_ASSET_NOT_FOUND
+        ):
+            target.update_asset("nonexistent", 0.5, tol_ok)
+
+    def test_update_empty_allocation_raises_error(self, tol_ok: Tolerance) -> None:
+        target = TargetAllocation()
+
+        with pytest.raises(
+            AssetNotFoundError, match=TargetErrorCode.TARGET_ASSET_NOT_FOUND
+        ):
+            target.update_asset("a", 0.5, tol_ok)
+
+    @pytest.mark.parametrize("bad_ratio", [-0.1, 1.01])
+    def test_update_invalid_ratio_raises_error(
+        self, bad_ratio: float, tol_ok: Tolerance
+    ) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        target.add_asset(asset_a, 0.3, tol_ok)
+
+        with pytest.raises(
+            InvalidTargetRatioError, match=TargetErrorCode.TARGET_INVALID_RATIO
+        ):
+            target.update_asset("a", bad_ratio, tol_ok)
+
+    @pytest.mark.parametrize(
+        "bad_tol",
+        [
+            {"lower": 0.4, "upper": 0.3},
+            {"lower": -0.1, "upper": 0.2},
+            {"lower": 0.2, "upper": 1.1},
+        ],
+    )
+    def test_update_invalid_tolerance_raises_error(
+        self, bad_tol: Tolerance, tol_ok: Tolerance
+    ) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        target.add_asset(asset_a, 0.3, tol_ok)
+
+        with pytest.raises(
+            InvalidToleranceBoundsError,
+            match=TargetErrorCode.TARGET_INVALID_TOLERANCE_BOUNDS,
+        ):
+            target.update_asset("a", 0.3, bad_tol)
+
+    def test_update_does_not_modify_on_validation_failure(
+        self, tol_ok: Tolerance
+    ) -> None:
+        target = TargetAllocation()
+        asset_a = Asset("a", "Asset A", "growth")
+        target.add_asset(asset_a, 0.3, tol_ok)
+
+        with pytest.raises(InvalidTargetRatioError):
+            target.update_asset("a", -0.5, tol_ok)
+
+        assert target.target_assets[asset_a] == (0.3, tol_ok)

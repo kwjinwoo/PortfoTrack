@@ -8,6 +8,30 @@ class TargetAllocationError(DomainError):
     """Base error for target allocation domain."""
 
 
+class AssetNotFoundError(TargetAllocationError):
+    """Raised when an asset is not found in the target allocation.
+
+    Attributes:
+        details: Contains:
+            - asset_id: The identifier of the asset that was not found.
+    """
+
+    def __init__(
+        self,
+        *,
+        asset_id: str,
+        details: dict[str, Any] | None = None,
+        cause: BaseException | None = None,
+    ) -> None:
+        super().__init__(
+            code=TargetErrorCode.TARGET_ASSET_NOT_FOUND,
+            message=f"Asset '{asset_id}' not found in the target allocation.",
+            details=details,
+            cause=cause,
+        )
+        self.details.update({"asset_id": asset_id})
+
+
 class DuplicateAssetError(TargetAllocationError):
     """Raised when attempting to add an asset that already exists in the target allocation.
 

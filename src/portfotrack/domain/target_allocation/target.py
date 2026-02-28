@@ -3,6 +3,7 @@ from typing import TypedDict
 
 from portfotrack.domain.asset.asset import Asset
 from portfotrack.domain.target_allocation.errors import (
+    AssetNotFoundError,
     DuplicateAssetError,
     InvalidTargetRatioError,
     InvalidToleranceBoundsError,
@@ -125,6 +126,49 @@ class TargetAllocation:
         """
         return [asset.id for asset in self.target_assets]
 
+    def remove_asset(self, asset_id: str) -> None:
+        """Removes an asset from the target allocation by its identifier.
+
+        Args:
+            asset_id: The identifier of the asset to remove.
+
+        Raises:
+            AssetNotFoundError: If no asset with the given id exists.
+        """
+        asset = self._find_asset(asset_id)
+        del self.target_assets[asset]
+
+    def update_asset(
+        self, asset_id: str, target_ratio: float, tolerance: Tolerance
+    ) -> None:
+        """Updates the ratio and tolerance for an existing asset.
+
+        Validates ratio and tolerance using the same rules as add_asset.
+        The asset identity (id, name, purpose) is preserved.
+
+        Args:
+            asset_id: The identifier of the asset to update.
+            target_ratio: New target allocation ratio in [0.0, 1.0].
+            tolerance: New acceptable allocation bounds.
+
+        Raises:
+            AssetNotFoundError: If no asset with the given id exists.
+            InvalidTargetRatioError: If target_ratio is outside [0.0, 1.0].
+            InvalidToleranceBoundsError: If tolerance bounds are invalid.
+        """
+        asset = self._find_asset(asset_id)
+
+        if not (0.0 <= target_ratio <= 1.0):
+            raise InvalidTargetRatioError(target_ratio=target_ratio)
+
+        lo, hi = tolerance["lower"], tolerance["upper"]
+        if lo > hi:
+            raise InvalidToleranceBoundsError(lower=lo, upper=hi)
+        if lo < 0.0 or hi > 1.0:
+            raise InvalidToleranceBoundsError(lower=lo, upper=hi)
+
+        self.target_assets[asset] = (target_ratio, tolerance)
+
     def is_valid_asset_id(self, asset_id: str) -> bool:
         """Checks whether a given asset_id exists in this allocation.
 
@@ -135,3 +179,20 @@ class TargetAllocation:
             True if an asset with the given id exists, False otherwise.
         """
         return any(asset.id == asset_id for asset in self.target_assets)
+
+    def _find_asset(self, asset_id: str) -> Asset:
+        """Finds an asset by its identifier.
+
+        Args:
+            asset_id: The identifier of the asset to find.
+
+        Returns:
+            The matching Asset instance.
+
+        Raises:
+            AssetNotFoundError: If no asset with the given id exists.
+        """
+        for asset in self.target_assets:
+            if asset.id == asset_id:
+                return asset
+        raise AssetNotFoundError(asset_id=asset_id)
