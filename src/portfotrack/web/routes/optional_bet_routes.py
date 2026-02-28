@@ -17,7 +17,7 @@ from portfotrack.domain.optional_bet.errors import (
 )
 from portfotrack.services.optional_bet_services import (
     add_item,
-    check_cap_breaches,
+    check_cap_breaches_with_snapshot,
     init_optional_bet_snapshot,
     load_latest_optional_bet,
     remove_item,
@@ -25,7 +25,10 @@ from portfotrack.services.optional_bet_services import (
     save_optional_bet_overwrite,
     update_item,
 )
-from portfotrack.storage.json_store.errors import OptionalBetNotFoundError
+from portfotrack.storage.json_store.errors import (
+    OptionalBetNotFoundError,
+    SnapshotNotFoundError,
+)
 from portfotrack.storage.serialization.optional_bet_json import optional_bet_to_dto
 
 _DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -322,33 +325,29 @@ def update_optional_bet(date: str):
 def check_breaches():
     """Check which optional bet items exceed their cap ratios.
 
+    Uses a portfolio snapshot to determine the main portfolio total.
+    By default the latest snapshot is used; pass an explicit filename
+    via the ``snapshot`` query parameter to use a specific one.
+
     Query parameters:
-        main_portfolio_total: Total amount of the main portfolio in KRW.
+        snapshot: Optional snapshot filename (e.g.
+            ``snapshot_2026-02-14_v1.json``).
 
     Returns:
-        JSON object with a ``breaches`` list, or 400/404 on error.
+        JSON object with ``breaches``, ``snapshot_date``, and
+        ``main_portfolio_total``, or 404 on error.
     """
-    raw_total = request.args.get("main_portfolio_total")
-    if raw_total is None:
-        return (
-            jsonify({"error": "Missing required parameter: 'main_portfolio_total'."}),
-            400,
-        )
+    snapshot_filename = request.args.get("snapshot")
 
     try:
-        main_portfolio_total = int(raw_total)
-    except (ValueError, TypeError):
-        return (
-            jsonify({"error": "'main_portfolio_total' must be an integer."}),
-            400,
+        report = check_cap_breaches_with_snapshot(
+            snapshot_filename=snapshot_filename,
         )
-
-    try:
-        snapshot = load_latest_optional_bet()
     except OptionalBetNotFoundError:
         return jsonify({"error": "No optional bet snapshot found."}), 404
+    except SnapshotNotFoundError:
+        return jsonify({"error": "No portfolio snapshot found."}), 404
 
-    breaches = check_cap_breaches(snapshot, main_portfolio_total=main_portfolio_total)
     result = [
         {
             "asset_id": b.asset_id,
@@ -356,9 +355,15 @@ def check_breaches():
             "actual_ratio": b.actual_ratio,
             "cap_ratio": b.cap_ratio,
         }
-        for b in breaches
+        for b in report["breaches"]
     ]
-    return jsonify({"breaches": result})
+    return jsonify(
+        {
+            "breaches": result,
+            "snapshot_date": report["snapshot_date"],
+            "main_portfolio_total": report["main_portfolio_total"],
+        }
+    )
 
 
 def _validate_items(items: list) -> tuple | None:

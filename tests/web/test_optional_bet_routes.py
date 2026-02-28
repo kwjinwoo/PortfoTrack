@@ -19,17 +19,23 @@ import pytest
 
 @pytest.fixture()
 def tmp_data_dir(tmp_path, monkeypatch):
-    """Redirect OPTIONAL_BETS_DIR to a temporary directory for isolation."""
+    """Redirect OPTIONAL_BETS_DIR and SNAPSHOTS_DIR to temporary directories."""
     ob_dir = tmp_path / "optional_bets"
     ob_dir.mkdir()
+    snap_dir = tmp_path / "snapshots"
+    snap_dir.mkdir()
 
     import portfotrack.path as path_mod
     import portfotrack.services.optional_bet_services as svc_mod
+    import portfotrack.services.snapshot_services as snap_svc_mod
     import portfotrack.storage.json_store.optional_bet_store as store_mod
+    import portfotrack.storage.json_store.snapshot_store as snap_store_mod
 
     monkeypatch.setattr(path_mod, "OPTIONAL_BETS_DIR", ob_dir)
     monkeypatch.setattr(svc_mod, "OPTIONAL_BETS_DIR", ob_dir)
     monkeypatch.setattr(store_mod, "OPTIONAL_BETS_DIR", ob_dir)
+    monkeypatch.setattr(snap_svc_mod, "SNAPSHOTS_DIR", snap_dir)
+    monkeypatch.setattr(snap_store_mod, "SNAPSHOTS_DIR", snap_dir)
 
     return ob_dir
 
@@ -65,6 +71,25 @@ def _write_optional_bet_file(
     file_name = f"optional_bet_{date}_v1.json"
     with open(ob_dir / file_name, "w", encoding="utf-8") as f:
         json.dump(dto, f, ensure_ascii=False, indent=2)
+
+
+def _write_snapshot_file(
+    tmp_path: Path,
+    date: str,
+    items: list | None = None,
+) -> str:
+    """Write a minimal valid snapshot JSON file and return its filename."""
+    snap_dir = tmp_path / "snapshots"
+    dto = {
+        "date": date,
+        "currency": "KRW",
+        "items": items
+        or [{"asset_id": "US_EQUITY", "label": "S&P500", "amount": 100_000_000}],
+    }
+    file_name = f"snapshot_{date}_v1.json"
+    with open(snap_dir / file_name, "w", encoding="utf-8") as f:
+        json.dump(dto, f, ensure_ascii=False, indent=2)
+    return file_name
 
 
 # ---------------------------------------------------------------------------
@@ -572,45 +597,84 @@ class TestUpdateOptionalBet:
 
 
 class TestCheckBreaches:
-    """GET /api/optional-bets/breaches — check cap breaches."""
+    """GET /api/optional-bets/breaches — snapshot-based cap breach check."""
 
-    def test_missing_param_returns_400(self, client, tmp_data_dir):
-        """Missing main_portfolio_total returns 400."""
+    def test_uses_latest_snapshot_by_default(self, client, tmp_data_dir, tmp_path):
+        """Without snapshot param, uses latest snapshot total."""
         _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+        _write_snapshot_file(tmp_path, "2026-02-27")
 
         response = client.get("/api/optional-bets/breaches")
 
-        assert response.status_code == 400
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["snapshot_date"] == "2026-02-27"
+        assert data["main_portfolio_total"] == 100_000_000
+        assert data["breaches"] == []
 
-    def test_invalid_param_returns_400(self, client, tmp_data_dir):
-        """Non-numeric main_portfolio_total returns 400."""
-        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
-
-        response = client.get("/api/optional-bets/breaches?main_portfolio_total=abc")
-
-        assert response.status_code == 400
-
-    def test_no_snapshot_returns_404(self, client):
-        """When no snapshot exists, returns 404."""
-        response = client.get(
-            "/api/optional-bets/breaches?main_portfolio_total=100000000"
+    def test_uses_specified_snapshot(self, client, tmp_data_dir, tmp_path):
+        """With snapshot param, uses that specific snapshot."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-01",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 10_000_000,
+                }
+            ],
         )
-
-        assert response.status_code == 404
-
-    def test_no_breaches_returns_empty(self, client, tmp_data_dir):
-        """When no items breach their cap, returns empty list."""
-        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+        _write_snapshot_file(
+            tmp_path,
+            "2026-02-14",
+            items=[{"asset_id": "US_EQUITY", "label": "S&P500", "amount": 80_000_000}],
+        )
+        _write_snapshot_file(tmp_path, "2026-02-27")
 
         response = client.get(
-            "/api/optional-bets/breaches?main_portfolio_total=100000000"
+            "/api/optional-bets/breaches?snapshot=snapshot_2026-02-14_v1.json"
         )
 
         assert response.status_code == 200
         data = response.get_json()
-        assert data["breaches"] == []
+        assert data["snapshot_date"] == "2026-02-14"
+        assert data["main_portfolio_total"] == 80_000_000
+        assert len(data["breaches"]) == 1
+        assert data["breaches"][0]["asset_id"] == "bitcoin"
 
-    def test_breach_detected(self, client, tmp_data_dir):
+    def test_no_optional_bet_returns_404(self, client, tmp_data_dir, tmp_path):
+        """When no optional bet snapshot exists, returns 404."""
+        _write_snapshot_file(tmp_path, "2026-02-27")
+
+        response = client.get("/api/optional-bets/breaches")
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert "error" in data
+
+    def test_no_snapshot_returns_404(self, client, tmp_data_dir):
+        """When no portfolio snapshot exists, returns 404."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.get("/api/optional-bets/breaches")
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert "error" in data
+
+    def test_nonexistent_snapshot_file_returns_404(self, client, tmp_data_dir):
+        """When specified snapshot file does not exist, returns 404."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.get(
+            "/api/optional-bets/breaches?snapshot=snapshot_9999-12-31_v1.json"
+        )
+
+        assert response.status_code == 404
+
+    def test_breach_detected(self, client, tmp_data_dir, tmp_path):
         """When an item exceeds its cap, returns breach details."""
         _write_optional_bet_file(
             tmp_data_dir,
@@ -624,10 +688,9 @@ class TestCheckBreaches:
                 }
             ],
         )
+        _write_snapshot_file(tmp_path, "2026-02-27")
 
-        response = client.get(
-            "/api/optional-bets/breaches?main_portfolio_total=100000000"
-        )
+        response = client.get("/api/optional-bets/breaches")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -635,3 +698,14 @@ class TestCheckBreaches:
         assert data["breaches"][0]["asset_id"] == "bitcoin"
         assert "actual_ratio" in data["breaches"][0]
         assert "cap_ratio" in data["breaches"][0]
+
+    def test_no_breaches_returns_empty(self, client, tmp_data_dir, tmp_path):
+        """When no items breach their cap, returns empty list."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+        _write_snapshot_file(tmp_path, "2026-02-27")
+
+        response = client.get("/api/optional-bets/breaches")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["breaches"] == []
