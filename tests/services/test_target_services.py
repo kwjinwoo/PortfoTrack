@@ -5,6 +5,7 @@ from portfotrack.domain.target_allocation import TargetAllocation, Tolerance
 from portfotrack.services import target_services
 from portfotrack.services.target_services import (
     get_available_assets_from_target,
+    save_target_overwrite,
     validate_asset_id_in_target,
 )
 
@@ -137,3 +138,70 @@ class TestValidateAssetIdInTarget:
         target = TargetAllocation()
 
         assert validate_asset_id_in_target(target, "us_equity") is False
+
+
+# ---------------------------
+# save_target_overwrite
+# ---------------------------
+
+
+class TestSaveTargetOverwrite:
+    """Tests for save_target_overwrite service function."""
+
+    def test_saves_to_specified_filename(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path
+    ) -> None:
+        import portfotrack.storage.json_store.target_store as store_mod
+
+        targets_dir = tmp_path / "targets"
+        monkeypatch.setattr(store_mod, "TARGETS_DIR", targets_dir, raising=True)
+
+        target = TargetAllocation()
+        target.add_asset(
+            Asset("us_equity", "US Equity", "growth"),
+            0.5,
+            {"lower": 0.4, "upper": 0.6},
+        )
+        target.add_asset(
+            Asset("kr_bond", "KR Bond", "stability"),
+            0.5,
+            {"lower": 0.4, "upper": 0.6},
+        )
+
+        file_name = "target_2026-01-15_v1.json"
+        save_target_overwrite(target, file_name)
+
+        saved_file = targets_dir / file_name
+        assert saved_file.exists()
+
+    def test_saved_content_matches_dto(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path
+    ) -> None:
+        import json
+
+        import portfotrack.storage.json_store.target_store as store_mod
+        from portfotrack.storage.serialization.target_json import target_to_dto
+
+        targets_dir = tmp_path / "targets"
+        monkeypatch.setattr(store_mod, "TARGETS_DIR", targets_dir, raising=True)
+
+        target = TargetAllocation()
+        target.add_asset(
+            Asset("us_equity", "US Equity", "growth"),
+            0.5,
+            {"lower": 0.4, "upper": 0.6},
+        )
+        target.add_asset(
+            Asset("kr_bond", "KR Bond", "stability"),
+            0.5,
+            {"lower": 0.4, "upper": 0.6},
+        )
+
+        file_name = "target_2026-01-15_v1.json"
+        save_target_overwrite(target, file_name)
+
+        with open(targets_dir / file_name, encoding="utf-8") as f:
+            saved = json.load(f)
+
+        expected_dto = target_to_dto(target)
+        assert saved == expected_dto

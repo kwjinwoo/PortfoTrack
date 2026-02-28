@@ -1,7 +1,7 @@
 from portfotrack.domain.asset.factory import create_asset
 from portfotrack.domain.target_allocation import TargetAllocation
 from portfotrack.path import TARGETS_DIR
-from portfotrack.storage.json_store.target_store import load, save
+from portfotrack.storage.json_store.target_store import load, save, save_to_file
 from portfotrack.storage.serialization.target_json import dto_to_target, target_to_dto
 
 
@@ -79,6 +79,21 @@ def save_target(target: TargetAllocation) -> None:
     """
     target_dto = target_to_dto(target)
     save(target_dto)
+
+
+def save_target_overwrite(target: TargetAllocation, file_name: str) -> None:
+    """Save the given target allocation to a specific file, overwriting it.
+
+    This is the service-layer wrapper for overwrite saves. It converts the
+    domain `TargetAllocation` into a DTO and delegates to the store's
+    `save_to_file`, preserving the original filename.
+
+    Args:
+        target: Target allocation domain object to persist.
+        file_name: The target file name to overwrite.
+    """
+    target_dto = target_to_dto(target)
+    save_to_file(target_dto, file_name)
 
 
 def load_latest_target() -> TargetAllocation:
