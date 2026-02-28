@@ -58,3 +58,29 @@ class SnapshotNotFoundError(StorageError):
             cause=cause,
         )
         self.details.update({"file_name": file_name})
+
+
+class OptionalBetNotFoundError(StorageError):
+    """Raised when an optional bet file cannot be found.
+
+    This error indicates that a requested optional bet file does not exist
+    in the storage location.
+
+    Attributes:
+        file_name: Name of the optional bet file that could not be found.
+    """
+
+    def __init__(
+        self,
+        *,
+        file_name: str,
+        details: dict[str, Any] | None = None,
+        cause: BaseException | None = None,
+    ) -> None:
+        super().__init__(
+            code=StoreJsonErrorcodes.STORE_OPTIONAL_BET_NOT_FOUND,
+            message=f"Optional bet file '{file_name}' was not found.",
+            details=details,
+            cause=cause,
+        )
+        self.details.update({"file_name": file_name})

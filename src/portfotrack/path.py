@@ -8,3 +8,4 @@ DATA_DIR = PROJECT_ROOT / "data"
 
 TARGETS_DIR = DATA_DIR / "targets"
 SNAPSHOTS_DIR = DATA_DIR / "snapshots"
+OPTIONAL_BETS_DIR = DATA_DIR / "optional_bets"
