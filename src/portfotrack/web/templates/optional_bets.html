@@ -75,9 +75,10 @@
         <h3>캡 초과 체크</h3>
         <form id="breach-form">
             <div class="form-group">
-                <label for="main-total">메인 포트폴리오 총액 (KRW)</label>
-                <input type="number" id="main-total" name="main_portfolio_total" min="0" required
-                    placeholder="예: 100000000">
+                <label for="snapshot-select">스냅샷 선택</label>
+                <select id="snapshot-select" name="snapshot">
+                    <option value="">최신 스냅샷 사용</option>
+                </select>
             </div>
             <button type="submit" class="btn btn-primary">체크</button>
         </form>

@@ -8,6 +8,7 @@ let _obDate = null;
 document.addEventListener("DOMContentLoaded", function () {
     loadLatest();
     loadFileList();
+    loadSnapshotList();
     setupCreateButton();
     setupAddForm();
     setupEditButtons();
@@ -296,6 +297,22 @@ function createEditRow(assetId, name, capRatio, amount) {
 // Breach check
 // ---------------------------------------------------------------------------
 
+async function loadSnapshotList() {
+    const select = document.getElementById("snapshot-select");
+    try {
+        const response = await fetch("/api/snapshots");
+        const data = await response.json();
+        for (const snap of data) {
+            const option = document.createElement("option");
+            option.value = snap.filename;
+            option.textContent = snap.date;
+            select.appendChild(option);
+        }
+    } catch {
+        // keep only the default option
+    }
+}
+
 function setupBreachForm() {
     const form = document.getElementById("breach-form");
     const result = document.getElementById("breach-result");
@@ -304,12 +321,12 @@ function setupBreachForm() {
         e.preventDefault();
         result.innerHTML = "";
 
-        const total = document.getElementById("main-total").value;
-        if (!total) return;
+        const snapshot = document.getElementById("snapshot-select").value;
+        const params = snapshot ? `?snapshot=${encodeURIComponent(snapshot)}` : "";
 
         try {
             const response = await fetch(
-                `/api/optional-bets/breaches?main_portfolio_total=${total}`
+                `/api/optional-bets/breaches${params}`
             );
             const data = await response.json();
 
@@ -318,12 +335,14 @@ function setupBreachForm() {
                 return;
             }
 
+            let info = `<p>스냅샷 날짜: <strong>${data.snapshot_date}</strong> | 메인 포트폴리오 총액: <strong>${data.main_portfolio_total.toLocaleString()} KRW</strong></p>`;
+
             if (data.breaches.length === 0) {
-                result.innerHTML = "<p class='success'>캡 초과 항목이 없습니다.</p>";
+                result.innerHTML = info + "<p class='success'>캡 초과 항목이 없습니다.</p>";
                 return;
             }
 
-            let html = "<table><thead><tr><th>자산 ID</th><th>이름</th><th>실제 비율</th><th>캡 비율</th></tr></thead><tbody>";
+            let html = info + "<table><thead><tr><th>자산 ID</th><th>이름</th><th>실제 비율</th><th>캡 비율</th></tr></thead><tbody>";
             for (const b of data.breaches) {
                 html += `<tr>
           <td>${b.asset_id}</td>
