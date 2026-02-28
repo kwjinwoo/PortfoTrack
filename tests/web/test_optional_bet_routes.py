@@ -1,8 +1,14 @@
 """Tests for optional bet API endpoints.
 
 Covers:
-- GET  /api/optional-bets         — list optional bet files
-- GET  /api/optional-bets/latest  — load latest optional bet snapshot
+- GET    /api/optional-bets              — list optional bet files
+- GET    /api/optional-bets/latest       — load latest optional bet snapshot
+- POST   /api/optional-bets              — create new snapshot
+- POST   /api/optional-bets/items        — add item to latest snapshot
+- DELETE /api/optional-bets/items/<id>   — remove item
+- PATCH  /api/optional-bets/items/<id>   — update item
+- PUT    /api/optional-bets/<date>       — update snapshot (overwrite/new)
+- GET    /api/optional-bets/breaches     — check cap breaches
 """
 
 import json
@@ -407,3 +413,225 @@ class TestUpdateItemRoute:
         )
 
         assert response.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# PUT /api/optional-bets/<date> — update snapshot
+# ---------------------------------------------------------------------------
+
+
+class TestUpdateOptionalBet:
+    """PUT /api/optional-bets/<date> — update snapshot."""
+
+    def test_invalid_date_format_returns_400(self, client):
+        """Invalid date format returns 400."""
+        response = client.put(
+            "/api/optional-bets/not-a-date",
+            json={"mode": "overwrite", "items": []},
+        )
+
+        assert response.status_code == 400
+
+    def test_no_body_returns_400(self, client):
+        """Missing request body returns 400."""
+        response = client.put(
+            "/api/optional-bets/2026-03-01",
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+
+    def test_invalid_mode_returns_400(self, client):
+        """Invalid mode value returns 400."""
+        response = client.put(
+            "/api/optional-bets/2026-03-01",
+            json={"mode": "invalid", "items": []},
+        )
+
+        assert response.status_code == 400
+
+    def test_missing_items_returns_400(self, client):
+        """Missing items field returns 400."""
+        response = client.put(
+            "/api/optional-bets/2026-03-01",
+            json={"mode": "overwrite"},
+        )
+
+        assert response.status_code == 400
+
+    def test_nonexistent_date_returns_404(self, client):
+        """Updating a non-existent date returns 404."""
+        response = client.put(
+            "/api/optional-bets/2026-03-01",
+            json={
+                "mode": "overwrite",
+                "items": [
+                    {
+                        "asset_id": "bitcoin",
+                        "name": "Bitcoin",
+                        "cap_ratio": 0.05,
+                        "amount": 1_000_000,
+                    }
+                ],
+            },
+        )
+
+        assert response.status_code == 404
+
+    def test_overwrite_mode_returns_200(self, client, tmp_data_dir):
+        """Overwrite mode replaces the file and returns 200."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.put(
+            "/api/optional-bets/2026-03-01",
+            json={
+                "mode": "overwrite",
+                "items": [
+                    {
+                        "asset_id": "ethereum",
+                        "name": "Ethereum",
+                        "cap_ratio": 0.03,
+                        "amount": 2_000_000,
+                    }
+                ],
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["items"]) == 1
+        assert data["items"][0]["asset_id"] == "ethereum"
+
+    def test_new_mode_returns_201(self, client, tmp_data_dir):
+        """New mode saves as a new file and returns 201."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.put(
+            "/api/optional-bets/2026-03-01",
+            json={
+                "mode": "new",
+                "items": [
+                    {
+                        "asset_id": "ethereum",
+                        "name": "Ethereum",
+                        "cap_ratio": 0.03,
+                        "amount": 2_000_000,
+                    }
+                ],
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert len(data["items"]) == 1
+
+    def test_overwrite_empty_items_returns_200(self, client, tmp_data_dir):
+        """Overwrite with empty items list returns 200."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.put(
+            "/api/optional-bets/2026-03-01",
+            json={"mode": "overwrite", "items": []},
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["items"] == []
+
+    def test_duplicate_asset_in_items_returns_409(self, client, tmp_data_dir):
+        """Duplicate asset_id within items returns 409."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.put(
+            "/api/optional-bets/2026-03-01",
+            json={
+                "mode": "overwrite",
+                "items": [
+                    {
+                        "asset_id": "bitcoin",
+                        "name": "Bitcoin",
+                        "cap_ratio": 0.05,
+                        "amount": 1_000_000,
+                    },
+                    {
+                        "asset_id": "bitcoin",
+                        "name": "BTC",
+                        "cap_ratio": 0.03,
+                        "amount": 500_000,
+                    },
+                ],
+            },
+        )
+
+        assert response.status_code == 409
+
+
+# ---------------------------------------------------------------------------
+# GET /api/optional-bets/breaches — check cap breaches
+# ---------------------------------------------------------------------------
+
+
+class TestCheckBreaches:
+    """GET /api/optional-bets/breaches — check cap breaches."""
+
+    def test_missing_param_returns_400(self, client, tmp_data_dir):
+        """Missing main_portfolio_total returns 400."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.get("/api/optional-bets/breaches")
+
+        assert response.status_code == 400
+
+    def test_invalid_param_returns_400(self, client, tmp_data_dir):
+        """Non-numeric main_portfolio_total returns 400."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.get("/api/optional-bets/breaches?main_portfolio_total=abc")
+
+        assert response.status_code == 400
+
+    def test_no_snapshot_returns_404(self, client):
+        """When no snapshot exists, returns 404."""
+        response = client.get(
+            "/api/optional-bets/breaches?main_portfolio_total=100000000"
+        )
+
+        assert response.status_code == 404
+
+    def test_no_breaches_returns_empty(self, client, tmp_data_dir):
+        """When no items breach their cap, returns empty list."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.get(
+            "/api/optional-bets/breaches?main_portfolio_total=100000000"
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["breaches"] == []
+
+    def test_breach_detected(self, client, tmp_data_dir):
+        """When an item exceeds its cap, returns breach details."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-01",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 10_000_000,
+                }
+            ],
+        )
+
+        response = client.get(
+            "/api/optional-bets/breaches?main_portfolio_total=100000000"
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["breaches"]) == 1
+        assert data["breaches"][0]["asset_id"] == "bitcoin"
+        assert "actual_ratio" in data["breaches"][0]
+        assert "cap_ratio" in data["breaches"][0]

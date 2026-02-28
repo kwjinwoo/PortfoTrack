@@ -17,6 +17,7 @@ from portfotrack.domain.optional_bet.errors import (
 )
 from portfotrack.services.optional_bet_services import (
     add_item,
+    check_cap_breaches,
     init_optional_bet_snapshot,
     load_latest_optional_bet,
     remove_item,
@@ -231,6 +232,133 @@ def update_item_route(asset_id: str):
     _save_latest(snapshot)
     dto = optional_bet_to_dto(snapshot)
     return jsonify(dto)
+
+
+@optional_bet_bp.route("/<date>", methods=["PUT"])
+def update_optional_bet(date: str):
+    """Update an existing optional bet snapshot with full replacement.
+
+    Expects JSON body with ``mode`` and ``items`` fields.
+    Mode determines save behavior:
+    - ``"overwrite"``: replaces the original file, preserving its date.
+    - ``"new"``: saves as a new snapshot with today's date.
+
+    Args:
+        date: ISO date string (YYYY-MM-DD) of the snapshot to update.
+
+    Returns:
+        200 with updated snapshot DTO for overwrite mode,
+        201 with new snapshot DTO for new mode,
+        or 400/404/409 on validation failure.
+    """
+    if not _DATE_PATTERN.match(date):
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({"error": "Request body must be valid JSON."}), 400
+
+    mode = body.get("mode")
+    if mode not in ("overwrite", "new"):
+        return (
+            jsonify({"error": "'mode' must be 'overwrite' or 'new'."}),
+            400,
+        )
+
+    items = body.get("items")
+    if items is None or not isinstance(items, list):
+        return jsonify({"error": "'items' must be a list."}), 400
+
+    if items:
+        error_resp = _validate_items(items)
+        if error_resp is not None:
+            return error_resp
+
+    # Verify the source snapshot exists
+    matching = list(path_mod.OPTIONAL_BETS_DIR.glob(f"optional_bet_{date}_v*.json"))
+    if not matching:
+        return (
+            jsonify({"error": f"Optional bet for {date} not found."}),
+            404,
+        )
+
+    # Build the new snapshot
+    snapshot = init_optional_bet_snapshot()
+    for item in items:
+        try:
+            add_item(
+                snapshot,
+                item["asset_id"],
+                item["name"],
+                float(item["cap_ratio"]),
+                int(item["amount"]),
+            )
+        except DuplicateOptionalBetError:
+            return (
+                jsonify({"error": f"Duplicate asset_id '{item['asset_id']}'."}),
+                409,
+            )
+        except InvalidCapRatioError:
+            return (
+                jsonify(
+                    {"error": "cap_ratio must be between 0.0 and 1.0 (exclusive)."}
+                ),
+                400,
+            )
+
+    dto = optional_bet_to_dto(snapshot)
+    if mode == "overwrite":
+        snapshot.date = date
+        latest_file = sorted(matching)[-1]
+        save_optional_bet_overwrite(snapshot, latest_file.name)
+        dto = optional_bet_to_dto(snapshot)
+        return jsonify(dto), 200
+    else:  # mode == "new"
+        save_optional_bet(snapshot)
+        return jsonify(dto), 201
+
+
+@optional_bet_bp.route("/breaches", methods=["GET"])
+def check_breaches():
+    """Check which optional bet items exceed their cap ratios.
+
+    Query parameters:
+        main_portfolio_total: Total amount of the main portfolio in KRW.
+
+    Returns:
+        JSON object with a ``breaches`` list, or 400/404 on error.
+    """
+    raw_total = request.args.get("main_portfolio_total")
+    if raw_total is None:
+        return (
+            jsonify({"error": "Missing required parameter: 'main_portfolio_total'."}),
+            400,
+        )
+
+    try:
+        main_portfolio_total = int(raw_total)
+    except (ValueError, TypeError):
+        return (
+            jsonify({"error": "'main_portfolio_total' must be an integer."}),
+            400,
+        )
+
+    try:
+        snapshot = load_latest_optional_bet()
+    except OptionalBetNotFoundError:
+        return jsonify({"error": "No optional bet snapshot found."}), 404
+
+    breaches = check_cap_breaches(snapshot, main_portfolio_total=main_portfolio_total)
+    result = [
+        {
+            "asset_id": b.asset_id,
+            "name": b.name,
+            "actual_ratio": b.actual_ratio,
+            "cap_ratio": b.cap_ratio,
+        }
+        for b in breaches
+    ]
+    return jsonify({"breaches": result})
 
 
 def _validate_items(items: list) -> tuple | None:
