@@ -1,4 +1,6 @@
-"""Tests for Flask application factory and health endpoint."""
+"""Tests for Flask application factory, health endpoint, and run_server."""
+
+from unittest.mock import patch
 
 import pytest
 
@@ -53,3 +55,59 @@ class TestHealthEndpoint:
         response = client.get("/health")
 
         assert response.content_type == "application/json"
+
+
+class TestRunServer:
+    """Tests for the run_server entry point function."""
+
+    def test_run_server_uses_default_host_and_port(self):
+        """run_server with no args should start on 127.0.0.1:5000."""
+        from portfotrack.web.app import run_server
+
+        with patch("portfotrack.web.app.create_app") as mock_create:
+            mock_app = mock_create.return_value
+            run_server([])
+
+            mock_create.assert_called_once()
+            mock_app.run.assert_called_once_with(
+                host="127.0.0.1", port=5000, debug=False
+            )
+
+    def test_run_server_accepts_custom_host(self):
+        """run_server should accept --host argument."""
+        from portfotrack.web.app import run_server
+
+        with patch("portfotrack.web.app.create_app") as mock_create:
+            mock_app = mock_create.return_value
+            run_server(["--host", "0.0.0.0"])
+
+            mock_app.run.assert_called_once_with(host="0.0.0.0", port=5000, debug=False)
+
+    def test_run_server_accepts_custom_port(self):
+        """run_server should accept --port argument."""
+        from portfotrack.web.app import run_server
+
+        with patch("portfotrack.web.app.create_app") as mock_create:
+            mock_app = mock_create.return_value
+            run_server(["--port", "8080"])
+
+            mock_app.run.assert_called_once_with(
+                host="127.0.0.1", port=8080, debug=False
+            )
+
+    def test_run_server_accepts_both_host_and_port(self):
+        """run_server should accept both --host and --port arguments."""
+        from portfotrack.web.app import run_server
+
+        with patch("portfotrack.web.app.create_app") as mock_create:
+            mock_app = mock_create.return_value
+            run_server(["--host", "0.0.0.0", "--port", "9090"])
+
+            mock_app.run.assert_called_once_with(host="0.0.0.0", port=9090, debug=False)
+
+    def test_run_server_rejects_invalid_port(self):
+        """run_server should reject non-integer port values."""
+        from portfotrack.web.app import run_server
+
+        with pytest.raises(SystemExit):
+            run_server(["--port", "abc"])

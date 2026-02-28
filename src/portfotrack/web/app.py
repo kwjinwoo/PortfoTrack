@@ -5,7 +5,13 @@ No external network calls; all data is read from and written to local
 JSON files.
 """
 
+import argparse
+import sys
+
 from flask import Flask, jsonify, render_template
+
+_DEFAULT_HOST = "127.0.0.1"
+_DEFAULT_PORT = 5000
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -64,3 +70,34 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.register_blueprint(trend_bp)
 
     return app
+
+
+def run_server(argv: list[str] | None = None) -> None:
+    """Parse CLI arguments and start the Flask development server.
+
+    Args:
+        argv: Command-line arguments to parse. Defaults to sys.argv[1:]
+            when None. Accepts --host and --port options.
+    """
+    if argv is None:
+        argv = sys.argv[1:]
+
+    parser = argparse.ArgumentParser(
+        prog="portfotrack",
+        description="Start the PortfoTrack web server.",
+    )
+    parser.add_argument(
+        "--host",
+        default=_DEFAULT_HOST,
+        help=f"Host to bind to (default: {_DEFAULT_HOST})",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=_DEFAULT_PORT,
+        help=f"Port to bind to (default: {_DEFAULT_PORT})",
+    )
+    args = parser.parse_args(argv)
+
+    app = create_app()
+    app.run(host=args.host, port=args.port, debug=False)

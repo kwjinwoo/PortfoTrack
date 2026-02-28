@@ -37,5 +37,8 @@ dependencies = [
     "pytest>=9.0.2",
 ]
 
+[project.scripts]
+portfotrack = "portfotrack.web.app:run_server"
+
 [tool.setuptools.packages.find]
 where = ["src"]
