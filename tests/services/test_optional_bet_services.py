@@ -16,6 +16,7 @@ from portfotrack.domain.optional_bet.errors import (
 from portfotrack.services.optional_bet_services import (
     add_item,
     check_cap_breaches,
+    check_cap_breaches_with_snapshot,
     init_optional_bet_snapshot,
     load_latest_optional_bet,
     remove_item,
@@ -23,7 +24,10 @@ from portfotrack.services.optional_bet_services import (
     save_optional_bet_overwrite,
     update_item,
 )
-from portfotrack.storage.json_store.errors import OptionalBetNotFoundError
+from portfotrack.storage.json_store.errors import (
+    OptionalBetNotFoundError,
+    SnapshotNotFoundError,
+)
 
 
 @pytest.fixture()
@@ -316,3 +320,221 @@ class TestCheckCapBreaches:
         result = check_cap_breaches(snapshot, main_portfolio_total=100_000_000)
 
         assert result == []
+
+
+# ---------------------------------------------------------------------------
+# check_cap_breaches_with_snapshot
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def _snapshot_and_bet_dirs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[Path, Path]:
+    """Set up isolated directories for both snapshots and optional bets."""
+    import portfotrack.services.optional_bet_services as ob_svc_mod
+    import portfotrack.services.snapshot_services as snap_svc_mod
+    import portfotrack.storage.json_store.optional_bet_store as ob_store_mod
+    import portfotrack.storage.json_store.snapshot_store as snap_store_mod
+
+    snap_dir = tmp_path / "snapshots"
+    snap_dir.mkdir()
+    ob_dir = tmp_path / "optional_bets"
+    ob_dir.mkdir()
+
+    monkeypatch.setattr(snap_svc_mod, "SNAPSHOTS_DIR", snap_dir)
+    monkeypatch.setattr(snap_store_mod, "SNAPSHOTS_DIR", snap_dir)
+    monkeypatch.setattr(ob_svc_mod, "OPTIONAL_BETS_DIR", ob_dir)
+    monkeypatch.setattr(ob_store_mod, "OPTIONAL_BETS_DIR", ob_dir)
+
+    return snap_dir, ob_dir
+
+
+def _write_snapshot_file(snap_dir: Path, date: str, items: list) -> str:
+    """Write a snapshot JSON file and return its filename."""
+    file_name = f"snapshot_{date}_v1.json"
+    (snap_dir / file_name).write_text(
+        json.dumps(
+            {"date": date, "currency": "KRW", "items": items},
+            ensure_ascii=False,
+        )
+    )
+    return file_name
+
+
+def _write_ob_file(ob_dir: Path, date: str, items: list) -> str:
+    """Write an optional bet JSON file and return its filename."""
+    file_name = f"optional_bet_{date}_v1.json"
+    (ob_dir / file_name).write_text(
+        json.dumps(
+            {"date": date, "currency": "KRW", "items": items},
+            ensure_ascii=False,
+        )
+    )
+    return file_name
+
+
+class TestCheckCapBreachesWithSnapshot:
+    """Tests for check_cap_breaches_with_snapshot service function."""
+
+    def test_uses_latest_snapshot_by_default(
+        self, _snapshot_and_bet_dirs: tuple[Path, Path]
+    ) -> None:
+        """When no filename given, uses latest snapshot total for breach check."""
+        snap_dir, ob_dir = _snapshot_and_bet_dirs
+        _write_snapshot_file(
+            snap_dir,
+            "2026-02-27",
+            [
+                {"asset_id": "US_EQUITY", "label": "S&P500", "amount": 50_000_000},
+                {"asset_id": "KR_BOND", "label": "Treasury", "amount": 50_000_000},
+            ],
+        )
+        _write_ob_file(
+            ob_dir,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                }
+            ],
+        )
+
+        result = check_cap_breaches_with_snapshot()
+
+        assert result["snapshot_date"] == "2026-02-27"
+        assert result["main_portfolio_total"] == 100_000_000
+        assert result["breaches"] == []
+
+    def test_uses_specified_snapshot_file(
+        self, _snapshot_and_bet_dirs: tuple[Path, Path]
+    ) -> None:
+        """When a filename is given, uses that snapshot's total."""
+        snap_dir, ob_dir = _snapshot_and_bet_dirs
+        _write_snapshot_file(
+            snap_dir,
+            "2026-02-14",
+            [{"asset_id": "US_EQUITY", "label": "S&P500", "amount": 80_000_000}],
+        )
+        _write_snapshot_file(
+            snap_dir,
+            "2026-02-27",
+            [{"asset_id": "US_EQUITY", "label": "S&P500", "amount": 200_000_000}],
+        )
+        _write_ob_file(
+            ob_dir,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 10_000_000,
+                }
+            ],
+        )
+
+        result = check_cap_breaches_with_snapshot(
+            snapshot_filename="snapshot_2026-02-14_v1.json"
+        )
+
+        assert result["snapshot_date"] == "2026-02-14"
+        assert result["main_portfolio_total"] == 80_000_000
+        # 10M / (80M + 10M) ≈ 0.111 > 0.05 → breach
+        assert len(result["breaches"]) == 1
+        assert result["breaches"][0].asset_id == "bitcoin"
+
+    def test_no_snapshot_raises_error(
+        self, _snapshot_and_bet_dirs: tuple[Path, Path]
+    ) -> None:
+        """When no snapshot files exist, raises SnapshotNotFoundError."""
+        _, ob_dir = _snapshot_and_bet_dirs
+        _write_ob_file(
+            ob_dir,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                }
+            ],
+        )
+
+        with pytest.raises(SnapshotNotFoundError):
+            check_cap_breaches_with_snapshot()
+
+    def test_no_optional_bet_raises_error(
+        self, _snapshot_and_bet_dirs: tuple[Path, Path]
+    ) -> None:
+        """When no optional bet files exist, raises OptionalBetNotFoundError."""
+        snap_dir, _ = _snapshot_and_bet_dirs
+        _write_snapshot_file(
+            snap_dir,
+            "2026-02-27",
+            [{"asset_id": "US_EQUITY", "label": "S&P500", "amount": 100_000_000}],
+        )
+
+        with pytest.raises(OptionalBetNotFoundError):
+            check_cap_breaches_with_snapshot()
+
+    def test_breach_detected_with_snapshot(
+        self, _snapshot_and_bet_dirs: tuple[Path, Path]
+    ) -> None:
+        """Detects breach when optional bet exceeds cap relative to snapshot total."""
+        snap_dir, ob_dir = _snapshot_and_bet_dirs
+        _write_snapshot_file(
+            snap_dir,
+            "2026-02-27",
+            [{"asset_id": "US_EQUITY", "label": "S&P500", "amount": 100_000_000}],
+        )
+        _write_ob_file(
+            ob_dir,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 10_000_000,
+                }
+            ],
+        )
+
+        result = check_cap_breaches_with_snapshot()
+
+        # 10M / (100M + 10M) ≈ 0.0909 > 0.05 → breach
+        assert len(result["breaches"]) == 1
+        assert result["breaches"][0].asset_id == "bitcoin"
+        assert result["main_portfolio_total"] == 100_000_000
+
+    def test_no_breach_returns_empty_list(
+        self, _snapshot_and_bet_dirs: tuple[Path, Path]
+    ) -> None:
+        """When no items breach cap, returns empty breaches list."""
+        snap_dir, ob_dir = _snapshot_and_bet_dirs
+        _write_snapshot_file(
+            snap_dir,
+            "2026-02-27",
+            [{"asset_id": "US_EQUITY", "label": "S&P500", "amount": 100_000_000}],
+        )
+        _write_ob_file(
+            ob_dir,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                }
+            ],
+        )
+
+        result = check_cap_breaches_with_snapshot()
+
+        assert result["breaches"] == []

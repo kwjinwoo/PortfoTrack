@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from portfotrack.domain.optional_bet import (
     CapBreachResult,
     OptionalBetSnapshot,
@@ -6,6 +8,10 @@ from portfotrack.domain.optional_bet.optional_bet import (
     check_cap_breaches as domain_check_cap_breaches,
 )
 from portfotrack.path import OPTIONAL_BETS_DIR
+from portfotrack.services.snapshot_services import (
+    load_latest_snapshot,
+    load_snapshot_by_filename,
+)
 from portfotrack.storage.json_store.errors import OptionalBetNotFoundError
 from portfotrack.storage.json_store.optional_bet_store import load as store_load
 from portfotrack.storage.json_store.optional_bet_store import save as store_save
@@ -173,4 +179,52 @@ def check_cap_breaches(
     """
     return domain_check_cap_breaches(
         snapshot.items, main_portfolio_total=main_portfolio_total
+    )
+
+
+class CapBreachReport(TypedDict):
+    """Result of a snapshot-based cap breach check."""
+
+    breaches: list[CapBreachResult]
+    snapshot_date: str
+    main_portfolio_total: int
+
+
+def check_cap_breaches_with_snapshot(
+    snapshot_filename: str | None = None,
+) -> CapBreachReport:
+    """Check cap breaches using a portfolio snapshot for the main total.
+
+    Loads the latest optional bet snapshot and a portfolio snapshot,
+    computes the main portfolio total from the snapshot's items, then
+    delegates to the domain-level breach check.
+
+    Args:
+        snapshot_filename: Optional snapshot file name. When ``None``,
+            the latest snapshot is used.
+
+    Returns:
+        A CapBreachReport containing breaches, snapshot date, and the
+        computed main portfolio total.
+
+    Raises:
+        SnapshotNotFoundError: If the requested snapshot does not exist.
+        OptionalBetNotFoundError: If no optional bet snapshot exists.
+    """
+    if snapshot_filename is not None:
+        portfolio = load_snapshot_by_filename(snapshot_filename)
+    else:
+        portfolio = load_latest_snapshot()
+
+    ob_snapshot = load_latest_optional_bet()
+    main_portfolio_total = sum(item.amount for item in portfolio.items)
+
+    breaches = domain_check_cap_breaches(
+        ob_snapshot.items, main_portfolio_total=main_portfolio_total
+    )
+
+    return CapBreachReport(
+        breaches=breaches,
+        snapshot_date=portfolio.date,
+        main_portfolio_total=main_portfolio_total,
     )
