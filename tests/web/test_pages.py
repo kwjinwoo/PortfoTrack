@@ -75,3 +75,33 @@ class TestNavigation:
         assert "/targets" in html
         assert "/reports" in html
         assert "/optional-bets" in html
+
+
+class TestOptionalBetsTrendUI:
+    """Optional bets page should contain trend chart elements."""
+
+    def test_page_contains_trend_chart_containers(self, client) -> None:
+        """Page should have canvas elements for the three trend charts."""
+        response = client.get("/optional-bets")
+        html = response.data.decode("utf-8")
+        assert "ob-ratio-chart" in html
+        assert "ob-amount-chart" in html
+        assert "ob-total-chart" in html
+
+    def test_page_loads_chart_js(self, client) -> None:
+        """Page should reference Chart.js CDN."""
+        response = client.get("/optional-bets")
+        html = response.data.decode("utf-8")
+        assert "chart.js" in html.lower() or "Chart" in html
+
+    def test_page_loads_trend_script(self, client) -> None:
+        """Page should load the optional-bets-trend-ui.js script."""
+        response = client.get("/optional-bets")
+        html = response.data.decode("utf-8")
+        assert "optional-bets-trend-ui.js" in html
+
+    def test_page_contains_trend_section_heading(self, client) -> None:
+        """Page should contain a heading for the trend analysis section."""
+        response = client.get("/optional-bets")
+        html = response.data.decode("utf-8")
+        assert "추이 분석" in html

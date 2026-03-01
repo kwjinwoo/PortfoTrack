@@ -89,7 +89,30 @@
         <h3>파일 목록</h3>
         <ul id="ob-file-list"></ul>
     </div>
+
+    <div class="card">
+        <h3>추이 분석</h3>
+        <div id="ob-trends-message" class="message"></div>
+
+        <div class="card" style="margin-top: 1rem;">
+            <h4>자산별 비율 추이</h4>
+            <canvas id="ob-ratio-chart" width="800" height="300"></canvas>
+        </div>
+
+        <div class="card" style="margin-top: 1rem;">
+            <h4>자산별 평가 금액 추이</h4>
+            <canvas id="ob-amount-chart" width="800" height="300"></canvas>
+        </div>
+
+        <div class="card" style="margin-top: 1rem;">
+            <h4>전체 옵셔널 벳 추이</h4>
+            <canvas id="ob-total-chart" width="800" height="300"></canvas>
+        </div>
+    </div>
 </section>
 
 <script src="{{ url_for('static', filename='js/optional-bets-ui.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="{{ url_for('static', filename='js/optional-bets-trend-ui.js') }}"></script>
 {% endblock %}
