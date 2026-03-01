@@ -19,12 +19,16 @@ from portfotrack.services.optional_bet_services import (
     add_item,
     check_cap_breaches_with_snapshot,
     init_optional_bet_snapshot,
+    load_all_optional_bets,
     load_latest_optional_bet,
     load_optional_bet_by_filename,
     remove_item,
     save_optional_bet,
     save_optional_bet_overwrite,
     update_item,
+)
+from portfotrack.services.optional_bet_trend_analysis import (
+    compute_optional_bet_trend,
 )
 from portfotrack.storage.json_store.errors import (
     OptionalBetNotFoundError,
@@ -69,6 +73,59 @@ def get_latest():
 
     dto = optional_bet_to_dto(snapshot)
     return jsonify(dto)
+
+
+@optional_bet_bp.route("/trends/analysis", methods=["GET"])
+def trend_analysis():
+    """Generate trend analysis data from all optional bet snapshots.
+
+    Returns:
+        JSON response with asset_trends, portfolio_trend, and metadata.
+    """
+    snapshots = load_all_optional_bets()
+    portfolio_trend = compute_optional_bet_trend(snapshots)
+
+    # Serialize asset trends
+    asset_trends_json = []
+    for at in portfolio_trend.asset_trends:
+        data_points = [
+            {"date": dp.date, "amount": dp.amount, "ratio": dp.ratio}
+            for dp in at.data_points
+        ]
+        asset_trends_json.append(
+            {
+                "asset_id": at.asset_id,
+                "asset_name": at.asset_name,
+                "data_points": data_points,
+            }
+        )
+
+    # Serialize portfolio total trend
+    portfolio_trend_json = [
+        {
+            "date": tp.date,
+            "total_amount": tp.total_amount,
+            "change_pct": tp.change_pct,
+        }
+        for tp in portfolio_trend.total_data_points
+    ]
+
+    # Build metadata
+    dates = [tp.date for tp in portfolio_trend.total_data_points]
+    metadata = {
+        "snapshot_count": len(snapshots),
+        "asset_count": len(portfolio_trend.asset_trends),
+        "start_date": dates[0] if dates else None,
+        "end_date": dates[-1] if dates else None,
+    }
+
+    return jsonify(
+        {
+            "asset_trends": asset_trends_json,
+            "portfolio_trend": portfolio_trend_json,
+            "metadata": metadata,
+        }
+    )
 
 
 @optional_bet_bp.route("", methods=["POST"])

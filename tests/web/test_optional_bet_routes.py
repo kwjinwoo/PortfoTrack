@@ -770,3 +770,149 @@ class TestGetOptionalBetByDate:
         data = response.get_json()
         assert data["date"] == "2026-02-28"
         assert data["items"][0]["asset_id"] == "bitcoin"
+
+
+# ---------------------------------------------------------------------------
+# GET /api/optional-bets/trends/analysis — optional bet trend analysis
+# ---------------------------------------------------------------------------
+
+
+class TestOptionalBetTrendAnalysis:
+    """GET /api/optional-bets/trends/analysis — trend analysis."""
+
+    def test_returns_200_with_empty_data_when_no_files(self, client) -> None:
+        """No optional bet files yields 200 with empty trend data."""
+        response = client.get("/api/optional-bets/trends/analysis")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["asset_trends"] == []
+        assert data["portfolio_trend"] == []
+        assert data["metadata"]["snapshot_count"] == 0
+
+    def test_returns_200_with_single_file(self, client, tmp_data_dir) -> None:
+        """One optional bet file produces valid trend data."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-01",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                },
+                {
+                    "asset_id": "ethereum",
+                    "name": "Ethereum",
+                    "cap_ratio": 0.03,
+                    "amount": 500_000,
+                },
+            ],
+        )
+
+        response = client.get("/api/optional-bets/trends/analysis")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["asset_trends"]) == 2
+        assert len(data["portfolio_trend"]) == 1
+        assert data["portfolio_trend"][0]["total_amount"] == 1_500_000
+        assert data["metadata"]["snapshot_count"] == 1
+
+    def test_returns_200_with_multiple_files(self, client, tmp_data_dir) -> None:
+        """Multiple files produce chronological trend data."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-02-28",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 800_000,
+                }
+            ],
+        )
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-01",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                }
+            ],
+        )
+
+        response = client.get("/api/optional-bets/trends/analysis")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["metadata"]["snapshot_count"] == 2
+        assert data["metadata"]["start_date"] == "2026-02-28"
+        assert data["metadata"]["end_date"] == "2026-03-01"
+        assert len(data["portfolio_trend"]) == 2
+
+    def test_asset_trend_structure(self, client, tmp_data_dir) -> None:
+        """Each asset trend contains asset_id, asset_name, and data_points."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.get("/api/optional-bets/trends/analysis")
+
+        data = response.get_json()
+        trend = data["asset_trends"][0]
+        assert "asset_id" in trend
+        assert "asset_name" in trend
+        assert "data_points" in trend
+        point = trend["data_points"][0]
+        assert "date" in point
+        assert "amount" in point
+        assert "ratio" in point
+
+    def test_portfolio_trend_structure(self, client, tmp_data_dir) -> None:
+        """Each portfolio trend point has date, total_amount, and change_pct."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.get("/api/optional-bets/trends/analysis")
+
+        data = response.get_json()
+        point = data["portfolio_trend"][0]
+        assert "date" in point
+        assert "total_amount" in point
+        assert "change_pct" in point
+
+    def test_portfolio_trend_change_pct_values(self, client, tmp_data_dir) -> None:
+        """change_pct reflects percentage change from previous snapshot."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-02-28",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 10_000_000,
+                }
+            ],
+        )
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-01",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 12_000_000,
+                }
+            ],
+        )
+
+        response = client.get("/api/optional-bets/trends/analysis")
+
+        data = response.get_json()
+        assert data["portfolio_trend"][0]["change_pct"] == pytest.approx(0.0)
+        assert data["portfolio_trend"][1]["change_pct"] == pytest.approx(20.0)
