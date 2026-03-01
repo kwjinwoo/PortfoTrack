@@ -3,6 +3,7 @@
 Covers:
 - GET    /api/optional-bets              — list optional bet files
 - GET    /api/optional-bets/latest       — load latest optional bet snapshot
+- GET    /api/optional-bets/<date>       — load optional bet by date
 - POST   /api/optional-bets              — create new snapshot
 - POST   /api/optional-bets/items        — add item to latest snapshot
 - DELETE /api/optional-bets/items/<id>   — remove item
@@ -709,3 +710,63 @@ class TestCheckBreaches:
         assert response.status_code == 200
         data = response.get_json()
         assert data["breaches"] == []
+
+
+# ---------------------------------------------------------------------------
+# GET /api/optional-bets/<date> — load by date
+# ---------------------------------------------------------------------------
+
+
+class TestGetOptionalBetByDate:
+    """GET /api/optional-bets/<date> — load optional bet by date."""
+
+    def test_returns_snapshot_for_valid_date(self, client, tmp_data_dir):
+        """Valid date with existing file returns 200 with snapshot DTO."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-01")
+
+        response = client.get("/api/optional-bets/2026-03-01")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["date"] == "2026-03-01"
+        assert len(data["items"]) == 1
+        assert data["items"][0]["asset_id"] == "bitcoin"
+
+    def test_nonexistent_date_returns_404(self, client, tmp_data_dir):
+        """Requesting a date with no file returns 404."""
+        response = client.get("/api/optional-bets/2026-12-31")
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert "error" in data
+
+    def test_invalid_date_format_returns_400(self, client, tmp_data_dir):
+        """Invalid date format returns 400."""
+        response = client.get("/api/optional-bets/not-a-date")
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "error" in data
+
+    def test_returns_correct_snapshot_among_multiple(self, client, tmp_data_dir):
+        """Returns the correct snapshot when multiple dates exist."""
+        _write_optional_bet_file(tmp_data_dir, "2026-02-28")
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-01",
+            items=[
+                {
+                    "asset_id": "ethereum",
+                    "name": "Ethereum",
+                    "cap_ratio": 0.03,
+                    "amount": 500_000,
+                }
+            ],
+        )
+
+        response = client.get("/api/optional-bets/2026-02-28")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["date"] == "2026-02-28"
+        assert data["items"][0]["asset_id"] == "bitcoin"

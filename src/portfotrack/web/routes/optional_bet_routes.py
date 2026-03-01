@@ -20,6 +20,7 @@ from portfotrack.services.optional_bet_services import (
     check_cap_breaches_with_snapshot,
     init_optional_bet_snapshot,
     load_latest_optional_bet,
+    load_optional_bet_by_filename,
     remove_item,
     save_optional_bet,
     save_optional_bet_overwrite,
@@ -233,6 +234,42 @@ def update_item_route(asset_id: str):
         )
 
     _save_latest(snapshot)
+    dto = optional_bet_to_dto(snapshot)
+    return jsonify(dto)
+
+
+@optional_bet_bp.route("/<date>", methods=["GET"])
+def get_optional_bet_by_date(date: str):
+    """Load an optional bet snapshot by date.
+
+    Finds the latest version file matching the given date and returns
+    its contents.
+
+    Args:
+        date: ISO date string (YYYY-MM-DD) of the snapshot.
+
+    Returns:
+        JSON representation of the snapshot, or 400/404 on error.
+    """
+    if not _DATE_PATTERN.match(date):
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    matching = sorted(path_mod.OPTIONAL_BETS_DIR.glob(f"optional_bet_{date}_v*.json"))
+    if not matching:
+        return (
+            jsonify({"error": f"Optional bet for {date} not found."}),
+            404,
+        )
+
+    latest_file = matching[-1]
+    try:
+        snapshot = load_optional_bet_by_filename(latest_file.name)
+    except OptionalBetNotFoundError:
+        return (
+            jsonify({"error": f"Optional bet for {date} not found."}),
+            404,
+        )
+
     dto = optional_bet_to_dto(snapshot)
     return jsonify(dto)
 
