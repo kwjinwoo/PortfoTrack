@@ -18,7 +18,9 @@ from portfotrack.services.optional_bet_services import (
     check_cap_breaches,
     check_cap_breaches_with_snapshot,
     init_optional_bet_snapshot,
+    load_all_optional_bets,
     load_latest_optional_bet,
+    load_optional_bet_by_filename,
     remove_item,
     save_optional_bet,
     save_optional_bet_overwrite,
@@ -538,3 +540,162 @@ class TestCheckCapBreachesWithSnapshot:
         result = check_cap_breaches_with_snapshot()
 
         assert result["breaches"] == []
+
+
+# ---------------------------------------------------------------------------
+# load_all_optional_bets
+# ---------------------------------------------------------------------------
+
+
+class TestLoadAllOptionalBets:
+    """Tests for load_all_optional_bets function."""
+
+    def test_empty_directory_returns_empty_list(self, optional_bets_path: Path) -> None:
+        """No optional bet files yields an empty list."""
+        result = load_all_optional_bets()
+
+        assert result == []
+
+    def test_single_file_returns_one_item(self, optional_bets_path: Path) -> None:
+        """One optional bet file yields a list with one OptionalBetSnapshot."""
+        _write_ob_file(
+            optional_bets_path,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                }
+            ],
+        )
+
+        result = load_all_optional_bets()
+
+        assert len(result) == 1
+        assert isinstance(result[0], OptionalBetSnapshot)
+        assert result[0].date == "2026-03-01"
+
+    def test_multiple_files_sorted_ascending_by_date(
+        self, optional_bets_path: Path
+    ) -> None:
+        """Multiple files are returned sorted by date ascending."""
+        _write_ob_file(
+            optional_bets_path,
+            "2026-03-02",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_200_000,
+                }
+            ],
+        )
+        _write_ob_file(
+            optional_bets_path,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                }
+            ],
+        )
+        _write_ob_file(
+            optional_bets_path,
+            "2026-02-28",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 800_000,
+                }
+            ],
+        )
+
+        result = load_all_optional_bets()
+
+        assert len(result) == 3
+        assert result[0].date == "2026-02-28"
+        assert result[1].date == "2026-03-01"
+        assert result[2].date == "2026-03-02"
+
+    def test_items_are_preserved(self, optional_bets_path: Path) -> None:
+        """Loaded optional bet snapshots contain correct items."""
+        _write_ob_file(
+            optional_bets_path,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                },
+                {
+                    "asset_id": "ethereum",
+                    "name": "Ethereum",
+                    "cap_ratio": 0.03,
+                    "amount": 500_000,
+                },
+            ],
+        )
+
+        result = load_all_optional_bets()
+
+        assert len(result) == 1
+        assert len(result[0].items) == 2
+        assert result[0].items[0].asset_id == "bitcoin"
+        assert result[0].items[1].asset_id == "ethereum"
+
+
+# ---------------------------------------------------------------------------
+# load_optional_bet_by_filename
+# ---------------------------------------------------------------------------
+
+
+class TestLoadOptionalBetByFilename:
+    """Tests for load_optional_bet_by_filename function."""
+
+    def test_loads_specific_file(self, optional_bets_path: Path) -> None:
+        """Loading by filename returns the correct snapshot."""
+        _write_ob_file(
+            optional_bets_path,
+            "2026-02-28",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 800_000,
+                }
+            ],
+        )
+        _write_ob_file(
+            optional_bets_path,
+            "2026-03-01",
+            [
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 1_000_000,
+                }
+            ],
+        )
+
+        result = load_optional_bet_by_filename("optional_bet_2026-02-28_v1.json")
+
+        assert result.date == "2026-02-28"
+        assert len(result.items) == 1
+        assert result.items[0].amount == 800_000
+
+    def test_nonexistent_file_raises_error(self, optional_bets_path: Path) -> None:
+        """Loading a non-existent file raises OptionalBetNotFoundError."""
+        with pytest.raises(OptionalBetNotFoundError):
+            load_optional_bet_by_filename("optional_bet_9999-12-31_v1.json")

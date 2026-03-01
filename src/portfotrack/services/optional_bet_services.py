@@ -163,6 +163,45 @@ def load_latest_optional_bet() -> OptionalBetSnapshot:
     return dto_to_optional_bet(dto)
 
 
+def load_all_optional_bets() -> list[OptionalBetSnapshot]:
+    """Load all optional bet snapshots from disk, sorted by date ascending.
+
+    Scans the optional bets directory for files matching the
+    ``optional_bet_*.json`` glob pattern, loads each one, and returns
+    them ordered chronologically.
+
+    Returns:
+        A list of OptionalBetSnapshot domain objects sorted by date
+        ascending. Returns an empty list if no files exist.
+    """
+    bet_files = sorted(OPTIONAL_BETS_DIR.glob("optional_bet_*.json"))
+
+    snapshots: list[OptionalBetSnapshot] = []
+    for file_path in bet_files:
+        dto = store_load(file_path.name)
+        snapshot = dto_to_optional_bet(dto)
+        snapshots.append(snapshot)
+
+    return snapshots
+
+
+def load_optional_bet_by_filename(file_name: str) -> OptionalBetSnapshot:
+    """Load a specific optional bet snapshot by its file name.
+
+    Args:
+        file_name: The JSON file name to load (e.g.
+            ``optional_bet_2026-03-01_v1.json``).
+
+    Returns:
+        The OptionalBetSnapshot from the specified file.
+
+    Raises:
+        OptionalBetNotFoundError: If the file does not exist.
+    """
+    dto = store_load(file_name)
+    return dto_to_optional_bet(dto)
+
+
 def check_cap_breaches(
     snapshot: OptionalBetSnapshot, *, main_portfolio_total: int
 ) -> list[CapBreachResult]:
