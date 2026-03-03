@@ -1,9 +1,6 @@
 ---
 applyTo: '**'
 ---
----
-applyTo: '**'
----
 # Copilot Instructions — PortfoTrack
 
 This repository contains **PortfoTrack**, a local-only personal portfolio tracking tool.
