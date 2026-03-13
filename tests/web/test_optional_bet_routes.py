@@ -916,3 +916,211 @@ class TestOptionalBetTrendAnalysis:
         data = response.get_json()
         assert data["portfolio_trend"][0]["change_pct"] == pytest.approx(0.0)
         assert data["portfolio_trend"][1]["change_pct"] == pytest.approx(20.0)
+
+
+# ---------------------------------------------------------------------------
+# POST /api/optional-bets/record-today — record today's amounts
+# ---------------------------------------------------------------------------
+
+
+class TestRecordToday:
+    """POST /api/optional-bets/record-today — record amounts for today."""
+
+    def test_no_snapshot_returns_404(self, client):
+        """When no optional bet snapshot exists, returns 404."""
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={"items": [{"asset_id": "bitcoin", "amount": 600_000}]},
+        )
+
+        assert response.status_code == 404
+
+    def test_returns_200_with_updated_amounts(self, client, tmp_data_dir):
+        """Successfully recording amounts returns 200 with new snapshot."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-12",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 500_000,
+                },
+                {
+                    "asset_id": "ethereum",
+                    "name": "Ethereum",
+                    "cap_ratio": 0.03,
+                    "amount": 300_000,
+                },
+            ],
+        )
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={
+                "items": [
+                    {"asset_id": "bitcoin", "amount": 600_000},
+                    {"asset_id": "ethereum", "amount": 400_000},
+                ]
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        amounts = {it["asset_id"]: it["amount"] for it in data["items"]}
+        assert amounts["bitcoin"] == 600_000
+        assert amounts["ethereum"] == 400_000
+
+    def test_preserves_name_and_cap_ratio(self, client, tmp_data_dir):
+        """Recorded snapshot preserves name and cap_ratio from latest."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-12",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 500_000,
+                }
+            ],
+        )
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={"items": [{"asset_id": "bitcoin", "amount": 700_000}]},
+        )
+
+        data = response.get_json()
+        item = data["items"][0]
+        assert item["name"] == "Bitcoin"
+        assert item["cap_ratio"] == 0.05
+
+    def test_invalid_json_returns_400(self, client, tmp_data_dir):
+        """Non-JSON body returns 400."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-12")
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+
+    def test_missing_items_key_returns_400(self, client, tmp_data_dir):
+        """Missing 'items' key returns 400."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-12")
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={"amounts": []},
+        )
+
+        assert response.status_code == 400
+
+    def test_unknown_asset_id_returns_400(self, client, tmp_data_dir):
+        """An asset_id not in the latest snapshot returns 400."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-12",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 500_000,
+                }
+            ],
+        )
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={
+                "items": [
+                    {"asset_id": "bitcoin", "amount": 600_000},
+                    {"asset_id": "unknown", "amount": 100_000},
+                ]
+            },
+        )
+
+        assert response.status_code == 400
+
+    def test_missing_required_fields_returns_400(self, client, tmp_data_dir):
+        """Item without asset_id or amount returns 400."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-12")
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={"items": [{"asset_id": "bitcoin"}]},
+        )
+
+        assert response.status_code == 400
+
+    def test_non_integer_amount_returns_400(self, client, tmp_data_dir):
+        """Non-integer amount returns 400."""
+        _write_optional_bet_file(tmp_data_dir, "2026-03-12")
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={"items": [{"asset_id": "bitcoin", "amount": "not_a_number"}]},
+        )
+
+        assert response.status_code == 400
+
+    def test_incomplete_items_returns_400(self, client, tmp_data_dir):
+        """When not all assets from latest are included, returns 400."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-12",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 500_000,
+                },
+                {
+                    "asset_id": "ethereum",
+                    "name": "Ethereum",
+                    "cap_ratio": 0.03,
+                    "amount": 300_000,
+                },
+            ],
+        )
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={"items": [{"asset_id": "bitcoin", "amount": 600_000}]},
+        )
+
+        assert response.status_code == 400
+
+    def test_saves_new_snapshot_file(self, client, tmp_data_dir):
+        """Record-today creates a new file with today's date."""
+        _write_optional_bet_file(
+            tmp_data_dir,
+            "2026-03-12",
+            items=[
+                {
+                    "asset_id": "bitcoin",
+                    "name": "Bitcoin",
+                    "cap_ratio": 0.05,
+                    "amount": 500_000,
+                }
+            ],
+        )
+
+        response = client.post(
+            "/api/optional-bets/record-today",
+            json={"items": [{"asset_id": "bitcoin", "amount": 700_000}]},
+        )
+
+        assert response.status_code == 200
+        # A new file should have been saved (today's date)
+        files = sorted(tmp_data_dir.glob("optional_bet_*.json"))
+        assert len(files) >= 1
+        # The latest file should contain the updated amount
+        latest_file = files[-1]
+        data = json.loads(latest_file.read_text())
+        assert data["items"][0]["amount"] == 700_000

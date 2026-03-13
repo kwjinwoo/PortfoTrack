@@ -22,6 +22,7 @@ from portfotrack.services.optional_bet_services import (
     load_all_optional_bets,
     load_latest_optional_bet,
     load_optional_bet_by_filename,
+    record_today_amounts,
     remove_item,
     save_optional_bet,
     save_optional_bet_overwrite,
@@ -458,6 +459,62 @@ def check_breaches():
             "main_portfolio_total": report["main_portfolio_total"],
         }
     )
+
+
+@optional_bet_bp.route("/record-today", methods=["POST"])
+def record_today():
+    """Record today's amounts for all optional bet items.
+
+    Creates a new snapshot dated today with updated amounts.
+    All asset_ids from the latest snapshot must be included.
+
+    Expects JSON body with an ``items`` list where each item has
+    ``asset_id`` (str) and ``amount`` (int).
+
+    Returns:
+        200 with the new snapshot DTO, or 400/404 on error.
+    """
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({"error": "Request body must be valid JSON."}), 400
+
+    items = body.get("items")
+    if items is None or not isinstance(items, list):
+        return jsonify({"error": "'items' must be a list."}), 400
+
+    for item in items:
+        if not isinstance(item, dict):
+            return jsonify({"error": "Each item must be an object."}), 400
+        if "asset_id" not in item or "amount" not in item:
+            return (
+                jsonify({"error": "Each item must have 'asset_id' and 'amount'."}),
+                400,
+            )
+        if not isinstance(item["asset_id"], str) or not item["asset_id"]:
+            return (
+                jsonify({"error": "'asset_id' must be a non-empty string."}),
+                400,
+            )
+        if not isinstance(item["amount"], int) or isinstance(item["amount"], bool):
+            return jsonify({"error": "'amount' must be an integer."}), 400
+
+    try:
+        latest = load_latest_optional_bet()
+    except OptionalBetNotFoundError:
+        return jsonify({"error": "No optional bet snapshot found."}), 404
+
+    amount_updates = {item["asset_id"]: item["amount"] for item in items}
+
+    try:
+        new_snapshot = record_today_amounts(latest, amount_updates)
+    except OptionalBetAssetNotFoundError as e:
+        return jsonify({"error": str(e)}), 400
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    save_optional_bet(new_snapshot)
+    dto = optional_bet_to_dto(new_snapshot)
+    return jsonify(dto)
 
 
 def _validate_items(items: list) -> tuple | None:
