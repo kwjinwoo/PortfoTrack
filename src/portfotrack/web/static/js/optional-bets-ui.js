@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setupAddForm();
     setupEditButtons();
     setupBreachForm();
+    setupRecordTodayButtons();
 });
 
 // ---------------------------------------------------------------------------
@@ -34,6 +35,7 @@ async function loadLatest() {
             table.style.display = "none";
             createBtn.style.display = "inline-block";
             editBtn.style.display = "none";
+            document.getElementById("record-today-btn").style.display = "none";
             _obDate = null;
             return;
         }
@@ -46,12 +48,14 @@ async function loadLatest() {
             status.innerHTML = "<p>옵셔널 벳이 비어 있습니다. 아이템을 추가하세요.</p>";
             table.style.display = "none";
             editBtn.style.display = "none";
+            document.getElementById("record-today-btn").style.display = "none";
             return;
         }
 
         status.innerHTML = "";
         table.style.display = "table";
         editBtn.style.display = "inline-block";
+        document.getElementById("record-today-btn").style.display = "inline-block";
         renderItems(tbody, data.items);
         document.getElementById("ob-total").innerHTML =
             "<strong>" + data.items.reduce((s, i) => s + i.amount, 0).toLocaleString() + "</strong>";
@@ -355,6 +359,84 @@ function setupBreachForm() {
             result.innerHTML = html;
         } catch {
             result.innerHTML = "<p class='error'>체크 중 오류가 발생했습니다.</p>";
+        }
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Record today's amounts
+// ---------------------------------------------------------------------------
+
+function setupRecordTodayButtons() {
+    const recordBtn = document.getElementById("record-today-btn");
+    const recordCard = document.getElementById("ob-record-card");
+    const cancelBtn = document.getElementById("record-cancel-btn");
+    const saveBtn = document.getElementById("record-save-btn");
+
+    recordBtn.addEventListener("click", async function () {
+        const response = await fetch("/api/optional-bets/latest");
+        if (!response.ok) return;
+        const data = await response.json();
+
+        const tbody = document.getElementById("record-items");
+        tbody.innerHTML = data.items
+            .map(
+                (item) => `
+        <tr data-asset-id="${item.asset_id}">
+          <td>${item.asset_id}</td>
+          <td>${item.name}</td>
+          <td>${(item.cap_ratio * 100).toFixed(1)}%</td>
+          <td><input type="number" class="record-amount" value="${item.amount}" min="0"></td>
+        </tr>`
+            )
+            .join("");
+
+        recordCard.style.display = "block";
+        recordBtn.style.display = "none";
+        document.getElementById("record-message").textContent = "";
+    });
+
+    cancelBtn.addEventListener("click", function () {
+        recordCard.style.display = "none";
+        document.getElementById("record-today-btn").style.display = "inline-block";
+        document.getElementById("record-message").textContent = "";
+    });
+
+    saveBtn.addEventListener("click", async function () {
+        const msg = document.getElementById("record-message");
+        msg.textContent = "";
+
+        const rows = document.querySelectorAll("#record-items tr");
+        const items = [];
+        for (const row of rows) {
+            items.push({
+                asset_id: row.dataset.assetId,
+                amount: parseInt(row.querySelector(".record-amount").value, 10),
+            });
+        }
+
+        try {
+            const response = await fetch("/api/optional-bets/record-today", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                msg.textContent = "오늘 금액이 기록되었습니다.";
+                msg.className = "message success";
+                recordCard.style.display = "none";
+                loadLatest();
+                loadFileList();
+            } else {
+                msg.textContent = data.error || "기록 실패";
+                msg.className = "message error";
+            }
+        } catch {
+            msg.textContent = "요청 중 오류가 발생했습니다.";
+            msg.className = "message error";
         }
     });
 }
