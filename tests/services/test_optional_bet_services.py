@@ -21,6 +21,7 @@ from portfotrack.services.optional_bet_services import (
     load_all_optional_bets,
     load_latest_optional_bet,
     load_optional_bet_by_filename,
+    record_today_amounts,
     remove_item,
     save_optional_bet,
     save_optional_bet_overwrite,
@@ -699,3 +700,83 @@ class TestLoadOptionalBetByFilename:
         """Loading a non-existent file raises OptionalBetNotFoundError."""
         with pytest.raises(OptionalBetNotFoundError):
             load_optional_bet_by_filename("optional_bet_9999-12-31_v1.json")
+
+
+# ---------------------------------------------------------------------------
+# record_today_amounts
+# ---------------------------------------------------------------------------
+
+
+class TestRecordTodayAmounts:
+    """Tests for record_today_amounts service function."""
+
+    def test_updates_all_items_with_new_amounts(self) -> None:
+        """All item amounts are replaced with the given updates."""
+        latest = OptionalBetSnapshot(date="2026-03-12")
+        latest.add_item("bitcoin", "Bitcoin", 0.05, 500_000)
+        latest.add_item("ethereum", "Ethereum", 0.03, 300_000)
+
+        result = record_today_amounts(latest, {"bitcoin": 600_000, "ethereum": 400_000})
+
+        assert len(result.items) == 2
+        amounts = {item.asset_id: item.amount for item in result.items}
+        assert amounts["bitcoin"] == 600_000
+        assert amounts["ethereum"] == 400_000
+
+    def test_preserves_name_and_cap_ratio(self) -> None:
+        """Name and cap_ratio are carried over from the latest snapshot."""
+        latest = OptionalBetSnapshot(date="2026-03-12")
+        latest.add_item("bitcoin", "Bitcoin", 0.05, 500_000)
+
+        result = record_today_amounts(latest, {"bitcoin": 700_000})
+
+        item = result.items[0]
+        assert item.name == "Bitcoin"
+        assert item.cap_ratio == 0.05
+
+    def test_result_has_today_date(self) -> None:
+        """Returned snapshot uses today's date (not the latest's date)."""
+        import datetime
+        from zoneinfo import ZoneInfo
+
+        latest = OptionalBetSnapshot(date="2026-03-12")
+        latest.add_item("bitcoin", "Bitcoin", 0.05, 500_000)
+
+        result = record_today_amounts(latest, {"bitcoin": 600_000})
+
+        expected_date = datetime.datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
+        assert result.date == expected_date
+
+    def test_unknown_asset_id_raises_error(self) -> None:
+        """An asset_id in updates not present in latest raises error."""
+        latest = OptionalBetSnapshot(date="2026-03-12")
+        latest.add_item("bitcoin", "Bitcoin", 0.05, 500_000)
+
+        with pytest.raises(OptionalBetAssetNotFoundError):
+            record_today_amounts(latest, {"bitcoin": 600_000, "unknown_asset": 100_000})
+
+    def test_missing_asset_in_updates_raises_error(self) -> None:
+        """An asset_id in latest not present in updates raises ValueError."""
+        latest = OptionalBetSnapshot(date="2026-03-12")
+        latest.add_item("bitcoin", "Bitcoin", 0.05, 500_000)
+        latest.add_item("ethereum", "Ethereum", 0.03, 300_000)
+
+        with pytest.raises(ValueError, match="ethereum"):
+            record_today_amounts(latest, {"bitcoin": 600_000})
+
+    def test_negative_amount_raises_error(self) -> None:
+        """Negative amount raises ValueError via domain validation."""
+        latest = OptionalBetSnapshot(date="2026-03-12")
+        latest.add_item("bitcoin", "Bitcoin", 0.05, 500_000)
+
+        with pytest.raises(ValueError, match="non-negative"):
+            record_today_amounts(latest, {"bitcoin": -100})
+
+    def test_empty_snapshot_with_empty_updates(self) -> None:
+        """An empty snapshot with empty updates returns an empty snapshot."""
+        latest = OptionalBetSnapshot(date="2026-03-12")
+
+        result = record_today_amounts(latest, {})
+
+        assert result.items == []
+        assert result.currency == "KRW"

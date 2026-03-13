@@ -4,6 +4,7 @@ from portfotrack.domain.optional_bet import (
     CapBreachResult,
     OptionalBetSnapshot,
 )
+from portfotrack.domain.optional_bet.errors import OptionalBetAssetNotFoundError
 from portfotrack.domain.optional_bet.optional_bet import (
     check_cap_breaches as domain_check_cap_breaches,
 )
@@ -200,6 +201,52 @@ def load_optional_bet_by_filename(file_name: str) -> OptionalBetSnapshot:
     """
     dto = store_load(file_name)
     return dto_to_optional_bet(dto)
+
+
+def record_today_amounts(
+    latest: OptionalBetSnapshot,
+    amount_updates: dict[str, int],
+) -> OptionalBetSnapshot:
+    """Create a new snapshot for today with updated amounts.
+
+    Copies all items from ``latest`` into a fresh snapshot dated today
+    (Asia/Seoul), replacing each item's amount with the value from
+    ``amount_updates``. Name and cap_ratio are preserved.
+
+    Args:
+        latest: The most recent OptionalBetSnapshot to base on.
+        amount_updates: Mapping of asset_id to new amount. Must contain
+            exactly the same asset_ids as ``latest``.
+
+    Returns:
+        A new OptionalBetSnapshot with today's date and updated amounts.
+
+    Raises:
+        OptionalBetAssetNotFoundError: If an asset_id in updates is not
+            present in ``latest``.
+        ValueError: If an asset_id in ``latest`` is missing from updates,
+            or if any amount is negative.
+    """
+    latest_ids = {item.asset_id for item in latest.items}
+
+    unknown = set(amount_updates.keys()) - latest_ids
+    if unknown:
+        raise OptionalBetAssetNotFoundError(asset_id=next(iter(unknown)))
+
+    missing = latest_ids - set(amount_updates.keys())
+    if missing:
+        raise ValueError(f"Missing asset_id in updates: {', '.join(sorted(missing))}")
+
+    new_snapshot = OptionalBetSnapshot()
+    for item in latest.items:
+        new_snapshot.add_item(
+            asset_id=item.asset_id,
+            name=item.name,
+            cap_ratio=item.cap_ratio,
+            amount=amount_updates[item.asset_id],
+        )
+
+    return new_snapshot
 
 
 def check_cap_breaches(
