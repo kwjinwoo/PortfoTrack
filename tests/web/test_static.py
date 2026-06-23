@@ -48,6 +48,23 @@ class TestIndexPage:
 
         assert "app.js" in html
 
+    def test_index_contains_dashboard_summary_regions(self, client):
+        """GET / should expose dashboard summary and action regions."""
+        response = client.get("/")
+        html = response.data.decode("utf-8")
+
+        assert "dashboard-summary" in html
+        assert "latest-snapshot-date" in html
+        assert "dashboard-next-actions" in html
+        assert "drift-status" in html
+
+    def test_index_links_dashboard_javascript(self, client):
+        """GET / should reference the dashboard JavaScript file."""
+        response = client.get("/")
+        html = response.data.decode("utf-8")
+
+        assert "dashboard-ui.js" in html
+
 
 class TestStaticFiles:
     """Tests for static CSS and JS file serving."""
@@ -61,5 +78,11 @@ class TestStaticFiles:
     def test_js_file_accessible(self, client):
         """GET /static/js/app.js should return 200."""
         response = client.get("/static/js/app.js")
+
+        assert response.status_code == 200
+
+    def test_dashboard_js_file_accessible(self, client):
+        """GET /static/js/dashboard-ui.js should return 200."""
+        response = client.get("/static/js/dashboard-ui.js")
 
         assert response.status_code == 200

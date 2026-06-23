@@ -50,7 +50,8 @@ They should not contain business logic.
 
 Current page areas:
 
-- Dashboard
+- Dashboard: summarizes the latest snapshot, target setup status, drift status,
+  and next actions by composing existing local JSON API endpoints.
 - Snapshots
 - Targets
 - Reports

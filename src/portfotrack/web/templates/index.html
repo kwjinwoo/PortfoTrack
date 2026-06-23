@@ -3,6 +3,42 @@
 {% block content %}
 <section class="dashboard">
   <h2>대시보드</h2>
-  <p>PortfoTrack에 오신 것을 환영합니다.</p>
+
+  <div class="dashboard-summary" id="dashboard-summary" aria-live="polite">
+    <div class="summary-card">
+      <span class="summary-label">최신 스냅샷</span>
+      <strong id="latest-snapshot-date">불러오는 중...</strong>
+      <span id="latest-snapshot-total" class="summary-meta">-</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">타겟 배분</span>
+      <strong id="target-status">확인 중</strong>
+      <span id="target-asset-count" class="summary-meta">-</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">리밸런싱 상태</span>
+      <strong id="drift-status">확인 중</strong>
+      <span id="drift-detail" class="summary-meta">-</span>
+    </div>
+  </div>
+
+  <div class="dashboard-panel">
+    <div>
+      <h3>다음 행동</h3>
+      <p id="dashboard-guidance">현재 데이터를 확인하고 있습니다.</p>
+    </div>
+    <div class="dashboard-actions" id="dashboard-next-actions">
+      <a class="btn btn-primary" href="/snapshots">스냅샷 기록</a>
+      <a class="btn btn-secondary" href="/reports">리포트 보기</a>
+      <a class="btn btn-secondary" href="/targets">타겟 설정</a>
+    </div>
+  </div>
+
+  <div class="dashboard-panel" id="dashboard-drift-panel" style="display:none;">
+    <h3>허용 범위 밖 자산</h3>
+    <ul id="dashboard-drift-list" class="dashboard-list"></ul>
+  </div>
 </section>
+
+<script src="{{ url_for('static', filename='js/dashboard-ui.js') }}"></script>
 {% endblock %}
