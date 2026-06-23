@@ -47,6 +47,20 @@ class TestTargetsPageStructure:
         assert 'name="lower"' in html
         assert 'name="upper"' in html
 
+    def test_ratio_inputs_accept_percent_values(self, client):
+        """Ratio fields should present percent-scale values in the UI."""
+        response = client.get("/targets")
+        html = response.data.decode("utf-8")
+
+        assert (
+            'id="target-ratio" name="target_ratio" step="0.1" min="0" max="100"' in html
+        )
+        assert 'id="lower-bound" name="lower" step="0.1" min="0" max="100"' in html
+        assert 'id="upper-bound" name="upper" step="0.1" min="0" max="100"' in html
+        assert "예: 60" in html
+        assert "예: 50" in html
+        assert "예: 70" in html
+
     def test_references_targets_js(self, client):
         """Page should reference the targets UI script."""
         response = client.get("/targets")

@@ -99,9 +99,9 @@ function setupAddAssetForm() {
       asset_id: document.getElementById("asset-id").value.trim(),
       asset_name: document.getElementById("asset-name").value.trim(),
       purpose: document.getElementById("asset-purpose").value.trim(),
-      target_ratio: parseFloat(document.getElementById("target-ratio").value),
-      lower: parseFloat(document.getElementById("lower-bound").value),
-      upper: parseFloat(document.getElementById("upper-bound").value),
+      target_ratio: percentInputToRatio(document.getElementById("target-ratio").value),
+      lower: percentInputToRatio(document.getElementById("lower-bound").value),
+      upper: percentInputToRatio(document.getElementById("upper-bound").value),
     };
 
     if (!payload.asset_id || !payload.asset_name || !payload.purpose) {
@@ -175,16 +175,16 @@ async function editTarget() {
           <input type="text" name="purpose" value="${a.purpose}" required>
         </div>
         <div class="form-group">
-          <label>목표 비율</label>
-          <input type="number" name="target_ratio" step="0.01" min="0" max="1" value="${a.target_ratio}" required>
+          <label>목표 비율 (%)</label>
+          <input type="number" name="target_ratio" step="0.1" min="0" max="100" value="${ratioToPercentInput(a.target_ratio)}" required>
         </div>
         <div class="form-group">
-          <label>하한</label>
-          <input type="number" name="lower" step="0.01" min="0" max="1" value="${a.tolerance.lower}" required>
+          <label>하한 (%)</label>
+          <input type="number" name="lower" step="0.1" min="0" max="100" value="${ratioToPercentInput(a.tolerance.lower)}" required>
         </div>
         <div class="form-group">
-          <label>상한</label>
-          <input type="number" name="upper" step="0.01" min="0" max="1" value="${a.tolerance.upper}" required>
+          <label>상한 (%)</label>
+          <input type="number" name="upper" step="0.1" min="0" max="100" value="${ratioToPercentInput(a.tolerance.upper)}" required>
         </div>
         <div class="form-group">
           <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.asset-row').remove()">삭제</button>
@@ -226,16 +226,16 @@ function setupEditButtons() {
         <input type="text" name="purpose" required placeholder="예: growth">
       </div>
       <div class="form-group">
-        <label>목표 비율</label>
-        <input type="number" name="target_ratio" step="0.01" min="0" max="1" required placeholder="예: 0.6">
+        <label>목표 비율 (%)</label>
+        <input type="number" name="target_ratio" step="0.1" min="0" max="100" required placeholder="예: 60">
       </div>
       <div class="form-group">
-        <label>하한</label>
-        <input type="number" name="lower" step="0.01" min="0" max="1" required placeholder="예: 0.5">
+        <label>하한 (%)</label>
+        <input type="number" name="lower" step="0.1" min="0" max="100" required placeholder="예: 50">
       </div>
       <div class="form-group">
-        <label>상한</label>
-        <input type="number" name="upper" step="0.01" min="0" max="1" required placeholder="예: 0.7">
+        <label>상한 (%)</label>
+        <input type="number" name="upper" step="0.1" min="0" max="100" required placeholder="예: 70">
       </div>
       <div class="form-group">
         <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.asset-row').remove()">삭제</button>
@@ -260,9 +260,9 @@ function setupEditButtons() {
         const assetId = row.querySelector('[name="asset_id"]').value.trim();
         const assetName = row.querySelector('[name="asset_name"]').value.trim();
         const purpose = row.querySelector('[name="purpose"]').value.trim();
-        const targetRatio = parseFloat(row.querySelector('[name="target_ratio"]').value);
-        const lower = parseFloat(row.querySelector('[name="lower"]').value);
-        const upper = parseFloat(row.querySelector('[name="upper"]').value);
+        const targetRatio = percentInputToRatio(row.querySelector('[name="target_ratio"]').value);
+        const lower = percentInputToRatio(row.querySelector('[name="lower"]').value);
+        const upper = percentInputToRatio(row.querySelector('[name="upper"]').value);
 
         if (!assetId || !assetName || !purpose) {
           showMessage("edit-target-message", "모든 텍스트 필드를 입력하세요.", "error");
@@ -349,4 +349,22 @@ function showMessage(elementId, text, type) {
     el.textContent = "";
     el.className = "message";
   }, 5000);
+}
+
+/**
+ * Convert a user-facing percent input into the ratio used by the API.
+ */
+function percentInputToRatio(value) {
+  const percent = parseFloat(value);
+  if (isNaN(percent)) {
+    return NaN;
+  }
+  return percent / 100;
+}
+
+/**
+ * Convert a stored ratio into a compact percent value for edit inputs.
+ */
+function ratioToPercentInput(ratio) {
+  return Number((ratio * 100).toFixed(4)).toString();
 }

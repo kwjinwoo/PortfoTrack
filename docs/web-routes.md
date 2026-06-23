@@ -54,7 +54,8 @@ Current page areas:
   first-use setup progress, and next actions by composing existing local JSON
   API endpoints.
 - Snapshots
-- Targets
+- Targets: presents allocation ratios as percent-scale inputs while preserving
+  ratio-scale JSON API payloads.
 - Reports
 - Trends
 - Optional bets
