@@ -1,0 +1,133 @@
+---
+id: map
+title: Knowledge Map
+kind: graph-map
+depends_on:
+  - index
+related:
+  - architecture
+  - testing-playbook
+  - error-book
+code_refs: []
+tests: []
+updates_when:
+  - docs nodes are added or removed
+  - task reading paths change
+---
+
+# Knowledge Map
+
+Use this map as the graph entrypoint for non-trivial repository work.
+Each path lists the minimum docs nodes to read before editing code.
+Also read the nearest `AGENTS.md` for any files you will touch.
+
+## If Changing Domain Logic
+
+Read:
+
+1. [Architecture](architecture.md)
+2. [Domain Model](domain-model.md)
+3. [Error Policy](error-policy.md)
+4. [Testing Playbook](testing-playbook.md)
+
+Then inspect:
+
+- `src/portfotrack/domain/AGENTS.md`
+- `src/portfotrack/domain/`
+- `src/portfotrack/services/` if behavior crosses a use-case boundary
+- `tests/domain/`
+- `tests/services/`
+
+## If Changing Services
+
+Read:
+
+1. [Architecture](architecture.md)
+2. [Domain Model](domain-model.md)
+3. [Storage Contracts](storage-contracts.md) when persistence is involved
+4. [Testing Playbook](testing-playbook.md)
+
+Then inspect:
+
+- `src/portfotrack/services/AGENTS.md`
+- `src/portfotrack/services/`
+- relevant domain and storage modules
+- `tests/services/`
+
+## If Changing JSON Persistence
+
+Read:
+
+1. [Architecture](architecture.md)
+2. [Storage Contracts](storage-contracts.md)
+3. [Error Policy](error-policy.md)
+4. [Testing Playbook](testing-playbook.md)
+
+Then inspect:
+
+- `src/portfotrack/storage/AGENTS.md`
+- `src/portfotrack/storage/serialization/`
+- `src/portfotrack/storage/json_store/`
+- `tests/storage/serialization/`
+- `tests/storage/json_store/`
+
+## If Changing Flask Routes or Pages
+
+Read:
+
+1. [Architecture](architecture.md)
+2. [Web Routes](web-routes.md)
+3. [Error Policy](error-policy.md)
+4. [Testing Playbook](testing-playbook.md)
+
+Then inspect:
+
+- `src/portfotrack/web/AGENTS.md`
+- `src/portfotrack/web/app.py`
+- `src/portfotrack/web/routes/`
+- `src/portfotrack/web/templates/`
+- `src/portfotrack/web/static/`
+- `tests/web/`
+
+## If Changing Error Handling
+
+Read:
+
+1. [Error Policy](error-policy.md)
+2. [Domain Model](domain-model.md)
+3. [Storage Contracts](storage-contracts.md)
+4. [Web Routes](web-routes.md)
+5. [Testing Playbook](testing-playbook.md)
+
+Then inspect the layer-specific error modules before changing behavior.
+
+## If Adding or Changing Project Rules
+
+Read:
+
+1. [Decisions](decisions.md)
+2. [Error Book](error-book.md)
+3. [Architecture](architecture.md)
+
+Then update `AGENTS.md` if the rule affects agent behavior.
+
+## If Changing Docs Graph Nodes
+
+Use `$portfotrack-docs-graph`.
+
+Read:
+
+1. `docs/AGENTS.md`
+2. [Knowledge Index](index.md)
+3. The node being edited
+4. Any node listed in `depends_on`
+
+Then inspect related nodes only when the edge or traversal path changes.
+
+## Graph Edges
+
+- `architecture` is a parent of domain, storage, services, and web nodes.
+- `error-policy` applies across all layers.
+- `testing-playbook` applies to every behavior change.
+- `decisions` explains why broad constraints exist.
+- `error-book` records recurring corrections that agents should check before editing.
