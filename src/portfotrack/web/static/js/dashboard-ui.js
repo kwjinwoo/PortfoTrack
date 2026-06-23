@@ -18,7 +18,8 @@ async function loadDashboardSummary() {
     renderSnapshotSummary(latestSnapshot);
     renderTargetSummary(target);
 
-    if (!latestSnapshot || !target) {
+    if (!latestSnapshot || !target || target.assets.length === 0) {
+      renderSetupFlow(snapshots, target, null);
       renderIncompleteSetup(latestSnapshot, target);
       return;
     }
@@ -26,6 +27,7 @@ async function loadDashboardSummary() {
     const report = await fetchOptionalJson(
       `/api/reports/allocation?snapshot_date=${encodeURIComponent(latestSnapshot.date)}`
     );
+    renderSetupFlow(snapshots, target, report);
     renderReportSummary(report);
   } catch (err) {
     renderDashboardError();
@@ -100,6 +102,51 @@ function renderTargetSummary(target) {
 }
 
 /**
+ * Render the first-use setup flow from available local data.
+ */
+function renderSetupFlow(snapshots, target, report) {
+  const hasTargetAssets = Boolean(target && target.assets && target.assets.length > 0);
+  const hasSnapshot = snapshots.length > 0;
+  const hasReport = Boolean(report && hasTargetAssets && hasSnapshot);
+  const hasTrend = snapshots.length >= 2;
+  const steps = [
+    { id: "target", ready: hasTargetAssets },
+    { id: "snapshot", ready: hasSnapshot },
+    { id: "report", ready: hasReport },
+    { id: "trend", ready: hasTrend },
+  ];
+  const currentStep = steps.find((step) => !step.ready);
+
+  for (const step of steps) {
+    const isCurrent = currentStep && currentStep.id === step.id;
+    const state = step.ready ? "complete" : isCurrent ? "current" : "waiting";
+    updateSetupStep(step.id, state);
+  }
+}
+
+/**
+ * Update one setup step's visual state and text.
+ */
+function updateSetupStep(stepId, state) {
+  const step = document.querySelector(`[data-setup-step="${stepId}"]`);
+  if (!step) return;
+
+  const label = step.querySelector("[data-setup-status]");
+  step.classList.remove("is-complete", "is-current", "is-waiting");
+  step.classList.add(`is-${state}`);
+
+  if (!label) return;
+
+  if (state === "complete") {
+    label.textContent = "완료";
+  } else if (state === "current") {
+    label.textContent = "현재 단계";
+  } else {
+    label.textContent = "대기";
+  }
+}
+
+/**
  * Render guidance for incomplete setup states.
  */
 function renderIncompleteSetup(snapshot, target) {
@@ -109,7 +156,7 @@ function renderIncompleteSetup(snapshot, target) {
 
   driftStatus.textContent = "대기";
 
-  if (!target) {
+  if (!target || target.assets.length === 0) {
     driftDetail.textContent = "타겟 설정 후 비교할 수 있습니다.";
     guidance.textContent = "먼저 타겟 배분을 만들고 현재 금액 스냅샷을 기록하세요.";
     return;

@@ -4,6 +4,37 @@
 <section class="dashboard">
   <h2>대시보드</h2>
 
+  <div class="dashboard-setup-flow" id="dashboard-setup-flow" aria-label="초기 설정 진행">
+    <a class="setup-step is-waiting" href="/targets" data-setup-step="target">
+      <span class="setup-step-index">1</span>
+      <span>
+        <strong>타겟 배분</strong>
+        <small data-setup-status>대기</small>
+      </span>
+    </a>
+    <a class="setup-step is-waiting" href="/snapshots" data-setup-step="snapshot">
+      <span class="setup-step-index">2</span>
+      <span>
+        <strong>스냅샷 기록</strong>
+        <small data-setup-status>대기</small>
+      </span>
+    </a>
+    <a class="setup-step is-waiting" href="/reports" data-setup-step="report">
+      <span class="setup-step-index">3</span>
+      <span>
+        <strong>리포트 확인</strong>
+        <small data-setup-status>대기</small>
+      </span>
+    </a>
+    <a class="setup-step is-waiting" href="/trends" data-setup-step="trend">
+      <span class="setup-step-index">4</span>
+      <span>
+        <strong>추이 보기</strong>
+        <small data-setup-status>대기</small>
+      </span>
+    </a>
+  </div>
+
   <div class="dashboard-summary" id="dashboard-summary" aria-live="polite">
     <div class="summary-card">
       <span class="summary-label">최신 스냅샷</span>

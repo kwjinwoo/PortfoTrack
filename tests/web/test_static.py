@@ -58,6 +58,17 @@ class TestIndexPage:
         assert "dashboard-next-actions" in html
         assert "drift-status" in html
 
+    def test_index_contains_setup_flow_regions(self, client):
+        """GET / should expose setup flow steps for first-time users."""
+        response = client.get("/")
+        html = response.data.decode("utf-8")
+
+        assert "dashboard-setup-flow" in html
+        assert 'data-setup-step="target"' in html
+        assert 'data-setup-step="snapshot"' in html
+        assert 'data-setup-step="report"' in html
+        assert 'data-setup-step="trend"' in html
+
     def test_index_links_dashboard_javascript(self, client):
         """GET / should reference the dashboard JavaScript file."""
         response = client.get("/")
