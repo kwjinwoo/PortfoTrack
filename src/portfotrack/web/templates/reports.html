@@ -17,6 +17,13 @@
       </div>
       <button type="submit" class="btn btn-primary">리포트 생성</button>
       <div id="report-message" class="message"></div>
+      <div id="report-empty-state" class="empty-state" style="display:none;">
+        <strong>리포트를 만들 스냅샷이 없습니다.</strong>
+        <p>현재 금액 스냅샷을 먼저 기록하면 타겟 배분과 비교할 수 있습니다.</p>
+        <div class="empty-state-actions">
+          <a class="btn btn-primary" href="/snapshots">스냅샷 기록하기</a>
+        </div>
+      </div>
     </form>
   </div>
 

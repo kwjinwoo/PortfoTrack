@@ -392,6 +392,44 @@ th {
   color: #721c24;
 }
 
+.message a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.empty-state {
+  padding: 1rem;
+  background: #f8f9fa;
+  border: 1px solid #ecf0f1;
+  border-radius: 8px;
+  color: #2c3e50;
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.empty-state p {
+  color: #5d6d7e;
+}
+
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.empty-state-actions:empty {
+  display: none;
+}
+
+.empty-state-actions .btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
 /* Progress bars */
 .progress-bar {
   background-color: #ecf0f1;

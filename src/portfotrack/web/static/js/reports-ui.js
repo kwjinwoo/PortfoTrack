@@ -12,10 +12,24 @@ document.addEventListener("DOMContentLoaded", function () {
  */
 async function loadSnapshotOptions() {
   const select = document.getElementById("snapshot-date-select");
+  const emptyState = document.getElementById("report-empty-state");
 
   try {
     const response = await fetch("/api/snapshots");
     const data = await response.json();
+
+    if (data.length === 0) {
+      if (emptyState) {
+        emptyState.style.display = "block";
+      }
+      select.disabled = true;
+      return;
+    }
+
+    if (emptyState) {
+      emptyState.style.display = "none";
+    }
+    select.disabled = false;
 
     data.forEach(function (s) {
       const option = document.createElement("option");
@@ -25,6 +39,9 @@ async function loadSnapshotOptions() {
     });
   } catch (err) {
     console.error("Failed to load snapshots:", err);
+    if (emptyState) {
+      emptyState.style.display = "block";
+    }
   }
 }
 

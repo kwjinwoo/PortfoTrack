@@ -106,6 +106,20 @@ class TestStaticFiles:
         assert "percentInputToRatio" in js
         assert "ratioToPercentInput" in js
 
+    def test_ui_scripts_render_empty_state_actions(self, client):
+        """UI scripts should render actionable empty states for missing data."""
+        script_paths = [
+            "/static/js/snapshots-ui.js",
+            "/static/js/targets-ui.js",
+            "/static/js/reports-ui.js",
+            "/static/js/optional-bets-ui.js",
+        ]
+
+        for path in script_paths:
+            response = client.get(path)
+            js = response.data.decode("utf-8")
+            assert "empty-state" in js
+
     @pytest.mark.parametrize(
         "path",
         [

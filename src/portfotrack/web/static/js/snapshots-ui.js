@@ -21,7 +21,19 @@ async function loadSnapshots() {
     const data = await response.json();
 
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3">저장된 스냅샷이 없습니다.</td></tr>';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="3">
+            <div class="empty-state">
+              <strong>저장된 스냅샷이 없습니다.</strong>
+              <p>현재 포트폴리오 금액을 기록하면 리포트와 추이를 볼 수 있습니다.</p>
+              <div class="empty-state-actions">
+                <a class="btn btn-primary" href="#create-snapshot-form">스냅샷 기록하기</a>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
       return;
     }
 

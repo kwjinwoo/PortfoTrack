@@ -26,11 +26,23 @@ async function loadTarget() {
     const response = await fetch("/api/targets");
 
     if (response.status === 404) {
-      status.innerHTML = "<p>타겟이 아직 설정되지 않았습니다.</p>";
+      status.innerHTML = `
+        <div class="empty-state">
+          <strong>타겟 배분이 아직 없습니다.</strong>
+          <p>자산군별 목표 비율과 허용 범위를 먼저 만들어 주세요.</p>
+          <div class="empty-state-actions">
+            <button type="button" class="btn btn-primary" data-create-target-action>새 타겟 생성</button>
+          </div>
+        </div>
+      `;
       table.style.display = "none";
       createBtn.style.display = "inline-block";
       editBtn.style.display = "none";
       _targetDate = null;
+      const action = status.querySelector("[data-create-target-action]");
+      action.addEventListener("click", function () {
+        createBtn.click();
+      });
       return;
     }
 
@@ -39,7 +51,15 @@ async function loadTarget() {
     _targetDate = data.date || null;
 
     if (data.assets.length === 0) {
-      status.innerHTML = "<p>타겟이 비어 있습니다. 자산을 추가하세요.</p>";
+      status.innerHTML = `
+        <div class="empty-state">
+          <strong>타겟은 있지만 자산이 비어 있습니다.</strong>
+          <p>자산군을 추가해 목표 비율 합계를 100%에 가깝게 맞춰 주세요.</p>
+          <div class="empty-state-actions">
+            <a class="btn btn-primary" href="#add-asset-card">자산 추가하기</a>
+          </div>
+        </div>
+      `;
       table.style.display = "none";
       editBtn.style.display = "none";
       return;

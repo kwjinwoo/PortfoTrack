@@ -154,3 +154,31 @@ class TestResponsiveTables:
         html = response.data.decode("utf-8")
 
         assert 'class="table-scroll"' in html
+
+
+class TestEmptyStateActions:
+    """Empty states should point users to the next useful action."""
+
+    def test_snapshots_page_links_target_setup_from_warning(self, client):
+        """Snapshot setup should offer a direct path to target setup."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'href="/targets"' in html
+        assert "타겟 설정으로 이동" in html
+
+    def test_reports_page_contains_snapshot_empty_state(self, client):
+        """Reports should expose a first action when no snapshots exist."""
+        response = client.get("/reports")
+        html = response.data.decode("utf-8")
+
+        assert 'id="report-empty-state"' in html
+        assert 'href="/snapshots"' in html
+
+    def test_optional_bets_page_contains_empty_state_action_region(self, client):
+        """Optional bets should reserve a clear empty-state action region."""
+        response = client.get("/optional-bets")
+        html = response.data.decode("utf-8")
+
+        assert 'class="empty-state-actions"' in html
+        assert "새 옵셔널 벳 생성" in html

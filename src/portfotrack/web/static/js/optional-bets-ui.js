@@ -31,12 +31,24 @@ async function loadLatest() {
         const response = await fetch("/api/optional-bets/latest");
 
         if (response.status === 404) {
-            status.innerHTML = "<p>옵셔널 벳이 아직 없습니다.</p>";
+            status.innerHTML = `
+                <div class="empty-state">
+                    <strong>옵셔널 벳이 아직 없습니다.</strong>
+                    <p>관리할 별도 자산군이 있다면 캡 비율과 현재 금액을 먼저 등록하세요.</p>
+                    <div class="empty-state-actions">
+                        <button type="button" class="btn btn-primary" data-create-ob-action>새 옵셔널 벳 생성</button>
+                    </div>
+                </div>
+            `;
             table.style.display = "none";
             createBtn.style.display = "inline-block";
             editBtn.style.display = "none";
             document.getElementById("record-today-btn").style.display = "none";
             _obDate = null;
+            const action = status.querySelector("[data-create-ob-action]");
+            action.addEventListener("click", function () {
+                createBtn.click();
+            });
             return;
         }
 
@@ -45,7 +57,15 @@ async function loadLatest() {
         _obDate = data.date || null;
 
         if (data.items.length === 0) {
-            status.innerHTML = "<p>옵셔널 벳이 비어 있습니다. 아이템을 추가하세요.</p>";
+            status.innerHTML = `
+                <div class="empty-state">
+                    <strong>옵셔널 벳 파일은 있지만 아이템이 없습니다.</strong>
+                    <p>자산 ID, 이름, 캡 비율, 현재 금액을 추가해 캡 초과 여부를 확인하세요.</p>
+                    <div class="empty-state-actions">
+                        <a class="btn btn-primary" href="#add-ob-card">아이템 추가하기</a>
+                    </div>
+                </div>
+            `;
             table.style.display = "none";
             editBtn.style.display = "none";
             document.getElementById("record-today-btn").style.display = "none";
@@ -92,7 +112,12 @@ async function loadFileList() {
         const data = await response.json();
 
         if (data.length === 0) {
-            list.innerHTML = "<li>파일 없음</li>";
+            list.innerHTML = `
+                <li class="empty-state">
+                    <strong>저장된 옵셔널 벳 파일이 없습니다.</strong>
+                    <p>새 옵셔널 벳을 만든 뒤 날짜별 기록을 쌓아 보세요.</p>
+                </li>
+            `;
             return;
         }
 
