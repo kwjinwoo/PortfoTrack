@@ -97,3 +97,16 @@ class TestStaticFiles:
         response = client.get("/static/js/dashboard-ui.js")
 
         assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/static/vendor/chart.umd.js",
+            "/static/vendor/chartjs-plugin-datalabels.min.js",
+        ],
+    )
+    def test_vendor_chart_assets_accessible(self, client, path):
+        """Chart vendor assets should be served locally."""
+        response = client.get(path)
+
+        assert response.status_code == 200

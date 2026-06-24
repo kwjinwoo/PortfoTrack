@@ -89,10 +89,12 @@ class TestOptionalBetsTrendUI:
         assert "ob-total-chart" in html
 
     def test_page_loads_chart_js(self, client) -> None:
-        """Page should reference Chart.js CDN."""
+        """Page should reference local Chart.js assets."""
         response = client.get("/optional-bets")
         html = response.data.decode("utf-8")
-        assert "chart.js" in html.lower() or "Chart" in html
+        assert "https://cdn.jsdelivr.net" not in html
+        assert "vendor/chart.umd.js" in html
+        assert "vendor/chartjs-plugin-datalabels.min.js" in html
 
     def test_page_loads_trend_script(self, client) -> None:
         """Page should load the optional-bets-trend-ui.js script."""

@@ -78,6 +78,8 @@ Route modules:
 
 Templates live under `src/portfotrack/web/templates/`.
 Static JavaScript and CSS live under `src/portfotrack/web/static/`.
+Chart dependencies are vendored under `src/portfotrack/web/static/vendor/`
+so trend pages remain usable without external network access.
 
 Keep UI behavior aligned with the local-only application model.
 Do not add external network dependencies for frontend behavior.

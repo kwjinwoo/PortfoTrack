@@ -41,10 +41,11 @@ class TestTrendsPage:
         assert "total-chart" in html
 
     def test_trends_page_loads_chart_js(self, client) -> None:
-        """Trends page should reference Chart.js CDN."""
+        """Trends page should reference local Chart.js assets."""
         response = client.get("/trends")
         html = response.data.decode("utf-8")
-        assert "chart.js" in html.lower() or "Chart" in html
+        assert "https://cdn.jsdelivr.net" not in html
+        assert "vendor/chart.umd.js" in html
 
     def test_trends_page_loads_trends_ui_script(self, client) -> None:
         """Trends page should load the trends-ui.js script."""
@@ -59,10 +60,10 @@ class TestTrendsPage:
         assert "/trends" in html
 
     def test_trends_page_includes_datalabels_plugin(self, client) -> None:
-        """Trends page should load the chartjs-plugin-datalabels script."""
+        """Trends page should load the local chartjs-plugin-datalabels script."""
         response = client.get("/trends")
         html = response.data.decode("utf-8")
-        assert "chartjs-plugin-datalabels" in html
+        assert "vendor/chartjs-plugin-datalabels.min.js" in html
 
     def test_trends_page_has_comparison_dropdowns(self, client) -> None:
         """Trends page should contain two select elements for snapshot comparison."""
