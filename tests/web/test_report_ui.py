@@ -48,6 +48,17 @@ class TestReportsPageStructure:
 
         assert 'id="report-summary"' in html
 
+    def test_contains_report_judgement_regions(self, client):
+        """Page should expose judgement-first report summary regions."""
+        response = client.get("/reports")
+        html = response.data.decode("utf-8")
+
+        assert 'id="report-judgement"' in html
+        assert 'id="report-drift-count"' in html
+        assert 'id="report-largest-over"' in html
+        assert 'id="report-largest-under"' in html
+        assert 'id="report-drift-highlights"' in html
+
     def test_contains_progress_column(self, client):
         """Report table should have a progress column header."""
         response = client.get("/reports")

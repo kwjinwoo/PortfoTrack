@@ -23,6 +23,24 @@
   <div class="card" id="report-result-card" style="display:none;">
     <h3>할당 비교 리포트 — <span id="report-date"></span></h3>
     <div id="report-summary" class="report-summary"></div>
+    <div id="report-judgement" class="report-judgement" aria-live="polite">
+      <div class="report-judgement-card">
+        <span class="summary-label">허용 범위 밖</span>
+        <strong id="report-drift-count">-</strong>
+        <span id="report-drift-count-detail" class="summary-meta">-</span>
+      </div>
+      <div class="report-judgement-card">
+        <span class="summary-label">가장 큰 초과</span>
+        <strong id="report-largest-over">-</strong>
+        <span id="report-largest-over-detail" class="summary-meta">-</span>
+      </div>
+      <div class="report-judgement-card">
+        <span class="summary-label">가장 큰 부족</span>
+        <strong id="report-largest-under">-</strong>
+        <span id="report-largest-under-detail" class="summary-meta">-</span>
+      </div>
+    </div>
+    <div id="report-drift-highlights" class="report-drift-highlights"></div>
     <table id="report-table">
       <thead>
         <tr>

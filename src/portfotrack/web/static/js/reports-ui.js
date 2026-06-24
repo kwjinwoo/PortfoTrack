@@ -80,8 +80,9 @@ function displayReport(report) {
   // Summary
   summary.innerHTML = `
     <p><strong>총 포트폴리오:</strong> ${report.total_portfolio_amount.toLocaleString()} KRW</p>
-    <p><strong>상태:</strong> ${report.is_complete ? "✓ 모든 자산 허용치 내" : "✗ 일부 자산 허용치 초과"}</p>
+    <p><strong>상태:</strong> ${report.is_complete ? "모든 자산 허용치 내" : "일부 자산 허용치 초과"}</p>
   `;
+  displayJudgement(report);
 
   // Items
   tbody.innerHTML = report.items
@@ -133,6 +134,102 @@ function displayReport(report) {
   }
 
   card.style.display = "block";
+}
+
+/**
+ * Render a judgement-first summary before the report table.
+ */
+function displayJudgement(report) {
+  const driftCount = document.getElementById("report-drift-count");
+  const driftCountDetail = document.getElementById("report-drift-count-detail");
+  const largestOver = document.getElementById("report-largest-over");
+  const largestOverDetail = document.getElementById("report-largest-over-detail");
+  const largestUnder = document.getElementById("report-largest-under");
+  const largestUnderDetail = document.getElementById("report-largest-under-detail");
+  const highlights = document.getElementById("report-drift-highlights");
+
+  const outsideItems = report.items.filter((item) => !item.is_within_tolerance);
+  const overItems = report.items
+    .map((item) => ({
+      item: item,
+      gap: item.current_ratio - item.tolerance.upper,
+    }))
+    .filter((entry) => entry.gap > 0)
+    .sort((a, b) => b.gap - a.gap);
+  const underItems = report.items
+    .map((item) => ({
+      item: item,
+      gap: item.tolerance.lower - item.current_ratio,
+    }))
+    .filter((entry) => entry.gap > 0)
+    .sort((a, b) => b.gap - a.gap);
+
+  driftCount.textContent = `${outsideItems.length}개`;
+  driftCountDetail.textContent = `${report.items.length}개 자산 중`;
+  renderGapCard(largestOver, largestOverDetail, overItems[0], "상한 초과");
+  renderGapCard(largestUnder, largestUnderDetail, underItems[0], "하한 미달");
+
+  if (outsideItems.length === 0) {
+    highlights.innerHTML = "<p>현재 모든 자산이 설정한 허용 범위 안에 있습니다.</p>";
+    return;
+  }
+
+  highlights.innerHTML = `
+    <h4>확인할 자산</h4>
+    <ul>
+      ${outsideItems.map(renderDriftHighlight).join("")}
+    </ul>
+  `;
+}
+
+/**
+ * Render the largest gap card when a matching item exists.
+ */
+function renderGapCard(valueEl, detailEl, entry, label) {
+  if (!entry) {
+    valueEl.textContent = "없음";
+    detailEl.textContent = "-";
+    return;
+  }
+
+  valueEl.textContent = entry.item.asset_name;
+  detailEl.textContent = `${label} ${formatPercentPoint(entry.gap)}`;
+}
+
+/**
+ * Render one out-of-range asset as a plain-language status item.
+ */
+function renderDriftHighlight(item) {
+  const current = formatPercent(item.current_ratio);
+  const lower = formatPercent(item.tolerance.lower);
+  const upper = formatPercent(item.tolerance.upper);
+  let status = "허용 범위 밖";
+  if (item.current_ratio > item.tolerance.upper) {
+    status = `상한보다 ${formatPercentPoint(item.current_ratio - item.tolerance.upper)} 높음`;
+  } else if (item.current_ratio < item.tolerance.lower) {
+    status = `하한보다 ${formatPercentPoint(item.tolerance.lower - item.current_ratio)} 낮음`;
+  }
+
+  return `
+    <li>
+      <strong>${item.asset_name}</strong>
+      <span>${status} · 현재 ${current}, 허용 ${lower}~${upper}</span>
+    </li>
+  `;
+}
+
+/**
+ * Format a ratio as a percentage.
+ */
+function formatPercent(ratio) {
+  return `${(ratio * 100).toFixed(1)}%`;
+}
+
+/**
+ * Format a ratio gap as a percentage-point value.
+ */
+function formatPercentPoint(ratio) {
+  return `${(ratio * 100).toFixed(1)}%p`;
 }
 
 /**

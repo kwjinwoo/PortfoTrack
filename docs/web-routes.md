@@ -56,7 +56,8 @@ Current page areas:
 - Snapshots
 - Targets: presents allocation ratios as percent-scale inputs while preserving
   ratio-scale JSON API payloads.
-- Reports
+- Reports: renders judgement-first allocation summaries before the detailed
+  comparison table.
 - Trends
 - Optional bets
 
