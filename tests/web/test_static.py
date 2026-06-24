@@ -98,6 +98,14 @@ class TestStaticFiles:
 
         assert response.status_code == 200
 
+    def test_optional_bets_js_converts_percent_inputs(self, client):
+        """Optional bet UI should convert percent inputs before API calls."""
+        response = client.get("/static/js/optional-bets-ui.js")
+        js = response.data.decode("utf-8")
+
+        assert "percentInputToRatio" in js
+        assert "ratioToPercentInput" in js
+
     @pytest.mark.parametrize(
         "path",
         [

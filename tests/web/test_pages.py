@@ -128,6 +128,19 @@ class TestOptionalBetsTrendUI:
         assert "추이 분석" in html
 
 
+class TestOptionalBetsInputs:
+    """Optional bet forms should use user-facing units consistently."""
+
+    def test_cap_ratio_input_uses_percent_unit(self, client) -> None:
+        """The optional bet cap ratio field should accept percent-scale values."""
+        response = client.get("/optional-bets")
+        html = response.data.decode("utf-8")
+
+        assert "캡 비율 (%)" in html
+        assert 'placeholder="예: 5"' in html
+        assert 'max="99"' in html
+
+
 class TestResponsiveTables:
     """Wide data tables should be wrapped for small screens."""
 

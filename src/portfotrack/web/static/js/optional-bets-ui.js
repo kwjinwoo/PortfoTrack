@@ -143,7 +143,7 @@ function setupAddForm() {
         const payload = {
             asset_id: document.getElementById("ob-asset-id").value.trim(),
             name: document.getElementById("ob-name").value.trim(),
-            cap_ratio: parseFloat(document.getElementById("ob-cap-ratio").value),
+            cap_ratio: percentInputToRatio(document.getElementById("ob-cap-ratio").value),
             amount: parseInt(document.getElementById("ob-amount").value, 10),
         };
 
@@ -234,7 +234,7 @@ function setupEditButtons() {
             items.push({
                 asset_id: row.querySelector(".edit-asset-id").value.trim(),
                 name: row.querySelector(".edit-name").value.trim(),
-                cap_ratio: parseFloat(row.querySelector(".edit-cap-ratio").value),
+                cap_ratio: percentInputToRatio(row.querySelector(".edit-cap-ratio").value),
                 amount: parseInt(row.querySelector(".edit-amount").value, 10),
             });
         }
@@ -290,11 +290,23 @@ function createEditRow(assetId, name, capRatio, amount) {
     div.innerHTML = `
     <input type="text" class="edit-asset-id" value="${assetId}" placeholder="자산 ID">
     <input type="text" class="edit-name" value="${name}" placeholder="이름">
-    <input type="number" class="edit-cap-ratio" value="${capRatio}" step="0.01" min="0.01" max="0.99" placeholder="캡 비율">
+    <input type="number" class="edit-cap-ratio" value="${ratioToPercentInput(capRatio)}" step="0.1" min="0.1" max="99" placeholder="캡 비율 (%)">
     <input type="number" class="edit-amount" value="${amount}" min="0" placeholder="금액">
     <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">삭제</button>
   `;
     return div;
+}
+
+function percentInputToRatio(value) {
+    const percent = parseFloat(value);
+    if (isNaN(percent)) {
+        return NaN;
+    }
+    return percent / 100;
+}
+
+function ratioToPercentInput(ratio) {
+    return Number((ratio * 100).toFixed(4)).toString();
 }
 
 // ---------------------------------------------------------------------------
