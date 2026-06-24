@@ -346,7 +346,7 @@ function setupBreachForm() {
                 return;
             }
 
-            let html = info + "<table><thead><tr><th>자산 ID</th><th>이름</th><th>실제 비율</th><th>캡 비율</th></tr></thead><tbody>";
+            let html = info + '<div class="table-scroll"><table><thead><tr><th>자산 ID</th><th>이름</th><th>실제 비율</th><th>캡 비율</th></tr></thead><tbody>';
             for (const b of data.breaches) {
                 html += `<tr>
           <td>${b.asset_id}</td>
@@ -355,7 +355,7 @@ function setupBreachForm() {
           <td>${(b.cap_ratio * 100).toFixed(2)}%</td>
         </tr>`;
             }
-            html += "</tbody></table>";
+            html += "</tbody></table></div>";
             result.innerHTML = html;
         } catch {
             result.innerHTML = "<p class='error'>체크 중 오류가 발생했습니다.</p>";

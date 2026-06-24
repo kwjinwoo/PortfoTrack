@@ -7,25 +7,27 @@
     <div class="card">
         <h3>현재 옵셔널 벳</h3>
         <div id="ob-status"></div>
-        <table id="ob-table" style="display:none;">
-            <thead>
-                <tr>
-                    <th>자산 ID</th>
-                    <th>이름</th>
-                    <th>캡 비율</th>
-                    <th>금액 (KRW)</th>
-                    <th>관리</th>
-                </tr>
-            </thead>
-            <tbody id="ob-items"></tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="3"><strong>합계</strong></td>
-                    <td id="ob-total"><strong>0</strong></td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
+        <div class="table-scroll">
+            <table id="ob-table" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>자산 ID</th>
+                        <th>이름</th>
+                        <th>캡 비율</th>
+                        <th>금액 (KRW)</th>
+                        <th>관리</th>
+                    </tr>
+                </thead>
+                <tbody id="ob-items"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3"><strong>합계</strong></td>
+                        <td id="ob-total"><strong>0</strong></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
         <button type="button" id="create-ob-btn" class="btn btn-primary" style="display:none;">새 옵셔널 벳 생성</button>
         <button type="button" id="edit-ob-btn" class="btn btn-secondary" style="display:none;">편집</button>
         <button type="button" id="record-today-btn" class="btn btn-primary" style="display:none;">오늘 금액 기록</button>
@@ -33,17 +35,19 @@
 
     <div class="card" id="ob-record-card" style="display:none;">
         <h3>오늘 금액 기록</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>자산 ID</th>
-                    <th>이름</th>
-                    <th>캡 비율</th>
-                    <th>금액 (KRW)</th>
-                </tr>
-            </thead>
-            <tbody id="record-items"></tbody>
-        </table>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>자산 ID</th>
+                        <th>이름</th>
+                        <th>캡 비율</th>
+                        <th>금액 (KRW)</th>
+                    </tr>
+                </thead>
+                <tbody id="record-items"></tbody>
+            </table>
+        </div>
         <button type="button" id="record-save-btn" class="btn btn-primary" style="margin-top: 1rem;">기록하기</button>
         <button type="button" id="record-cancel-btn" class="btn btn-secondary" style="margin-top: 1rem;">취소</button>
         <div id="record-message" class="message"></div>

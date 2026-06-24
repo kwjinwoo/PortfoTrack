@@ -126,3 +126,18 @@ class TestOptionalBetsTrendUI:
         response = client.get("/optional-bets")
         html = response.data.decode("utf-8")
         assert "추이 분석" in html
+
+
+class TestResponsiveTables:
+    """Wide data tables should be wrapped for small screens."""
+
+    @pytest.mark.parametrize(
+        "path",
+        ["/snapshots", "/targets", "/reports", "/optional-bets"],
+    )
+    def test_data_tables_use_scroll_wrapper(self, client, path):
+        """Pages with data tables should expose a responsive table container."""
+        response = client.get(path)
+        html = response.data.decode("utf-8")
+
+        assert 'class="table-scroll"' in html

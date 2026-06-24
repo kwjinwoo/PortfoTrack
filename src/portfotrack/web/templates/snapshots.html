@@ -6,20 +6,22 @@
 
   <div class="card">
     <h3>스냅샷 목록</h3>
-    <table id="snapshot-table">
-      <thead>
-        <tr>
-          <th>날짜</th>
-          <th>파일명</th>
-          <th>액션</th>
-        </tr>
-      </thead>
-      <tbody id="snapshot-list">
-        <tr>
-          <td colspan="3">로딩 중...</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-scroll">
+      <table id="snapshot-table">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>파일명</th>
+            <th>액션</th>
+          </tr>
+        </thead>
+        <tbody id="snapshot-list">
+          <tr>
+            <td colspan="3">로딩 중...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <div class="card">
@@ -46,16 +48,18 @@
 
   <div class="card" id="snapshot-detail-card" style="display:none;">
     <h3>스냅샷 상세 — <span id="snapshot-detail-date"></span></h3>
-    <table>
-      <thead>
-        <tr>
-          <th>자산 ID</th>
-          <th>라벨</th>
-          <th>금액 (KRW)</th>
-        </tr>
-      </thead>
-      <tbody id="snapshot-detail-items"></tbody>
-    </table>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>자산 ID</th>
+            <th>라벨</th>
+            <th>금액 (KRW)</th>
+          </tr>
+        </thead>
+        <tbody id="snapshot-detail-items"></tbody>
+      </table>
+    </div>
   </div>
 
   <div class="card" id="snapshot-edit-card" style="display:none;">
