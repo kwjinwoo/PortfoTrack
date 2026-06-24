@@ -30,17 +30,27 @@ header h1 {
 nav ul {
   list-style: none;
   display: flex;
-  gap: 1.5rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 nav a {
   color: #ecf0f1;
   text-decoration: none;
   font-weight: 500;
+  display: inline-block;
+  padding: 0.35rem 0.55rem;
+  border-radius: 4px;
 }
 
-nav a:hover {
-  text-decoration: underline;
+nav a:hover,
+nav a.is-active {
+  background: rgba(255, 255, 255, 0.14);
+  text-decoration: none;
+}
+
+nav a.is-active {
+  color: #fff;
 }
 
 main {
@@ -423,6 +433,21 @@ th {
 }
 
 @media (max-width: 760px) {
+  header {
+    padding: 1rem;
+  }
+
+  nav ul {
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+
+  nav li {
+    flex: 0 0 auto;
+  }
+
   .dashboard-setup-flow {
     grid-template-columns: 1fr;
   }

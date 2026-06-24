@@ -76,6 +76,25 @@ class TestNavigation:
         assert "/reports" in html
         assert "/optional-bets" in html
 
+    @pytest.mark.parametrize(
+        ("path", "label"),
+        [
+            ("/", "대시보드"),
+            ("/snapshots", "스냅샷"),
+            ("/targets", "타겟"),
+            ("/reports", "리포트"),
+            ("/trends", "추이"),
+            ("/optional-bets", "옵셔널 벳"),
+        ],
+    )
+    def test_current_nav_link_is_marked(self, client, path, label):
+        """The active page link should expose a visual and semantic marker."""
+        response = client.get(path)
+        html = response.data.decode("utf-8")
+
+        assert f'aria-current="page">{label}</a>' in html
+        assert 'class="nav-link is-active"' in html
+
 
 class TestOptionalBetsTrendUI:
     """Optional bets page should contain trend chart elements."""
