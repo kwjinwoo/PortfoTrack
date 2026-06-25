@@ -9,8 +9,11 @@ related:
   - error-policy
   - testing-playbook
   - storage-contracts
+  - web-routes
 code_refs:
   - AGENTS.md
+  - src/portfotrack/web/static/css/styles.css
+  - src/portfotrack/web/static/js
 tests: []
 updates_when:
   - agents repeatedly make the same mistake
@@ -42,6 +45,22 @@ asked to skip tests.
 
 Related nodes:
 
+- [Testing Playbook](testing-playbook.md)
+
+## Do Not Overpower Dynamic UI State
+
+The web UI uses initially hidden elements that JavaScript reveals after local
+API calls. Do not add `!important` to dynamic visibility classes such as
+`is-hidden`; it can prevent scripted panels from appearing even when the API
+call and rendering logic succeed.
+
+Example: allocation report generation reveals `#report-result-card` from
+`reports-ui.js`. If `.is-hidden` uses `display: none !important`, the report
+button appears to do nothing because the card remains visually hidden.
+
+Related nodes:
+
+- [Web Routes](web-routes.md)
 - [Testing Playbook](testing-playbook.md)
 
 ## Do Not Convert Invariants Into User Errors

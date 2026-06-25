@@ -167,6 +167,17 @@ class TestStaticFiles:
             html = path.read_text(encoding="utf-8")
             assert 'style="' not in html, path.name
 
+    def test_hidden_class_allows_scripted_visibility_changes(self, client):
+        """Dynamic panels should be revealable by UI scripts."""
+        response = client.get("/static/css/styles.css")
+        css = response.data.decode("utf-8")
+
+        hidden_rule = css[
+            css.index(".is-hidden") : css.index("}", css.index(".is-hidden"))
+        ]
+
+        assert "!important" not in hidden_rule
+
     @pytest.mark.parametrize(
         "path",
         [

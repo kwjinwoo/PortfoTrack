@@ -9,6 +9,7 @@ related:
   - domain-model
   - storage-contracts
   - testing-playbook
+  - error-book
 code_refs:
   - src/portfotrack/web/app.py
   - src/portfotrack/web/routes
@@ -84,6 +85,19 @@ so trend pages remain usable without external network access.
 Keep UI behavior aligned with the local-only application model.
 Do not add external network dependencies for frontend behavior.
 
+## Dynamic UI State
+
+Templates may render panels, buttons, tables, and warnings with `is-hidden`
+when they are initially unavailable.
+Static JavaScript may reveal these elements after local API calls.
+Do not make `is-hidden` stronger than script-driven display changes; in
+particular, avoid `display: none !important` for dynamic visibility classes.
+
+When changing CSS or JavaScript for dynamic panels, verify the user flow that
+reveals the panel, not only the static page structure.
+Examples include allocation report generation, snapshot detail display, target
+editing, and optional bet record/edit panels.
+
 ## Links
 
 Depends on:
@@ -96,3 +110,4 @@ Related:
 - [Domain Model](domain-model.md)
 - [Storage Contracts](storage-contracts.md)
 - [Testing Playbook](testing-playbook.md)
+- [Error Book](error-book.md)
