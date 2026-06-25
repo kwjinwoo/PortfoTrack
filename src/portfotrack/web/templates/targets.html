@@ -2,13 +2,18 @@
 
 {% block content %}
 <section class="targets-page">
-  <h2>타겟 배분 관리</h2>
+  <div class="page-header">
+    <div>
+      <h2>타겟 배분 관리</h2>
+      <p class="page-kicker">자산군 목표 비율과 허용 범위를 로컬 타겟으로 관리합니다.</p>
+    </div>
+  </div>
 
   <div class="card">
     <h3>현재 타겟</h3>
     <div id="target-status"></div>
     <div class="table-scroll">
-      <table id="target-table" class="is-hidden">
+      <table id="target-table" class="table-financial is-hidden">
         <thead>
           <tr>
             <th>자산 ID</th>
@@ -22,14 +27,18 @@
         <tbody id="target-assets"></tbody>
       </table>
     </div>
-    <button type="button" id="create-target-btn" class="btn btn-primary is-hidden">새 타겟 생성</button>
-    <button type="button" id="edit-target-btn" class="btn btn-secondary is-hidden">타겟 편집</button>
+    <div class="section-actions">
+      <button type="button" id="create-target-btn" class="btn btn-primary is-hidden">새 타겟 생성</button>
+      <button type="button" id="edit-target-btn" class="btn btn-secondary is-hidden">타겟 편집</button>
+    </div>
   </div>
 
   <div class="card is-hidden" id="target-edit-card">
     <h3>타겟 편집</h3>
     <div id="edit-assets-container"></div>
-    <button type="button" id="edit-add-asset-btn" class="btn btn-secondary">+ 자산 추가</button>
+    <div class="form-actions">
+      <button type="button" id="edit-add-asset-btn" class="btn btn-secondary">+ 자산 추가</button>
+    </div>
     <div class="form-group stacked-control">
       <label>저장 방식</label>
       <label><input type="radio" name="target-save-mode" value="overwrite" checked> 기존 파일 덮어쓰기</label>
@@ -41,8 +50,10 @@
       <button type="button" id="confirm-target-save-btn" class="btn btn-primary">그래도 저장</button>
       <button type="button" id="cancel-target-save-btn" class="btn btn-secondary">다시 조정</button>
     </div>
-    <button type="button" id="edit-target-save-btn" class="btn btn-primary">저장</button>
-    <button type="button" id="edit-target-cancel-btn" class="btn btn-secondary">취소</button>
+    <div class="form-actions">
+      <button type="button" id="edit-target-save-btn" class="btn btn-primary">저장</button>
+      <button type="button" id="edit-target-cancel-btn" class="btn btn-secondary">취소</button>
+    </div>
     <div id="edit-target-message" class="message" role="status" aria-live="polite"></div>
   </div>
 
@@ -75,7 +86,9 @@
           <input type="number" id="upper-bound" name="upper" step="0.1" min="0" max="100" required placeholder="예: 70">
         </div>
       </div>
-      <button type="submit" class="btn btn-primary">자산 추가</button>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">자산 추가</button>
+      </div>
       <div id="target-message" class="message" role="status" aria-live="polite"></div>
     </form>
   </div>

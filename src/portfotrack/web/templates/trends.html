@@ -2,33 +2,42 @@
 
 {% block content %}
 <section class="trends-page">
-  <h2>추이 분석</h2>
+  <div class="page-header">
+    <div>
+      <h2>추이 분석</h2>
+      <p class="page-kicker">자산 비율, 금액, 전체 포트폴리오 흐름을 스냅샷 기준으로 비교합니다.</p>
+    </div>
+  </div>
 
-  <div class="card">
+  <div class="analysis-panel">
     <h3>자산별 비율 추이</h3>
     <canvas id="ratio-chart" width="800" height="300"></canvas>
   </div>
 
-  <div class="card">
+  <div class="analysis-panel">
     <h3>자산별 평가 금액 추이</h3>
     <canvas id="amount-chart" width="800" height="300"></canvas>
   </div>
 
-  <div class="card">
+  <div class="analysis-panel">
     <h3>전체 포트폴리오 추이</h3>
     <canvas id="total-chart" width="800" height="300"></canvas>
 
     <div class="comparison-section">
       <h4>스냅샷 비교</h4>
       <div class="comparison-controls">
-        <label for="compare-from">기준:</label>
-        <select id="compare-from">
-          <option value="">선택</option>
-        </select>
-        <label for="compare-to">비교:</label>
-        <select id="compare-to">
-          <option value="">선택</option>
-        </select>
+        <div class="form-group">
+          <label for="compare-from">기준</label>
+          <select id="compare-from">
+            <option value="">선택</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="compare-to">비교</label>
+          <select id="compare-to">
+            <option value="">선택</option>
+          </select>
+        </div>
       </div>
       <div id="comparison-result" class="comparison-result"></div>
     </div>

@@ -2,7 +2,12 @@
 
 {% block content %}
 <section class="reports-page">
-  <h2>할당 리포트</h2>
+  <div class="page-header">
+    <div>
+      <h2>할당 리포트</h2>
+      <p class="page-kicker">스냅샷을 타겟 배분과 비교하고 허용 범위 이탈을 확인합니다.</p>
+    </div>
+  </div>
 
   <div class="card">
     <h3>리포트 생성</h3>
@@ -15,7 +20,9 @@
           </select>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary">리포트 생성</button>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">리포트 생성</button>
+      </div>
       <div id="report-message" class="message" role="status" aria-live="polite"></div>
       <div id="report-empty-state" class="empty-state is-hidden">
         <strong>리포트를 만들 스냅샷이 없습니다.</strong>
@@ -49,7 +56,7 @@
     </div>
     <div id="report-drift-highlights" class="report-drift-highlights"></div>
     <div class="table-scroll">
-      <table id="report-table">
+      <table id="report-table" class="table-financial">
         <thead>
           <tr>
             <th>자산</th>

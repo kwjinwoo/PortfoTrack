@@ -10,17 +10,19 @@
 
 <body>
   <header>
-    <h1>PortfoTrack</h1>
-    <nav>
-      <ul>
-        <li><a class="nav-link{% if request.path == '/' %} is-active{% endif %}" href="/" {% if request.path == '/' %}aria-current="page"{% endif %}>대시보드</a></li>
-        <li><a class="nav-link{% if request.path == '/snapshots' %} is-active{% endif %}" href="/snapshots" {% if request.path == '/snapshots' %}aria-current="page"{% endif %}>스냅샷</a></li>
-        <li><a class="nav-link{% if request.path == '/targets' %} is-active{% endif %}" href="/targets" {% if request.path == '/targets' %}aria-current="page"{% endif %}>타겟</a></li>
-        <li><a class="nav-link{% if request.path == '/reports' %} is-active{% endif %}" href="/reports" {% if request.path == '/reports' %}aria-current="page"{% endif %}>리포트</a></li>
-        <li><a class="nav-link{% if request.path == '/trends' %} is-active{% endif %}" href="/trends" {% if request.path == '/trends' %}aria-current="page"{% endif %}>추이</a></li>
-        <li><a class="nav-link{% if request.path == '/optional-bets' %} is-active{% endif %}" href="/optional-bets" {% if request.path == '/optional-bets' %}aria-current="page"{% endif %}>옵셔널 벳</a></li>
-      </ul>
-    </nav>
+    <div class="app-header-inner">
+      <h1>PortfoTrack</h1>
+      <nav>
+        <ul>
+          <li><a class="nav-link{% if request.path == '/' %} is-active{% endif %}" href="/" {% if request.path == '/' %}aria-current="page"{% endif %}>대시보드</a></li>
+          <li><a class="nav-link{% if request.path == '/snapshots' %} is-active{% endif %}" href="/snapshots" {% if request.path == '/snapshots' %}aria-current="page"{% endif %}>스냅샷</a></li>
+          <li><a class="nav-link{% if request.path == '/targets' %} is-active{% endif %}" href="/targets" {% if request.path == '/targets' %}aria-current="page"{% endif %}>타겟</a></li>
+          <li><a class="nav-link{% if request.path == '/reports' %} is-active{% endif %}" href="/reports" {% if request.path == '/reports' %}aria-current="page"{% endif %}>리포트</a></li>
+          <li><a class="nav-link{% if request.path == '/trends' %} is-active{% endif %}" href="/trends" {% if request.path == '/trends' %}aria-current="page"{% endif %}>추이</a></li>
+          <li><a class="nav-link{% if request.path == '/optional-bets' %} is-active{% endif %}" href="/optional-bets" {% if request.path == '/optional-bets' %}aria-current="page"{% endif %}>옵셔널 벳</a></li>
+        </ul>
+      </nav>
+    </div>
   </header>
   <main>
     {% block content %}{% endblock %}

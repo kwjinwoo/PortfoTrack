@@ -2,13 +2,18 @@
 
 {% block content %}
 <section class="optional-bets-page">
-    <h2>옵셔널 벳 관리</h2>
+    <div class="page-header">
+        <div>
+            <h2>옵셔널 벳 관리</h2>
+            <p class="page-kicker">코어 배분과 분리한 선택 자산의 캡 비율과 금액을 확인합니다.</p>
+        </div>
+    </div>
 
     <div class="card">
         <h3>현재 옵셔널 벳</h3>
         <div id="ob-status"></div>
         <div class="table-scroll">
-            <table id="ob-table" class="is-hidden">
+            <table id="ob-table" class="table-financial is-hidden">
                 <thead>
                     <tr>
                         <th>자산 ID</th>
@@ -28,16 +33,18 @@
                 </tfoot>
             </table>
         </div>
-        <button type="button" id="create-ob-btn" class="btn btn-primary is-hidden">새 옵셔널 벳 생성</button>
-        <button type="button" id="edit-ob-btn" class="btn btn-secondary is-hidden">편집</button>
-        <button type="button" id="record-today-btn" class="btn btn-primary is-hidden">오늘 금액 기록</button>
+        <div class="section-actions">
+            <button type="button" id="create-ob-btn" class="btn btn-primary is-hidden">새 옵셔널 벳 생성</button>
+            <button type="button" id="edit-ob-btn" class="btn btn-secondary is-hidden">편집</button>
+            <button type="button" id="record-today-btn" class="btn btn-primary is-hidden">오늘 금액 기록</button>
+        </div>
         <div class="empty-state-actions" aria-hidden="true"></div>
     </div>
 
     <div class="card is-hidden" id="ob-record-card">
         <h3>오늘 금액 기록</h3>
         <div class="table-scroll">
-            <table>
+            <table class="table-financial">
                 <thead>
                     <tr>
                         <th>자산 ID</th>
@@ -49,22 +56,28 @@
                 <tbody id="record-items"></tbody>
             </table>
         </div>
-        <button type="button" id="record-save-btn" class="btn btn-primary stacked-control">기록하기</button>
-        <button type="button" id="record-cancel-btn" class="btn btn-secondary stacked-control">취소</button>
+        <div class="form-actions">
+            <button type="button" id="record-save-btn" class="btn btn-primary stacked-control">기록하기</button>
+            <button type="button" id="record-cancel-btn" class="btn btn-secondary stacked-control">취소</button>
+        </div>
         <div id="record-message" class="message" role="status" aria-live="polite"></div>
     </div>
 
     <div class="card is-hidden" id="ob-edit-card">
         <h3>옵셔널 벳 편집</h3>
         <div id="edit-ob-container"></div>
-        <button type="button" id="edit-add-ob-btn" class="btn btn-secondary">+ 아이템 추가</button>
+        <div class="form-actions">
+            <button type="button" id="edit-add-ob-btn" class="btn btn-secondary">+ 아이템 추가</button>
+        </div>
         <div class="form-group stacked-control">
             <label>저장 방식</label>
             <label><input type="radio" name="ob-save-mode" value="overwrite" checked> 기존 파일 덮어쓰기</label>
             <label><input type="radio" name="ob-save-mode" value="new"> 새 파일로 저장</label>
         </div>
-        <button type="button" id="edit-ob-save-btn" class="btn btn-primary">저장</button>
-        <button type="button" id="edit-ob-cancel-btn" class="btn btn-secondary">취소</button>
+        <div class="form-actions">
+            <button type="button" id="edit-ob-save-btn" class="btn btn-primary">저장</button>
+            <button type="button" id="edit-ob-cancel-btn" class="btn btn-secondary">취소</button>
+        </div>
         <div id="edit-ob-message" class="message" role="status" aria-live="polite"></div>
     </div>
 
@@ -90,7 +103,9 @@
                     <input type="number" id="ob-amount" name="amount" min="0" required placeholder="예: 1000000">
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">아이템 추가</button>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">아이템 추가</button>
+            </div>
             <div id="ob-message" class="message" role="status" aria-live="polite"></div>
         </form>
     </div>
@@ -104,7 +119,9 @@
                     <option value="">최신 스냅샷 사용</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">체크</button>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">체크</button>
+            </div>
         </form>
         <div id="breach-result"></div>
     </div>
@@ -114,7 +131,7 @@
         <ul id="ob-file-list"></ul>
     </div>
 
-    <div class="card">
+    <div class="analysis-panel">
         <h3>추이 분석</h3>
         <div id="ob-trends-message" class="message" role="status" aria-live="polite"></div>
 
