@@ -26,7 +26,7 @@
 
   <div class="card">
     <h3>새 스냅샷 생성</h3>
-    <div id="no-target-warning" class="message error" style="display:none;">
+    <div id="no-target-warning" class="message error is-hidden">
       타겟 배분이 설정되지 않았습니다. 먼저 타겟을 생성하세요.
       <a href="/targets">타겟 설정으로 이동</a>
     </div>
@@ -55,7 +55,7 @@
     </form>
   </div>
 
-  <div class="card" id="snapshot-detail-card" style="display:none;">
+  <div class="card is-hidden" id="snapshot-detail-card">
     <h3>스냅샷 상세 — <span id="snapshot-detail-date"></span></h3>
     <div class="table-scroll">
       <table>
@@ -71,11 +71,11 @@
     </div>
   </div>
 
-  <div class="card" id="snapshot-edit-card" style="display:none;">
+  <div class="card is-hidden" id="snapshot-edit-card">
     <h3>스냅샷 편집 — <span id="edit-snapshot-date"></span></h3>
     <div id="edit-items-container"></div>
     <button type="button" id="edit-add-item-btn" class="btn btn-secondary">+ 항목 추가</button>
-    <div class="form-group" style="margin-top: 1rem;">
+    <div class="form-group stacked-control">
       <label>저장 방식</label>
       <label><input type="radio" name="save-mode" value="overwrite" checked> 기존 파일 덮어쓰기</label>
       <label><input type="radio" name="save-mode" value="new"> 새 스냅샷으로 저장</label>

@@ -1,5 +1,7 @@
 """Tests for static file serving and template rendering."""
 
+from pathlib import Path
+
 import pytest
 
 
@@ -119,6 +121,20 @@ class TestStaticFiles:
             response = client.get(path)
             js = response.data.decode("utf-8")
             assert "empty-state" in js
+
+    def test_templates_do_not_use_inline_style_attributes(self):
+        """Templates should express visual states through classes."""
+        template_dir = (
+            Path(__file__).resolve().parents[2]
+            / "src"
+            / "portfotrack"
+            / "web"
+            / "templates"
+        )
+
+        for path in template_dir.glob("*.html"):
+            html = path.read_text(encoding="utf-8")
+            assert 'style="' not in html, path.name
 
     @pytest.mark.parametrize(
         "path",

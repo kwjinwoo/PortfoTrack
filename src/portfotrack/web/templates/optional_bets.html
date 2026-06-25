@@ -8,7 +8,7 @@
         <h3>현재 옵셔널 벳</h3>
         <div id="ob-status"></div>
         <div class="table-scroll">
-            <table id="ob-table" style="display:none;">
+            <table id="ob-table" class="is-hidden">
                 <thead>
                     <tr>
                         <th>자산 ID</th>
@@ -28,13 +28,13 @@
                 </tfoot>
             </table>
         </div>
-        <button type="button" id="create-ob-btn" class="btn btn-primary" style="display:none;">새 옵셔널 벳 생성</button>
-        <button type="button" id="edit-ob-btn" class="btn btn-secondary" style="display:none;">편집</button>
-        <button type="button" id="record-today-btn" class="btn btn-primary" style="display:none;">오늘 금액 기록</button>
+        <button type="button" id="create-ob-btn" class="btn btn-primary is-hidden">새 옵셔널 벳 생성</button>
+        <button type="button" id="edit-ob-btn" class="btn btn-secondary is-hidden">편집</button>
+        <button type="button" id="record-today-btn" class="btn btn-primary is-hidden">오늘 금액 기록</button>
         <div class="empty-state-actions" aria-hidden="true"></div>
     </div>
 
-    <div class="card" id="ob-record-card" style="display:none;">
+    <div class="card is-hidden" id="ob-record-card">
         <h3>오늘 금액 기록</h3>
         <div class="table-scroll">
             <table>
@@ -49,16 +49,16 @@
                 <tbody id="record-items"></tbody>
             </table>
         </div>
-        <button type="button" id="record-save-btn" class="btn btn-primary" style="margin-top: 1rem;">기록하기</button>
-        <button type="button" id="record-cancel-btn" class="btn btn-secondary" style="margin-top: 1rem;">취소</button>
+        <button type="button" id="record-save-btn" class="btn btn-primary stacked-control">기록하기</button>
+        <button type="button" id="record-cancel-btn" class="btn btn-secondary stacked-control">취소</button>
         <div id="record-message" class="message"></div>
     </div>
 
-    <div class="card" id="ob-edit-card" style="display:none;">
+    <div class="card is-hidden" id="ob-edit-card">
         <h3>옵셔널 벳 편집</h3>
         <div id="edit-ob-container"></div>
         <button type="button" id="edit-add-ob-btn" class="btn btn-secondary">+ 아이템 추가</button>
-        <div class="form-group" style="margin-top: 1rem;">
+        <div class="form-group stacked-control">
             <label>저장 방식</label>
             <label><input type="radio" name="ob-save-mode" value="overwrite" checked> 기존 파일 덮어쓰기</label>
             <label><input type="radio" name="ob-save-mode" value="new"> 새 파일로 저장</label>

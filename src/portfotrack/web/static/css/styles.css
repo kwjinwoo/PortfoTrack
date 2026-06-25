@@ -66,6 +66,10 @@ footer {
   font-size: 0.875rem;
 }
 
+.is-hidden {
+  display: none;
+}
+
 /* Cards */
 .card {
   background: #fff;
@@ -229,6 +233,10 @@ footer {
   margin-top: 0.4rem;
 }
 
+.stacked-control {
+  margin-top: 1rem;
+}
+
 /* Reports */
 .report-summary {
   margin-bottom: 1rem;
@@ -295,6 +303,23 @@ footer {
 .chart-panel h4 {
   margin-bottom: 0.75rem;
   color: #2c3e50;
+}
+
+.comparison-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+.comparison-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.comparison-result {
+  margin-top: 0.5rem;
 }
 
 /* Tables */

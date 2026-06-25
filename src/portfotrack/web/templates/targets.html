@@ -8,7 +8,7 @@
     <h3>현재 타겟</h3>
     <div id="target-status"></div>
     <div class="table-scroll">
-      <table id="target-table" style="display:none;">
+      <table id="target-table" class="is-hidden">
         <thead>
           <tr>
             <th>자산 ID</th>
@@ -22,15 +22,15 @@
         <tbody id="target-assets"></tbody>
       </table>
     </div>
-    <button type="button" id="create-target-btn" class="btn btn-primary" style="display:none;">새 타겟 생성</button>
-    <button type="button" id="edit-target-btn" class="btn btn-secondary" style="display:none;">타겟 편집</button>
+    <button type="button" id="create-target-btn" class="btn btn-primary is-hidden">새 타겟 생성</button>
+    <button type="button" id="edit-target-btn" class="btn btn-secondary is-hidden">타겟 편집</button>
   </div>
 
-  <div class="card" id="target-edit-card" style="display:none;">
+  <div class="card is-hidden" id="target-edit-card">
     <h3>타겟 편집</h3>
     <div id="edit-assets-container"></div>
     <button type="button" id="edit-add-asset-btn" class="btn btn-secondary">+ 자산 추가</button>
-    <div class="form-group" style="margin-top: 1rem;">
+    <div class="form-group stacked-control">
       <label>저장 방식</label>
       <label><input type="radio" name="target-save-mode" value="overwrite" checked> 기존 파일 덮어쓰기</label>
       <label><input type="radio" name="target-save-mode" value="new"> 새 타겟으로 저장</label>
