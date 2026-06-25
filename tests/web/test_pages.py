@@ -127,6 +127,14 @@ class TestOptionalBetsTrendUI:
         html = response.data.decode("utf-8")
         assert "추이 분석" in html
 
+    def test_trend_charts_use_chart_panels(self, client) -> None:
+        """Optional bet trend charts should not be nested as cards."""
+        response = client.get("/optional-bets")
+        html = response.data.decode("utf-8")
+
+        assert 'class="chart-panel"' in html
+        assert 'class="card" style="margin-top: 1rem;"' not in html
+
 
 class TestOptionalBetsInputs:
     """Optional bet forms should use user-facing units consistently."""
