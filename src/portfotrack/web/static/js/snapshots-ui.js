@@ -386,8 +386,4 @@ function showMessage(elementId, text, type) {
   const el = document.getElementById(elementId);
   el.textContent = text;
   el.className = `message ${type}`;
-  setTimeout(() => {
-    el.textContent = "";
-    el.className = "message";
-  }, 5000);
 }

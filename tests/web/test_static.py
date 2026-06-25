@@ -130,6 +130,29 @@ class TestStaticFiles:
         assert "confirm(" not in js
         assert "target-ratio-warning" in js
 
+    def test_ui_scripts_do_not_auto_clear_messages(self, client):
+        """User-facing messages should remain visible until replaced."""
+        script_paths = [
+            "/static/js/snapshots-ui.js",
+            "/static/js/targets-ui.js",
+            "/static/js/reports-ui.js",
+        ]
+
+        for path in script_paths:
+            response = client.get(path)
+            js = response.data.decode("utf-8")
+            assert "setTimeout" not in js
+
+    def test_message_regions_are_announced(self, client):
+        """Message regions should be exposed to assistive technologies."""
+        page_paths = ["/snapshots", "/targets", "/reports", "/trends", "/optional-bets"]
+
+        for path in page_paths:
+            response = client.get(path)
+            html = response.data.decode("utf-8")
+            assert 'class="message' in html
+            assert 'aria-live="polite"' in html
+
     def test_templates_do_not_use_inline_style_attributes(self):
         """Templates should express visual states through classes."""
         template_dir = (

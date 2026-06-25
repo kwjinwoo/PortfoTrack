@@ -51,7 +51,7 @@
         </div>
         <button type="button" id="record-save-btn" class="btn btn-primary stacked-control">기록하기</button>
         <button type="button" id="record-cancel-btn" class="btn btn-secondary stacked-control">취소</button>
-        <div id="record-message" class="message"></div>
+        <div id="record-message" class="message" role="status" aria-live="polite"></div>
     </div>
 
     <div class="card is-hidden" id="ob-edit-card">
@@ -65,7 +65,7 @@
         </div>
         <button type="button" id="edit-ob-save-btn" class="btn btn-primary">저장</button>
         <button type="button" id="edit-ob-cancel-btn" class="btn btn-secondary">취소</button>
-        <div id="edit-ob-message" class="message"></div>
+        <div id="edit-ob-message" class="message" role="status" aria-live="polite"></div>
     </div>
 
     <div class="card" id="add-ob-card">
@@ -91,7 +91,7 @@
                 </div>
             </div>
             <button type="submit" class="btn btn-primary">아이템 추가</button>
-            <div id="ob-message" class="message"></div>
+            <div id="ob-message" class="message" role="status" aria-live="polite"></div>
         </form>
     </div>
 
@@ -116,7 +116,7 @@
 
     <div class="card">
         <h3>추이 분석</h3>
-        <div id="ob-trends-message" class="message"></div>
+        <div id="ob-trends-message" class="message" role="status" aria-live="polite"></div>
 
         <div class="chart-panel">
             <h4>자산별 비율 추이</h4>
