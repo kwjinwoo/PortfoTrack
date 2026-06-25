@@ -211,17 +211,25 @@ function setupAddItemButton() {
   btn.addEventListener("click", function () {
     const container = document.getElementById("snapshot-items-container");
     const row = document.createElement("div");
-    row.className = "item-row";
+    row.className = "item-row snapshot-item-row";
     row.innerHTML = `
-      <label>자산 ID</label>
-      <select name="asset_id" required>
-        ${_buildAssetOptions()}
-      </select>
-      <label>라벨</label>
-      <input type="text" name="label" required placeholder="예: S&P500">
-      <label>금액 (KRW)</label>
-      <input type="number" name="amount" required placeholder="예: 5000000">
-      <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.remove()">삭제</button>
+      <div class="form-group">
+        <label>자산 ID</label>
+        <select name="asset_id" required>
+          ${_buildAssetOptions()}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>라벨</label>
+        <input type="text" name="label" required placeholder="예: S&P500">
+      </div>
+      <div class="form-group">
+        <label>금액 (KRW)</label>
+        <input class="amount-input" type="number" name="amount" inputmode="numeric" required placeholder="예: 5000000">
+      </div>
+      <div class="row-action">
+        <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.item-row').remove()">삭제</button>
+      </div>
     `;
     container.appendChild(row);
   });
@@ -254,14 +262,22 @@ async function editSnapshot(date) {
     container.innerHTML = data.items
       .map(
         (item) => `
-      <div class="item-row">
-        <label>자산 ID</label>
-        <select name="asset_id" required>${_buildAssetOptionsWithSelected(item.asset_id)}</select>
-        <label>라벨</label>
-        <input type="text" name="label" required value="${item.label}">
-        <label>금액 (KRW)</label>
-        <input type="number" name="amount" required value="${item.amount}">
-        <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.remove()">삭제</button>
+      <div class="item-row snapshot-item-row">
+        <div class="form-group">
+          <label>자산 ID</label>
+          <select name="asset_id" required>${_buildAssetOptionsWithSelected(item.asset_id)}</select>
+        </div>
+        <div class="form-group">
+          <label>라벨</label>
+          <input type="text" name="label" required value="${item.label}">
+        </div>
+        <div class="form-group">
+          <label>금액 (KRW)</label>
+          <input class="amount-input" type="number" name="amount" inputmode="numeric" required value="${item.amount}">
+        </div>
+        <div class="row-action">
+          <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.item-row').remove()">삭제</button>
+        </div>
       </div>
     `
       )
@@ -295,15 +311,23 @@ function setupEditButtons() {
   document.getElementById("edit-add-item-btn").addEventListener("click", function () {
     const container = document.getElementById("edit-items-container");
     const row = document.createElement("div");
-    row.className = "item-row";
+    row.className = "item-row snapshot-item-row";
     row.innerHTML = `
-      <label>자산 ID</label>
-      <select name="asset_id" required>${_buildAssetOptions()}</select>
-      <label>라벨</label>
-      <input type="text" name="label" required placeholder="예: S&P500">
-      <label>금액 (KRW)</label>
-      <input type="number" name="amount" required placeholder="예: 5000000">
-      <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.remove()">삭제</button>
+      <div class="form-group">
+        <label>자산 ID</label>
+        <select name="asset_id" required>${_buildAssetOptions()}</select>
+      </div>
+      <div class="form-group">
+        <label>라벨</label>
+        <input type="text" name="label" required placeholder="예: S&P500">
+      </div>
+      <div class="form-group">
+        <label>금액 (KRW)</label>
+        <input class="amount-input" type="number" name="amount" inputmode="numeric" required placeholder="예: 5000000">
+      </div>
+      <div class="row-action">
+        <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.item-row').remove()">삭제</button>
+      </div>
     `;
     container.appendChild(row);
   });

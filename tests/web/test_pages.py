@@ -182,3 +182,16 @@ class TestEmptyStateActions:
 
         assert 'class="empty-state-actions"' in html
         assert "새 옵셔널 벳 생성" in html
+
+
+class TestSnapshotFormLayout:
+    """Snapshot amount entry should remain scannable as rows grow."""
+
+    def test_snapshot_create_form_uses_dense_item_rows(self, client):
+        """The initial snapshot row should expose the compact row classes."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'class="item-row snapshot-item-row"' in html
+        assert 'class="amount-input"' in html
+        assert 'inputmode="numeric"' in html

@@ -32,15 +32,21 @@
     </div>
     <form id="create-snapshot-form">
       <div id="snapshot-items-container">
-        <div class="item-row">
-          <label>자산 ID</label>
-          <select name="asset_id" required>
-            <option value="">로딩 중...</option>
-          </select>
-          <label>라벨</label>
-          <input type="text" name="label" required placeholder="예: S&P500">
-          <label>금액 (KRW)</label>
-          <input type="number" name="amount" required placeholder="예: 5000000">
+        <div class="item-row snapshot-item-row">
+          <div class="form-group">
+            <label>자산 ID</label>
+            <select name="asset_id" required>
+              <option value="">로딩 중...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>라벨</label>
+            <input type="text" name="label" required placeholder="예: S&P500">
+          </div>
+          <div class="form-group">
+            <label>금액 (KRW)</label>
+            <input class="amount-input" type="number" name="amount" inputmode="numeric" required placeholder="예: 5000000">
+          </div>
         </div>
       </div>
       <button type="button" id="add-item-btn" class="btn btn-secondary">+ 항목 추가</button>

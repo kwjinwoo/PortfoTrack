@@ -324,16 +324,32 @@ th {
   flex-wrap: wrap;
 }
 
+.snapshot-item-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.2fr) minmax(150px, 1fr) auto;
+  align-items: end;
+}
+
 .item-row label {
   font-weight: 500;
   min-width: 60px;
 }
 
-.item-row input {
+.item-row input,
+.item-row select {
   padding: 0.5rem;
   border: 1px solid #bdc3c7;
   border-radius: 4px;
   font-size: 0.9rem;
+}
+
+.amount-input {
+  text-align: right;
+}
+
+.row-action {
+  display: flex;
+  align-items: center;
 }
 
 /* Buttons */
@@ -516,5 +532,13 @@ th {
 
   .report-judgement {
     grid-template-columns: 1fr;
+  }
+
+  .snapshot-item-row {
+    grid-template-columns: 1fr;
+  }
+
+  .row-action {
+    align-items: flex-start;
   }
 }
