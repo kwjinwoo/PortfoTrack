@@ -122,6 +122,14 @@ class TestStaticFiles:
             js = response.data.decode("utf-8")
             assert "empty-state" in js
 
+    def test_targets_js_uses_in_app_ratio_confirmation(self, client):
+        """Target save warnings should avoid native browser confirm dialogs."""
+        response = client.get("/static/js/targets-ui.js")
+        js = response.data.decode("utf-8")
+
+        assert "confirm(" not in js
+        assert "target-ratio-warning" in js
+
     def test_templates_do_not_use_inline_style_attributes(self):
         """Templates should express visual states through classes."""
         template_dir = (

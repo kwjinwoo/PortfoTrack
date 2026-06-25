@@ -203,3 +203,15 @@ class TestSnapshotFormLayout:
         assert 'class="item-row snapshot-item-row"' in html
         assert 'class="amount-input"' in html
         assert 'inputmode="numeric"' in html
+
+
+class TestTargetSaveConfirmation:
+    """Target edits should confirm ratio mismatches inside the page."""
+
+    def test_target_edit_page_contains_ratio_warning_panel(self, client):
+        """The target page should expose an in-app ratio warning panel."""
+        response = client.get("/targets")
+        html = response.data.decode("utf-8")
+
+        assert 'id="target-ratio-warning"' in html
+        assert "그래도 저장" in html

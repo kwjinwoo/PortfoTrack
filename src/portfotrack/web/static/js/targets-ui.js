@@ -4,6 +4,7 @@
 
 /** Date of the target currently loaded. */
 let _targetDate = null;
+let _pendingTargetSave = null;
 
 document.addEventListener("DOMContentLoaded", function () {
   loadTarget();
@@ -224,6 +225,22 @@ async function editTarget() {
  * Set up the edit card buttons (edit, add asset, save, cancel).
  */
 function setupEditButtons() {
+  document
+    .getElementById("confirm-target-save-btn")
+    .addEventListener("click", async function () {
+      if (!_pendingTargetSave) return;
+      hideRatioWarning();
+      await saveTargetPayload(_pendingTargetSave);
+      _pendingTargetSave = null;
+    });
+
+  document
+    .getElementById("cancel-target-save-btn")
+    .addEventListener("click", function () {
+      _pendingTargetSave = null;
+      hideRatioWarning();
+    });
+
   document.getElementById("edit-target-btn").addEventListener("click", function () {
     editTarget();
   });
@@ -311,44 +328,19 @@ function setupEditButtons() {
 
       // Pre-validate total ratio on client side
       const totalRatio = assets.reduce((sum, a) => sum + a.target_ratio, 0);
-      if (Math.abs(totalRatio - 1.0) > 0.0001) {
-        const proceed = confirm(
-          `총 비율이 ${(totalRatio * 100).toFixed(1)}%입니다 (100% 아님). 그래도 저장하시겠습니까?`
-        );
-        if (!proceed) return;
-      }
-
       const mode = document.querySelector(
         'input[name="target-save-mode"]:checked'
       ).value;
+      const payload = { mode: mode, assets: assets };
 
-      try {
-        const response = await fetch(`/api/targets/${_targetDate}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: mode, assets: assets }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          let msg = "타겟이 저장되었습니다.";
-          if (data.warnings && data.warnings.length > 0) {
-            msg += " ⚠ " + data.warnings.join("; ");
-          }
-          showMessage("edit-target-message", msg, "success");
-          document.getElementById("target-edit-card").style.display = "none";
-          loadTarget();
-        } else {
-          const err = await response.json();
-          showMessage(
-            "edit-target-message",
-            err.error || "저장에 실패했습니다.",
-            "error"
-          );
-        }
-      } catch (err) {
-        showMessage("edit-target-message", "네트워크 오류가 발생했습니다.", "error");
+      if (Math.abs(totalRatio - 1.0) > 0.0001) {
+        _pendingTargetSave = payload;
+        showRatioWarning(totalRatio);
+        return;
       }
+
+      hideRatioWarning();
+      await saveTargetPayload(payload);
     });
 
   document
@@ -356,6 +348,51 @@ function setupEditButtons() {
     .addEventListener("click", function () {
       document.getElementById("target-edit-card").style.display = "none";
     });
+}
+
+async function saveTargetPayload(payload) {
+  try {
+    const response = await fetch(`/api/targets/${_targetDate}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      let msg = "타겟이 저장되었습니다.";
+      if (data.warnings && data.warnings.length > 0) {
+        msg += " ⚠ " + data.warnings.join("; ");
+      }
+      showMessage("edit-target-message", msg, "success");
+      document.getElementById("target-edit-card").style.display = "none";
+      loadTarget();
+    } else {
+      const err = await response.json();
+      showMessage(
+        "edit-target-message",
+        err.error || "저장에 실패했습니다.",
+        "error"
+      );
+    }
+  } catch (err) {
+    showMessage("edit-target-message", "네트워크 오류가 발생했습니다.", "error");
+  }
+}
+
+function showRatioWarning(totalRatio) {
+  const warning = document.getElementById("target-ratio-warning");
+  const detail = document.getElementById("target-ratio-warning-detail");
+  const totalPercent = (totalRatio * 100).toFixed(1);
+  const gapPercent = Math.abs((1.0 - totalRatio) * 100).toFixed(1);
+  const direction = totalRatio > 1.0 ? "초과" : "부족";
+
+  detail.textContent = `현재 합계는 ${totalPercent}%로 100%보다 ${gapPercent}%p ${direction}합니다.`;
+  warning.classList.remove("is-hidden");
+}
+
+function hideRatioWarning() {
+  document.getElementById("target-ratio-warning").classList.add("is-hidden");
 }
 
 /**

@@ -445,6 +445,15 @@ th {
   color: #721c24;
 }
 
+.message.warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.message.warning p {
+  margin-top: 0.25rem;
+}
+
 .message a {
   color: inherit;
   font-weight: 700;
