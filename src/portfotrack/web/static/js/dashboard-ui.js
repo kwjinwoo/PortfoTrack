@@ -69,10 +69,12 @@ async function renderSnapshotSummary(snapshot) {
   if (!snapshot) {
     dateEl.textContent = "없음";
     totalEl.textContent = "첫 스냅샷이 필요합니다.";
+    setSummaryCardState(dateEl, "warn");
     return;
   }
 
   dateEl.textContent = snapshot.date;
+  setSummaryCardState(dateEl, "info");
 
   try {
     const detail = await fetchJson(`/api/snapshots/${encodeURIComponent(snapshot.date)}`);
@@ -93,12 +95,14 @@ function renderTargetSummary(target) {
   if (!target) {
     statusEl.textContent = "미설정";
     countEl.textContent = "타겟 배분이 필요합니다.";
+    setSummaryCardState(statusEl, "warn");
     return;
   }
 
   const count = target.assets.length;
   statusEl.textContent = count > 0 ? "설정됨" : "비어 있음";
   countEl.textContent = `${count}개 자산`;
+  setSummaryCardState(statusEl, count > 0 ? "ok" : "warn");
 }
 
 /**
@@ -155,6 +159,7 @@ function renderIncompleteSetup(snapshot, target) {
   const guidance = document.getElementById("dashboard-guidance");
 
   driftStatus.textContent = "대기";
+  setSummaryCardState(driftStatus, "warn");
 
   if (!target || target.assets.length === 0) {
     driftDetail.textContent = "타겟 설정 후 비교할 수 있습니다.";
@@ -193,6 +198,7 @@ function renderReportSummary(report) {
     driftStatus.textContent = "범위 내";
     driftDetail.textContent = "모든 자산이 허용 범위 안에 있습니다.";
     guidance.textContent = "현재 상태가 타겟 범위 안에 있습니다. 새 스냅샷을 기록하며 변화를 추적하세요.";
+    setSummaryCardState(driftStatus, "ok");
     driftPanel.style.display = "none";
     return;
   }
@@ -200,6 +206,7 @@ function renderReportSummary(report) {
   driftStatus.textContent = `${outsideItems.length}개 이탈`;
   driftDetail.textContent = "허용 범위 밖 자산을 확인하세요.";
   guidance.textContent = "리포트에서 허용 범위 밖 자산의 차이를 확인하세요.";
+  setSummaryCardState(driftStatus, "danger");
   driftPanel.style.display = "block";
   driftList.innerHTML = "";
 
@@ -222,6 +229,20 @@ function renderDashboardError() {
   document.getElementById("drift-status").textContent = "오류";
   document.getElementById("dashboard-guidance").textContent =
     "대시보드 데이터를 불러올 수 없습니다. 각 관리 화면에서 데이터를 확인하세요.";
+  setSummaryCardState(document.getElementById("latest-snapshot-date"), "danger");
+  setSummaryCardState(document.getElementById("target-status"), "danger");
+  setSummaryCardState(document.getElementById("drift-status"), "danger");
+}
+
+/**
+ * Apply a quiet status accent to the summary card containing an element.
+ */
+function setSummaryCardState(element, state) {
+  const card = element.closest(".summary-card");
+  if (!card) return;
+
+  card.classList.remove("is-ok", "is-warn", "is-danger", "is-info");
+  card.classList.add(`is-${state}`);
 }
 
 /**
