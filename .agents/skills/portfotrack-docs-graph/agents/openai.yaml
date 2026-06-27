@@ -1,0 +1,4 @@
+interface:
+  display_name: "PortfoTrack Docs Graph"
+  short_description: "Read and update PortfoTrack docs graph"
+  default_prompt: "Use $portfotrack-docs-graph to inspect and update the PortfoTrack documentation graph."
