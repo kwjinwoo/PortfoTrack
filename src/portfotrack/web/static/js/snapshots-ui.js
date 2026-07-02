@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setupCreateForm();
   setupAddItemButton();
   setupEditButtons();
+  setupExportButtons();
 });
 
 /**
@@ -73,6 +74,7 @@ async function viewSnapshot(date) {
     }
 
     const data = await response.json();
+    _viewingDate = date;
     dateSpan.textContent = data.date;
     tbody.innerHTML = data.items
       .map(
@@ -92,11 +94,92 @@ async function viewSnapshot(date) {
   }
 }
 
+/** Build the export URL from the selected snapshot and privacy options. */
+function _exportUrl() {
+  const includeLabels = document.getElementById("export-include-labels").checked;
+  const hideAmounts = document.getElementById("export-hide-amounts").checked;
+  const params = new URLSearchParams({
+    snapshot_date: _viewingDate,
+    include_labels: String(includeLabels),
+    hide_amounts: String(hideAmounts),
+  });
+  return `/api/reports/allocation/export?${params.toString()}`;
+}
+
+/** Fetch the Markdown export for the snapshot currently being viewed. */
+async function _fetchExport() {
+  if (!_viewingDate) {
+    throw new Error("먼저 스냅샷을 선택하세요.");
+  }
+  const response = await fetch(_exportUrl());
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.error || "내보내기에 실패했습니다.");
+  }
+  return response.text();
+}
+
+/** Copy text with a fallback for browsers that deny the Clipboard API. */
+async function _copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return;
+  } catch (err) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw err;
+  }
+}
+
+/** Set up copy and local Markdown download actions. */
+function setupExportButtons() {
+  document
+    .getElementById("copy-chatgpt-export-btn")
+    .addEventListener("click", async function () {
+      try {
+        const markdown = await _fetchExport();
+        await _copyText(markdown);
+        showMessage("export-message", "Markdown을 클립보드에 복사했습니다.", "success");
+      } catch (err) {
+        showMessage("export-message", err.message || "복사에 실패했습니다.", "error");
+      }
+    });
+
+  document
+    .getElementById("save-chatgpt-export-btn")
+    .addEventListener("click", async function () {
+      try {
+        const markdown = await _fetchExport();
+        const url = URL.createObjectURL(
+          new Blob([markdown], { type: "text/markdown;charset=utf-8" })
+        );
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `portfotrack-${_viewingDate}.md`;
+        link.click();
+        URL.revokeObjectURL(url);
+        showMessage("export-message", "Markdown 파일을 저장했습니다.", "success");
+      } catch (err) {
+        showMessage("export-message", err.message || "저장에 실패했습니다.", "error");
+      }
+    });
+}
+
 /**
  * Cached target assets for building select dropdowns.
  * @type {Array<{id: string, name: string, purpose: string}>}
  */
 let _cachedAssets = [];
+
+/** Date of the snapshot currently shown in the detail card. */
+let _viewingDate = null;
 
 /**
  * Load target assets and populate all asset_id dropdowns.

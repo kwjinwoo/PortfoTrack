@@ -198,3 +198,67 @@ class TestAllocationReport:
         data = response.get_json()
         assert "is_complete" in data
         assert data["is_complete"] is True
+
+
+class TestAllocationMarkdownExport:
+    """GET /api/reports/allocation/export — export target and snapshot."""
+
+    def test_returns_downloadable_markdown(self, client, tmp_data_dir):
+        """A valid portfolio produces a UTF-8 Markdown attachment."""
+        _write_snapshot(
+            tmp_data_dir["snapshots"],
+            "2026-02-12",
+            [{"asset_id": "us_equity", "label": "S&P500", "amount": 10_000_000}],
+        )
+        _write_target(
+            tmp_data_dir["targets"],
+            "2026-02-07",
+            [
+                {
+                    "id": "us_equity",
+                    "name": "US Equity",
+                    "purpose": "growth",
+                    "target_ratio": 1.0,
+                    "tolerance": {"lower": 0.9, "upper": 1.0},
+                }
+            ],
+        )
+
+        response = client.get("/api/reports/allocation/export?snapshot_date=2026-02-12")
+
+        assert response.status_code == 200
+        assert response.mimetype == "text/markdown"
+        assert "portfotrack-2026-02-12.md" in response.headers["Content-Disposition"]
+        assert "S&P500" in response.get_data(as_text=True)
+        assert "ChatGPT에게 요청할 내용" not in response.get_data(as_text=True)
+
+    def test_applies_privacy_options(self, client, tmp_data_dir):
+        """Query options omit labels and exact amounts from the export."""
+        _write_snapshot(
+            tmp_data_dir["snapshots"],
+            "2026-02-12",
+            [{"asset_id": "us_equity", "label": "S&P500", "amount": 10_000_000}],
+        )
+        _write_target(
+            tmp_data_dir["targets"],
+            "2026-02-07",
+            [
+                {
+                    "id": "us_equity",
+                    "name": "US Equity",
+                    "purpose": "growth",
+                    "target_ratio": 1.0,
+                    "tolerance": {"lower": 0.9, "upper": 1.0},
+                }
+            ],
+        )
+
+        response = client.get(
+            "/api/reports/allocation/export"
+            "?snapshot_date=2026-02-12&include_labels=false&hide_amounts=true"
+        )
+
+        markdown = response.get_data(as_text=True)
+        assert response.status_code == 200
+        assert "S&P500" not in markdown
+        assert "10,000,000" not in markdown

@@ -6,10 +6,11 @@ by combining a snapshot with the latest target allocation.
 
 import re
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 import portfotrack.path as path_mod
 from portfotrack.services.allocation_report import generate_allocation_report
+from portfotrack.services.chatgpt_export import format_portfolio_markdown
 from portfotrack.services.target_services import load_latest_target
 from portfotrack.storage.json_store.errors import SnapshotNotFoundError
 from portfotrack.storage.json_store.snapshot_store import load as store_load
@@ -87,4 +88,58 @@ def allocation_report():
             "total_additional_needed": report.total_additional_needed(),
             "items": items,
         }
+    )
+
+
+@report_bp.route("/allocation/export", methods=["GET"])
+def allocation_markdown_export():
+    """Export a snapshot and the latest target as a Markdown attachment.
+
+    Query params:
+        snapshot_date: ISO date string (YYYY-MM-DD) of the snapshot to use.
+        include_labels: ``false`` omits individual holding labels.
+        hide_amounts: ``true`` omits exact monetary amounts.
+
+    Returns:
+        UTF-8 Markdown suitable for copying into a local AI conversation, or
+        a JSON 400/404 response when the requested data is unavailable.
+    """
+    snapshot_date = request.args.get("snapshot_date")
+    if not snapshot_date:
+        return jsonify({"error": "Query parameter 'snapshot_date' is required."}), 400
+    if not _DATE_PATTERN.match(snapshot_date):
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    matching = list(path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{snapshot_date}_v*.json"))
+    if not matching:
+        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
+
+    latest_file = sorted(matching)[-1]
+    try:
+        snapshot_dto = store_load(latest_file.name)
+    except SnapshotNotFoundError:
+        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
+    snapshot = dto_to_snapshot(snapshot_dto)
+
+    try:
+        target = load_latest_target()
+    except FileNotFoundError:
+        return jsonify({"error": "No target allocation found."}), 404
+
+    report = generate_allocation_report(target, snapshot)
+    markdown = format_portfolio_markdown(
+        target,
+        snapshot,
+        report,
+        include_labels=request.args.get("include_labels", "true").lower() != "false",
+        hide_amounts=request.args.get("hide_amounts", "false").lower() == "true",
+    )
+    return Response(
+        markdown,
+        mimetype="text/markdown",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="portfotrack-{snapshot_date}.md"'
+            )
+        },
     )

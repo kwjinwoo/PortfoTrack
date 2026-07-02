@@ -72,6 +72,16 @@ class TestSnapshotsPageStructure:
 
         assert 'id="no-target-warning"' in html
 
+    def test_detail_card_contains_markdown_export_controls(self, client):
+        """Snapshot details expose copy, save, and privacy controls."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert 'id="copy-chatgpt-export-btn"' in html
+        assert 'id="save-chatgpt-export-btn"' in html
+        assert 'id="export-include-labels"' in html
+        assert 'id="export-hide-amounts"' in html
+
 
 class TestSnapshotEditUI:
     """Snapshot page should contain UI elements for editing snapshots."""

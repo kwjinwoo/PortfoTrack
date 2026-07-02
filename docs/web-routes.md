@@ -62,6 +62,12 @@ Current page areas:
 - Trends
 - Optional bets
 
+The snapshot detail panel can export the selected snapshot together with the
+latest target as paste-ready Markdown. Users may copy it to the clipboard or
+save it locally, omit holding labels, and hide exact amounts while retaining
+allocation ratios. The export is factual and does not append a suggested AI
+prompt.
+
 ## API Routes
 
 API routes live in Flask blueprints under `src/portfotrack/web/routes/`.
@@ -74,6 +80,11 @@ Route modules:
 - `report_routes.py`
 - `trend_routes.py`
 - `optional_bet_routes.py`
+
+Allocation report routes also expose
+`GET /api/reports/allocation/export?snapshot_date=YYYY-MM-DD`. The response is
+a local UTF-8 Markdown attachment; `include_labels=false` omits holding labels
+and `hide_amounts=true` omits exact monetary amounts.
 
 ## UI Assets
 
