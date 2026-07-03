@@ -5,6 +5,7 @@ kind: reference
 depends_on:
   - architecture
 related:
+  - project-roadmap
   - domain-model
   - storage-contracts
   - web-routes
@@ -59,10 +60,10 @@ boundaries.
 
 ## Known Work State
 
-No next milestone, open implementation gap, or canonical roadmap is currently
-recorded in the docs graph. Do not infer planned work from an absent feature.
-When work is intentionally accepted, record its durable scope here or in a
-dedicated decision node and link it from this section.
+A canonical [Project Roadmap](planning/roadmap.md) is recorded in the docs
+graph. It currently contains no accepted or in-progress milestone; its
+machine-readable allocation context export is a proposal, not committed work.
+Do not treat roadmap candidates as implemented behavior or approved scope.
 
 ## Verification Baseline
 
@@ -86,6 +87,7 @@ Depends on:
 
 Related:
 
+- [Project Roadmap](planning/roadmap.md)
 - [Domain Model](domain/overview.md)
 - [Storage Contracts](storage/contracts.md)
 - [Web Routes](web/routes.md)

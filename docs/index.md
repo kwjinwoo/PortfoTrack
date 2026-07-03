@@ -6,6 +6,7 @@ depends_on: []
 related:
   - map
   - project-status
+  - project-roadmap
   - architecture
 code_refs: []
 tests: []
@@ -28,6 +29,7 @@ For a quick orientation before selecting work, read
 
 - [Knowledge Map](map.md): Task-oriented traversal paths through the docs graph.
 - [Project Status](project-status.md): Current capabilities, deliberate boundaries, work state, and verification baseline.
+- [Project Roadmap](planning/roadmap.md): Intended direction, milestone states, and candidate future capabilities.
 - [Architecture](foundation/architecture.md): Layer boundaries and dependency direction.
 - [Domain Model](domain/overview.md): Asset, target allocation, snapshot, trend, and optional bet concepts.
 - [Storage Contracts](storage/contracts.md): JSON DTOs, file stores, naming, and persistence rules.

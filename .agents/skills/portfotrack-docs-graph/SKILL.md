@@ -1,6 +1,6 @@
 ---
 name: portfotrack-docs-graph
-description: Read, traverse, create, and update the PortfoTrack repository documentation graph. Use when working in the PortfoTrack repo and the task involves AGENTS.md, docs/map.md, nested docs knowledge nodes, documentation frontmatter, typed links, graph traversal paths, project status, architecture/domain/storage/web docs, ADRs, glossary, error-book, or keeping docs synchronized with code changes.
+description: Read, traverse, create, and update the PortfoTrack repository documentation graph. Use when working in the PortfoTrack repo and the task involves AGENTS.md, docs/map.md, nested docs knowledge nodes, documentation frontmatter, typed links, graph traversal paths, project status or roadmap planning, architecture/domain/storage/web docs, ADRs, glossary, error-book, or keeping docs synchronized with code changes.
 ---
 
 # PortfoTrack Docs Graph
@@ -26,8 +26,12 @@ Use the map's task paths to choose only relevant nodes.
 
 For common tasks:
 
-- Orientation or work selection: read `project-status`, then follow its link to
-  the owning capability node before treating the summary as a contract.
+- Orientation or work selection: read `project-status`; also read
+  `project-roadmap` when evaluating future work, then follow links to the owning
+  capability nodes before treating a summary as a contract.
+- Product planning: read `project-status`, `project-roadmap`, `architecture`,
+  and any relevant ADRs. Treat only `accepted` and `in-progress` roadmap
+  milestones as committed work; a `proposed` milestone is not approved scope.
 - Domain behavior: read `architecture`, `domain-model`, `error-policy`, `testing-playbook`.
 - Persistence: read `architecture`, `storage-contracts`, `error-policy`, `testing-playbook`.
 - Web/API/UI: read `architecture`, `web-routes`, `error-policy`, `testing-playbook`.
@@ -56,7 +60,9 @@ move. Make markdown links point to docs files by relative path.
 Keep `index.md`, `map.md`, and `project-status.md` at the docs root. Place
 other nodes one directory level below `docs/` according to knowledge purpose,
 not by mechanically mirroring the source tree. ADRs live under `docs/adr/`,
-with `docs/adr/README.md` as their discovery node.
+with `docs/adr/README.md` as their discovery node. Keep the general roadmap in
+`docs/planning/roadmap.md`; add narrower planning nodes only when independently
+changing detail makes the general roadmap difficult to use.
 
 When adding a node:
 
@@ -106,8 +112,26 @@ Also review `project-status` in the same change when it alters:
 - an accepted milestone or known implementation gap
 - the full-suite verification baseline used as a repository reference point
 
+Review `project-roadmap` in the same change when:
+
+- a milestone is proposed, accepted, started, deferred, or completed
+- product direction or deliberate non-goals change
+- completed work changes the next useful milestone
+
+Keep roadmap state transitions synchronized with evidence:
+
+- `proposed` records an option and must not be treated as implementation scope
+- `accepted` records agreed scope and should be reflected in the work-state
+  summary in `project-status`
+- `in-progress` must correspond to active implementation or documentation work
+- `completed` requires verified behavior, updated owning contract nodes, and an
+  updated capability summary in `project-status`
+- `deferred` retains enough rationale to prevent accidental reintroduction
+
 Do not update `project-status` for internal refactors that leave its summary
 accurate. Keep detailed contracts and rationale in their owning nodes.
+Do not use the roadmap as an implementation contract or as evidence that a
+capability already exists.
 
 Do not create `llms.txt` for this repo unless the user explicitly asks.
 Use `AGENTS.md` as the agent-facing entrypoint.

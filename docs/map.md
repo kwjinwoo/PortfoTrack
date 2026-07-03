@@ -6,6 +6,7 @@ depends_on:
   - index
 related:
   - project-status
+  - project-roadmap
   - architecture
   - testing-playbook
   - error-book
@@ -27,10 +28,24 @@ Also read the nearest `AGENTS.md` for any files you will touch.
 Read:
 
 1. [Project Status](project-status.md)
-2. The capability node linked from the relevant status section
+2. [Project Roadmap](planning/roadmap.md) when evaluating future work
+3. The capability node linked from the relevant status or roadmap section
 
 Then inspect the referenced code and tests before treating a status summary as
-a detailed contract.
+a detailed contract. Treat only `accepted` or `in-progress` roadmap milestones
+as committed work.
+
+## If Reviewing or Changing Product Plans
+
+Read:
+
+1. [Project Status](project-status.md)
+2. [Project Roadmap](planning/roadmap.md)
+3. [Architecture](foundation/architecture.md)
+
+Then follow the roadmap links for affected capabilities. Keep proposals
+distinct from implemented contracts, and use an ADR when accepting a broad or
+costly-to-reverse architectural decision.
 
 ## If Changing Domain Logic
 
@@ -140,6 +155,8 @@ Then inspect related nodes only when the edge or traversal path changes.
 
 - `project-status` summarizes current repository capabilities and points to the
   owning contract nodes without replacing them.
+- `project-roadmap` records future intent and milestone state without replacing
+  `project-status`, implementation plans, contracts, or ADRs.
 - `adr` indexes durable project decisions without replacing individual ADRs.
 - `architecture` is a parent of domain, storage, services, and web nodes.
 - `error-policy` applies across all layers.
