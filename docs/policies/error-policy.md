@@ -3,7 +3,7 @@ id: error-policy
 title: Error Policy
 kind: policy
 depends_on:
-  - decisions
+  - adr
 related:
   - domain-model
   - storage-contracts
@@ -68,11 +68,11 @@ They are allowed in tests.
 
 Depends on:
 
-- [Decisions](decisions.md)
+- [Architecture Decision Records](../adr/README.md)
 
 Related:
 
-- [Domain Model](domain-model.md)
-- [Storage Contracts](storage-contracts.md)
-- [Web Routes](web-routes.md)
+- [Domain Model](../domain/overview.md)
+- [Storage Contracts](../storage/contracts.md)
+- [Web Routes](../web/routes.md)
 - [Testing Playbook](testing-playbook.md)

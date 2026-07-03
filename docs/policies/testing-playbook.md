@@ -66,11 +66,11 @@ Do not commit while checks are failing.
 
 Depends on:
 
-- [Architecture](architecture.md)
+- [Architecture](../foundation/architecture.md)
 
 Related:
 
-- [Domain Model](domain-model.md)
-- [Storage Contracts](storage-contracts.md)
-- [Web Routes](web-routes.md)
+- [Domain Model](../domain/overview.md)
+- [Storage Contracts](../storage/contracts.md)
+- [Web Routes](../web/routes.md)
 - [Error Policy](error-policy.md)

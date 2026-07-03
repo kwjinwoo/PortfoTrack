@@ -36,10 +36,10 @@ a detailed contract.
 
 Read:
 
-1. [Architecture](architecture.md)
-2. [Domain Model](domain-model.md)
-3. [Error Policy](error-policy.md)
-4. [Testing Playbook](testing-playbook.md)
+1. [Architecture](foundation/architecture.md)
+2. [Domain Model](domain/overview.md)
+3. [Error Policy](policies/error-policy.md)
+4. [Testing Playbook](policies/testing-playbook.md)
 
 Then inspect:
 
@@ -53,10 +53,10 @@ Then inspect:
 
 Read:
 
-1. [Architecture](architecture.md)
-2. [Domain Model](domain-model.md)
-3. [Storage Contracts](storage-contracts.md) when persistence is involved
-4. [Testing Playbook](testing-playbook.md)
+1. [Architecture](foundation/architecture.md)
+2. [Domain Model](domain/overview.md)
+3. [Storage Contracts](storage/contracts.md) when persistence is involved
+4. [Testing Playbook](policies/testing-playbook.md)
 
 Then inspect:
 
@@ -69,10 +69,10 @@ Then inspect:
 
 Read:
 
-1. [Architecture](architecture.md)
-2. [Storage Contracts](storage-contracts.md)
-3. [Error Policy](error-policy.md)
-4. [Testing Playbook](testing-playbook.md)
+1. [Architecture](foundation/architecture.md)
+2. [Storage Contracts](storage/contracts.md)
+3. [Error Policy](policies/error-policy.md)
+4. [Testing Playbook](policies/testing-playbook.md)
 
 Then inspect:
 
@@ -86,10 +86,10 @@ Then inspect:
 
 Read:
 
-1. [Architecture](architecture.md)
-2. [Web Routes](web-routes.md)
-3. [Error Policy](error-policy.md)
-4. [Testing Playbook](testing-playbook.md)
+1. [Architecture](foundation/architecture.md)
+2. [Web Routes](web/routes.md)
+3. [Error Policy](policies/error-policy.md)
+4. [Testing Playbook](policies/testing-playbook.md)
 
 Then inspect:
 
@@ -104,11 +104,11 @@ Then inspect:
 
 Read:
 
-1. [Error Policy](error-policy.md)
-2. [Domain Model](domain-model.md)
-3. [Storage Contracts](storage-contracts.md)
-4. [Web Routes](web-routes.md)
-5. [Testing Playbook](testing-playbook.md)
+1. [Error Policy](policies/error-policy.md)
+2. [Domain Model](domain/overview.md)
+3. [Storage Contracts](storage/contracts.md)
+4. [Web Routes](web/routes.md)
+5. [Testing Playbook](policies/testing-playbook.md)
 
 Then inspect the layer-specific error modules before changing behavior.
 
@@ -116,9 +116,10 @@ Then inspect the layer-specific error modules before changing behavior.
 
 Read:
 
-1. [Decisions](decisions.md)
-2. [Error Book](error-book.md)
-3. [Architecture](architecture.md)
+1. [Architecture Decision Records](adr/README.md)
+2. The ADRs relevant to the rule
+3. [Error Book](records/error-book.md)
+4. [Architecture](foundation/architecture.md)
 
 Then update `AGENTS.md` if the rule affects agent behavior.
 
@@ -139,8 +140,9 @@ Then inspect related nodes only when the edge or traversal path changes.
 
 - `project-status` summarizes current repository capabilities and points to the
   owning contract nodes without replacing them.
+- `adr` indexes durable project decisions without replacing individual ADRs.
 - `architecture` is a parent of domain, storage, services, and web nodes.
 - `error-policy` applies across all layers.
 - `testing-playbook` applies to every behavior change.
-- `decisions` explains why broad constraints exist.
+- Individual `adr-*` nodes explain why broad constraints exist.
 - `error-book` records recurring corrections that agents should check before editing.

@@ -3,7 +3,7 @@ id: error-book
 title: Error Book
 kind: correction-log
 depends_on:
-  - decisions
+  - adr
 related:
   - architecture
   - error-policy
@@ -33,10 +33,10 @@ objects. Use the architecture map before editing.
 
 Related nodes:
 
-- [Architecture](architecture.md)
-- [Domain Model](domain-model.md)
-- [Storage Contracts](storage-contracts.md)
-- [Web Routes](web-routes.md)
+- [Architecture](../foundation/architecture.md)
+- [Domain Model](../domain/overview.md)
+- [Storage Contracts](../storage/contracts.md)
+- [Web Routes](../web/routes.md)
 
 ## Do Not Add Untested Behavior
 
@@ -45,7 +45,7 @@ asked to skip tests.
 
 Related nodes:
 
-- [Testing Playbook](testing-playbook.md)
+- [Testing Playbook](../policies/testing-playbook.md)
 
 ## Do Not Overpower Dynamic UI State
 
@@ -60,8 +60,8 @@ button appears to do nothing because the card remains visually hidden.
 
 Related nodes:
 
-- [Web Routes](web-routes.md)
-- [Testing Playbook](testing-playbook.md)
+- [Web Routes](../web/routes.md)
+- [Testing Playbook](../policies/testing-playbook.md)
 
 ## Do Not Convert Invariants Into User Errors
 
@@ -70,8 +70,8 @@ Do not hide programmer errors behind application error classes.
 
 Related nodes:
 
-- [Error Policy](error-policy.md)
-- [Storage Contracts](storage-contracts.md)
+- [Error Policy](../policies/error-policy.md)
+- [Storage Contracts](../storage/contracts.md)
 
 ## Do Not Add Network or Database Dependencies
 
@@ -81,8 +81,9 @@ engines.
 
 Related nodes:
 
-- [Decisions](decisions.md)
-- [Architecture](architecture.md)
+- [ADR-0001: Local-Only Application](../adr/0001-local-only-application.md)
+- [ADR-0002: File-Based Persistence](../adr/0002-file-based-persistence.md)
+- [Architecture](../foundation/architecture.md)
 
 ## Do Not Turn Reports Into Advice Engines
 
@@ -92,5 +93,5 @@ or personalized financial advice.
 
 Related nodes:
 
-- [Decisions](decisions.md)
-- [Domain Model](domain-model.md)
+- [ADR-0004: Rule-Based Guidance Only](../adr/0004-rule-based-guidance-only.md)
+- [Domain Model](../domain/overview.md)

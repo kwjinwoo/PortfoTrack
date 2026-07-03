@@ -96,11 +96,11 @@ Primary code:
 
 Depends on:
 
-- [Architecture](architecture.md)
-- [Error Policy](error-policy.md)
+- [Architecture](../foundation/architecture.md)
+- [Error Policy](../policies/error-policy.md)
 
 Related:
 
-- [Storage Contracts](storage-contracts.md)
-- [Testing Playbook](testing-playbook.md)
-- [Glossary](glossary.md)
+- [Storage Contracts](../storage/contracts.md)
+- [Testing Playbook](../policies/testing-playbook.md)
+- [Glossary](../foundation/glossary.md)

@@ -40,8 +40,9 @@ persistence. Its implemented workflow covers:
   controls for labels and exact amounts; and
 - using vendored chart assets without an external network dependency.
 
-See [Domain Model](domain-model.md), [Storage Contracts](storage-contracts.md),
-and [Web Routes](web-routes.md) for the contracts behind these capabilities.
+See [Domain Model](domain/overview.md),
+[Storage Contracts](storage/contracts.md), and [Web Routes](web/routes.md) for
+the contracts behind these capabilities.
 
 ## Deliberate Boundaries
 
@@ -53,7 +54,8 @@ The following are product constraints, not missing features:
   optimization-heavy, or personalized financial advice; and
 - the app does not generate automated trading signals or execute trades.
 
-See [Architecture](architecture.md) for layer and dependency boundaries.
+See [Architecture](foundation/architecture.md) for layer and dependency
+boundaries.
 
 ## Known Work State
 
@@ -80,11 +82,11 @@ another docs node; transient personal task lists do not belong here.
 
 Depends on:
 
-- [Architecture](architecture.md)
+- [Architecture](foundation/architecture.md)
 
 Related:
 
-- [Domain Model](domain-model.md)
-- [Storage Contracts](storage-contracts.md)
-- [Web Routes](web-routes.md)
-- [Testing Playbook](testing-playbook.md)
+- [Domain Model](domain/overview.md)
+- [Storage Contracts](storage/contracts.md)
+- [Web Routes](web/routes.md)
+- [Testing Playbook](policies/testing-playbook.md)

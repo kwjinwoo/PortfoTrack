@@ -77,6 +77,6 @@ Use native Python exceptions.
 
 Related:
 
-- [Domain Model](domain-model.md)
-- [Storage Contracts](storage-contracts.md)
-- [Web Routes](web-routes.md)
+- [Domain Model](../domain/overview.md)
+- [Storage Contracts](../storage/contracts.md)
+- [Web Routes](../web/routes.md)

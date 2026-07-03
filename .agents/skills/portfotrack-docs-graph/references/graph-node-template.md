@@ -25,9 +25,11 @@ updates_when:
 
 ## Field Meanings
 
-- `id`: Stable lowercase hyphenated node identifier. Usually matches filename.
+- `id`: Globally unique lowercase hyphenated node identifier. It remains stable
+  when a file moves and usually matches the filename outside special entrypoints
+  such as `adr/README.md`.
 - `title`: Human-readable title.
-- `kind`: Node type such as `entrypoint`, `graph-map`, `concept`, `contract`, `interface`, `policy`, `decision-log`, `correction-log`, or `reference`.
+- `kind`: Node type such as `entrypoint`, `graph-map`, `concept`, `contract`, `interface`, `policy`, `decision`, `decision-index`, `correction-log`, or `reference`.
 - `depends_on`: Nodes that must be read first for correctness.
 - `related`: Adjacent nodes that may be useful but are not prerequisites.
 - `code_refs`: Source paths governed or explained by the node.
@@ -49,11 +51,11 @@ Use concise bullets and code references.
 
 Depends on:
 
-- [Architecture](architecture.md)
+- [Architecture](../foundation/architecture.md)
 
 Related:
 
-- [Testing Playbook](testing-playbook.md)
+- [Testing Playbook](../policies/testing-playbook.md)
 ```
 
 ## Edge Rules
@@ -63,3 +65,5 @@ Related:
 - Keep graph edges meaningful; avoid linking every node to every other node.
 - If `docs/map.md` gains a path that mentions this node, ensure the node has
   enough links for local traversal after the map path is followed.
+- Resolve links relative to the file that contains them; moving a node requires
+  updating its inbound and outbound paths without changing its id.

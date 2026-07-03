@@ -113,12 +113,12 @@ editing, and optional bet record/edit panels.
 
 Depends on:
 
-- [Architecture](architecture.md)
-- [Error Policy](error-policy.md)
+- [Architecture](../foundation/architecture.md)
+- [Error Policy](../policies/error-policy.md)
 
 Related:
 
-- [Domain Model](domain-model.md)
-- [Storage Contracts](storage-contracts.md)
-- [Testing Playbook](testing-playbook.md)
-- [Error Book](error-book.md)
+- [Domain Model](../domain/overview.md)
+- [Storage Contracts](../storage/contracts.md)
+- [Testing Playbook](../policies/testing-playbook.md)
+- [Error Book](../records/error-book.md)

@@ -8,7 +8,7 @@ depends_on:
 related:
   - domain-model
   - testing-playbook
-  - decisions
+  - adr
 code_refs:
   - src/portfotrack/storage/serialization
   - src/portfotrack/storage/json_store
@@ -59,7 +59,7 @@ Broken trusted DTOs or impossible saved structures can be treated as
 programmer/invariant violations and may use native exceptions such as
 `RuntimeError` or `TypeError`.
 
-See [Error Policy](error-policy.md) before changing this boundary.
+See [Error Policy](../policies/error-policy.md) before changing this boundary.
 
 ## Naming and Time
 
@@ -71,11 +71,11 @@ timezone expectation.
 
 Depends on:
 
-- [Architecture](architecture.md)
-- [Error Policy](error-policy.md)
+- [Architecture](../foundation/architecture.md)
+- [Error Policy](../policies/error-policy.md)
 
 Related:
 
-- [Domain Model](domain-model.md)
-- [Testing Playbook](testing-playbook.md)
-- [Decisions](decisions.md)
+- [Domain Model](../domain/overview.md)
+- [Testing Playbook](../policies/testing-playbook.md)
+- [Architecture Decision Records](../adr/README.md)

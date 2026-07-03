@@ -40,7 +40,8 @@ This repository uses `docs/` as an LLM-readable knowledge graph.
 Use `$portfotrack-docs-graph` when reading, creating, or updating docs graph
 nodes.
 
-Durable project knowledge lives in `docs/*.md`.
+Durable project knowledge lives under `docs/`.
 Module-level invariants live in nested `AGENTS.md` files.
-Keep docs flat under `docs/`.
+Keep root entrypoints stable and group knowledge nodes in shallow,
+purpose-based directories.
 Do not add `llms.txt` unless explicitly requested.

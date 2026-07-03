@@ -3,7 +3,7 @@ id: architecture
 title: Architecture
 kind: concept
 depends_on:
-  - decisions
+  - adr
 related:
   - domain-model
   - storage-contracts
@@ -78,11 +78,11 @@ ORMs, automated trading integrations, or external storage engines.
 
 Depends on:
 
-- [Decisions](decisions.md)
+- [Architecture Decision Records](../adr/README.md)
 
 Related:
 
-- [Domain Model](domain-model.md)
-- [Storage Contracts](storage-contracts.md)
-- [Web Routes](web-routes.md)
-- [Testing Playbook](testing-playbook.md)
+- [Domain Model](../domain/overview.md)
+- [Storage Contracts](../storage/contracts.md)
+- [Web Routes](../web/routes.md)
+- [Testing Playbook](../policies/testing-playbook.md)
