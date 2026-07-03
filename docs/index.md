@@ -5,6 +5,7 @@ kind: entrypoint
 depends_on: []
 related:
   - map
+  - project-status
   - architecture
 code_refs: []
 tests: []
@@ -20,9 +21,13 @@ It is written for both humans and coding agents.
 Start with [Knowledge Map](map.md) when you need to change code.
 Use this page when you only need a quick overview of the available nodes.
 
+For a quick orientation before selecting work, read
+[Project Status](project-status.md).
+
 ## Core Nodes
 
 - [Knowledge Map](map.md): Task-oriented traversal paths through the docs graph.
+- [Project Status](project-status.md): Current capabilities, deliberate boundaries, work state, and verification baseline.
 - [Architecture](architecture.md): Layer boundaries and dependency direction.
 - [Domain Model](domain-model.md): Asset, target allocation, snapshot, trend, and optional bet concepts.
 - [Storage Contracts](storage-contracts.md): JSON DTOs, file stores, naming, and persistence rules.

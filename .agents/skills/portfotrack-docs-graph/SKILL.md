@@ -1,6 +1,6 @@
 ---
 name: portfotrack-docs-graph
-description: Read, traverse, create, and update the PortfoTrack repository documentation graph. Use when working in the PortfoTrack repo and the task involves AGENTS.md, docs/map.md, docs/*.md knowledge nodes, documentation frontmatter, typed links, graph traversal paths, architecture/domain/storage/web docs, decisions, glossary, error-book, or keeping docs synchronized with code changes.
+description: Read, traverse, create, and update the PortfoTrack repository documentation graph. Use when working in the PortfoTrack repo and the task involves AGENTS.md, docs/map.md, docs/*.md knowledge nodes, documentation frontmatter, typed links, graph traversal paths, project status, architecture/domain/storage/web docs, decisions, glossary, error-book, or keeping docs synchronized with code changes.
 ---
 
 # PortfoTrack Docs Graph
@@ -26,6 +26,8 @@ Use the map's task paths to choose only relevant nodes.
 
 For common tasks:
 
+- Orientation or work selection: read `project-status`, then follow its link to
+  the owning capability node before treating the summary as a contract.
 - Domain behavior: read `architecture`, `domain-model`, `error-policy`, `testing-playbook`.
 - Persistence: read `architecture`, `storage-contracts`, `error-policy`, `testing-playbook`.
 - Web/API/UI: read `architecture`, `web-routes`, `error-policy`, `testing-playbook`.
@@ -74,6 +76,15 @@ Update docs in the same change when code changes alter:
 - error handling boundaries
 - test layout or required checks
 - project-level constraints or decisions
+
+Also review `project-status` in the same change when it alters:
+
+- user-visible capabilities summarized by the status node
+- an accepted milestone or known implementation gap
+- the full-suite verification baseline used as a repository reference point
+
+Do not update `project-status` for internal refactors that leave its summary
+accurate. Keep detailed contracts and rationale in their owning nodes.
 
 Do not create `llms.txt` for this repo unless the user explicitly asks.
 Use `AGENTS.md` as the agent-facing entrypoint.

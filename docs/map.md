@@ -5,6 +5,7 @@ kind: graph-map
 depends_on:
   - index
 related:
+  - project-status
   - architecture
   - testing-playbook
   - error-book
@@ -20,6 +21,16 @@ updates_when:
 Use this map as the graph entrypoint for non-trivial repository work.
 Each path lists the minimum docs nodes to read before editing code.
 Also read the nearest `AGENTS.md` for any files you will touch.
+
+## If Orienting or Choosing Work
+
+Read:
+
+1. [Project Status](project-status.md)
+2. The capability node linked from the relevant status section
+
+Then inspect the referenced code and tests before treating a status summary as
+a detailed contract.
 
 ## If Changing Domain Logic
 
@@ -126,6 +137,8 @@ Then inspect related nodes only when the edge or traversal path changes.
 
 ## Graph Edges
 
+- `project-status` summarizes current repository capabilities and points to the
+  owning contract nodes without replacing them.
 - `architecture` is a parent of domain, storage, services, and web nodes.
 - `error-policy` applies across all layers.
 - `testing-playbook` applies to every behavior change.
