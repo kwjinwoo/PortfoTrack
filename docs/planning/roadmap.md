@@ -6,6 +6,7 @@ depends_on:
   - architecture
   - project-status
 related:
+  - allocation-context-export
   - domain-model
   - storage-contracts
   - web-routes
@@ -59,44 +60,31 @@ work. Roadmap order expresses a likely sequence, not a delivery promise.
 
 No new milestone is currently accepted or in progress. Preserve the verified
 local portfolio workflow described in [Project Status](../project-status.md)
-while proposed work is evaluated.
+until another candidate has a clear user outcome and durable boundaries.
 
-## Next Candidate
+## Completed Milestone
 
 ### Machine-readable allocation context export
 
-Status: `proposed`
+Status: `completed`
 
 Provide a versioned JSON export of an explicitly selected portfolio snapshot
 and its allocation comparison. The first motivating consumer is PeakGuard,
 which could combine its own price-discount observations with PortfoTrack's
 allocation context. The export itself should remain consumer-neutral.
 
-The capability should expose allocation facts only, such as stable asset ids,
+The completed capability exposes allocation facts only: stable asset ids,
 current amounts and weights, target ranges, drift, snapshot date, currency, and
-an export schema version. Exact fields, rounding, ordering, and missing-data
-behavior are open contract decisions, not current behavior.
+an export schema version. It requires an explicit snapshot, sorts assets by id,
+retains ratio precision, normalizes percentage-point floating noise, and uses
+the existing report route's `400` and `404` missing-data behavior.
 
-Likely delivery sequence:
-
-1. Define and document a consumer-neutral export contract.
-2. Implement a service builder by reusing existing allocation-report logic.
-3. Add unit tests for payload values, boundary states, and absent inputs.
-4. Add a local UI download path for a selected snapshot.
-5. Validate the file through a manual, user-controlled consumer workflow.
-6. Promote verified behavior into the owning contract and status nodes.
-
-Acceptance questions:
-
-- Which existing asset id is the canonical cross-tool identity?
-- Does export require an explicit snapshot, or may it select the latest one?
-- How are weights and percentage-point drift represented and rounded?
-- What response is produced when a target or snapshot is unavailable?
-- Which fields form the stable versioned contract versus optional metadata?
-
-Completion means a documented and tested local JSON export can be produced
-without parsing Markdown, fetching market data, introducing ticker-level
-modeling, or generating buy or sell guidance.
+The service builder reuses allocation-report semantics, the snapshot UI offers
+a local JSON download, and tests cover payload values, tolerance boundaries,
+empty inputs, deterministic ordering, attachment headers, and explicit
+selection. The durable shape is owned by the
+[Allocation Context Export](../interfaces/allocation-context-export.md)
+contract.
 
 ## Later Horizon
 
@@ -139,6 +127,7 @@ Depends on:
 
 Related:
 
+- [Allocation Context Export](../interfaces/allocation-context-export.md)
 - [Domain Model](../domain/overview.md)
 - [Storage Contracts](../storage/contracts.md)
 - [Web Routes](../web/routes.md)

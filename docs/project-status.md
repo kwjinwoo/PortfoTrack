@@ -6,6 +6,7 @@ depends_on:
   - architecture
 related:
   - project-roadmap
+  - allocation-context-export
   - domain-model
   - storage-contracts
   - web-routes
@@ -38,7 +39,9 @@ persistence. Its implemented workflow covers:
 - recording optional bets separately from the core allocation model;
 - using a dashboard to surface setup state, latest data, drift, and next actions;
 - exporting snapshot and target information as paste-ready Markdown, with
-  controls for labels and exact amounts; and
+  controls for labels and exact amounts;
+- downloading a versioned, consumer-neutral allocation-context JSON file for
+  an explicitly selected snapshot; and
 - using vendored chart assets without an external network dependency.
 
 See [Domain Model](domain/overview.md),
@@ -61,16 +64,16 @@ boundaries.
 ## Known Work State
 
 A canonical [Project Roadmap](planning/roadmap.md) is recorded in the docs
-graph. It currently contains no accepted or in-progress milestone; its
-machine-readable allocation context export is a proposal, not committed work.
-Do not treat roadmap candidates as implemented behavior or approved scope.
+graph. It currently contains no accepted or in-progress milestone. The
+machine-readable allocation context export milestone is completed; no later
+candidate is currently durable enough to record.
 
 ## Verification Baseline
 
-At commit `d7eabe1` on 2026-07-04, `uv run pytest -q` completed with `624 passed`.
-This is a historical baseline, not a promise about an unverified working tree.
-Re-run the command before relying on the current checkout, and update this
-baseline when a later project-status review establishes a new reference point.
+On 2026-07-04, `uv run pytest -q` completed with `629 passed` in the working
+tree containing the allocation-context export. This is a verification record,
+not a promise about later changes; re-run the command before relying on the
+current checkout.
 
 ## Maintenance Rule
 
@@ -88,6 +91,7 @@ Depends on:
 Related:
 
 - [Project Roadmap](planning/roadmap.md)
+- [Allocation Context Export](interfaces/allocation-context-export.md)
 - [Domain Model](domain/overview.md)
 - [Storage Contracts](storage/contracts.md)
 - [Web Routes](web/routes.md)

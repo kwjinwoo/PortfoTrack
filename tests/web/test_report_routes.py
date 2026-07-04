@@ -262,3 +262,65 @@ class TestAllocationMarkdownExport:
         assert response.status_code == 200
         assert "S&P500" not in markdown
         assert "10,000,000" not in markdown
+
+
+class TestAllocationContextExport:
+    """GET /api/reports/allocation/export.json — versioned JSON download."""
+
+    def test_returns_downloadable_versioned_json(self, client, tmp_data_dir):
+        """An explicitly selected snapshot produces an attachment."""
+        _write_snapshot(
+            tmp_data_dir["snapshots"],
+            "2026-02-12",
+            [
+                {"asset_id": "us_equity", "label": "S&P500", "amount": 4_000_000},
+                {"asset_id": "kr_bond", "label": "Bond", "amount": 6_000_000},
+            ],
+        )
+        _write_target(
+            tmp_data_dir["targets"],
+            "2026-02-07",
+            [
+                {
+                    "id": "us_equity",
+                    "name": "US Equity",
+                    "purpose": "growth",
+                    "target_ratio": 0.6,
+                    "tolerance": {"lower": 0.5, "upper": 0.7},
+                },
+                {
+                    "id": "kr_bond",
+                    "name": "KR Bond",
+                    "purpose": "stability",
+                    "target_ratio": 0.4,
+                    "tolerance": {"lower": 0.3, "upper": 0.5},
+                },
+            ],
+        )
+
+        response = client.get(
+            "/api/reports/allocation/export.json?snapshot_date=2026-02-12"
+        )
+
+        assert response.status_code == 200
+        assert response.mimetype == "application/json"
+        assert response.headers["Content-Disposition"] == (
+            'attachment; filename="portfotrack-allocation-2026-02-12-v1.json"'
+        )
+        payload = response.get_json()
+        assert payload["schema_version"] == "1.0"
+        assert payload["snapshot"]["currency"] == "KRW"
+        assert [item["asset_id"] for item in payload["assets"]] == [
+            "kr_bond",
+            "us_equity",
+        ]
+        assert all("label" not in item for item in payload["assets"])
+
+    def test_requires_explicit_snapshot_date(self, client):
+        """The export never silently selects the latest snapshot."""
+        response = client.get("/api/reports/allocation/export.json")
+
+        assert response.status_code == 400
+        assert response.get_json() == {
+            "error": "Query parameter 'snapshot_date' is required."
+        }

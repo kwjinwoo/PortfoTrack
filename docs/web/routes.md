@@ -8,6 +8,7 @@ depends_on:
 related:
   - domain-model
   - storage-contracts
+  - allocation-context-export
   - testing-playbook
   - error-book
 code_refs:
@@ -66,7 +67,8 @@ The snapshot detail panel can export the selected snapshot together with the
 latest target as paste-ready Markdown. Users may copy it to the clipboard or
 save it locally, omit holding labels, and hide exact amounts while retaining
 allocation ratios. The export is factual and does not append a suggested AI
-prompt.
+prompt. It can also download the selected snapshot's versioned,
+consumer-neutral allocation context as local JSON.
 
 ## API Routes
 
@@ -85,6 +87,11 @@ Allocation report routes also expose
 `GET /api/reports/allocation/export?snapshot_date=YYYY-MM-DD`. The response is
 a local UTF-8 Markdown attachment; `include_labels=false` omits holding labels
 and `hide_amounts=true` omits exact monetary amounts.
+
+`GET /api/reports/allocation/export.json?snapshot_date=YYYY-MM-DD` returns a
+versioned local JSON attachment. It requires an explicit snapshot and follows
+the [Allocation Context Export](../interfaces/allocation-context-export.md)
+contract.
 
 ## UI Assets
 
@@ -120,5 +127,6 @@ Related:
 
 - [Domain Model](../domain/overview.md)
 - [Storage Contracts](../storage/contracts.md)
+- [Allocation Context Export](../interfaces/allocation-context-export.md)
 - [Testing Playbook](../policies/testing-playbook.md)
 - [Error Book](../records/error-book.md)

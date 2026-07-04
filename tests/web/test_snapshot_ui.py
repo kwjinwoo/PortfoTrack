@@ -79,6 +79,7 @@ class TestSnapshotsPageStructure:
 
         assert 'id="copy-chatgpt-export-btn"' in html
         assert 'id="save-chatgpt-export-btn"' in html
+        assert 'id="save-allocation-json-btn"' in html
         assert 'id="export-include-labels"' in html
         assert 'id="export-hide-amounts"' in html
 

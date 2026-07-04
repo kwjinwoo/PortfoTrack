@@ -9,6 +9,9 @@ import re
 from flask import Blueprint, Response, jsonify, request
 
 import portfotrack.path as path_mod
+from portfotrack.services.allocation_context_export import (
+    build_allocation_context_export,
+)
 from portfotrack.services.allocation_report import generate_allocation_report
 from portfotrack.services.chatgpt_export import format_portfolio_markdown
 from portfotrack.services.target_services import load_latest_target
@@ -143,3 +146,44 @@ def allocation_markdown_export():
             )
         },
     )
+
+
+@report_bp.route("/allocation/export.json", methods=["GET"])
+def allocation_context_export():
+    """Download versioned allocation facts for an explicit snapshot.
+
+    Query params:
+        snapshot_date: Required ISO date string (YYYY-MM-DD).
+
+    Returns:
+        A local JSON attachment, or a JSON 400/404 response when the requested
+        portfolio context is unavailable.
+    """
+    snapshot_date = request.args.get("snapshot_date")
+    if not snapshot_date:
+        return jsonify({"error": "Query parameter 'snapshot_date' is required."}), 400
+    if not _DATE_PATTERN.match(snapshot_date):
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    matching = list(path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{snapshot_date}_v*.json"))
+    if not matching:
+        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
+
+    latest_file = sorted(matching)[-1]
+    try:
+        snapshot_dto = store_load(latest_file.name)
+    except SnapshotNotFoundError:
+        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
+    snapshot = dto_to_snapshot(snapshot_dto)
+
+    try:
+        target = load_latest_target()
+    except FileNotFoundError:
+        return jsonify({"error": "No target allocation found."}), 404
+
+    report = generate_allocation_report(target, snapshot)
+    response = jsonify(build_allocation_context_export(snapshot, report))
+    response.headers["Content-Disposition"] = (
+        f'attachment; filename="portfotrack-allocation-{snapshot_date}-v1.json"'
+    )
+    return response

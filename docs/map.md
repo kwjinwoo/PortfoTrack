@@ -8,6 +8,7 @@ related:
   - project-status
   - project-roadmap
   - architecture
+  - allocation-context-export
   - testing-playbook
   - error-book
 code_refs: []
@@ -114,6 +115,10 @@ Then inspect:
 - `src/portfotrack/web/templates/`
 - `src/portfotrack/web/static/`
 - `tests/web/`
+
+For the machine-readable allocation download, also read
+[Allocation Context Export](interfaces/allocation-context-export.md), then
+inspect its referenced service and tests.
 
 ## If Changing Error Handling
 

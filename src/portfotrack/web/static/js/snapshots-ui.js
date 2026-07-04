@@ -138,7 +138,7 @@ async function _copyText(text) {
   }
 }
 
-/** Set up copy and local Markdown download actions. */
+/** Set up copy and local export download actions. */
 function setupExportButtons() {
   document
     .getElementById("copy-chatgpt-export-btn")
@@ -168,6 +168,38 @@ function setupExportButtons() {
         showMessage("export-message", "Markdown 파일을 저장했습니다.", "success");
       } catch (err) {
         showMessage("export-message", err.message || "저장에 실패했습니다.", "error");
+      }
+    });
+
+  document
+    .getElementById("save-allocation-json-btn")
+    .addEventListener("click", async function () {
+      if (!_viewingDate) {
+        showMessage("export-message", "먼저 스냅샷을 선택하세요.", "error");
+        return;
+      }
+      try {
+        const params = new URLSearchParams({ snapshot_date: _viewingDate });
+        const response = await fetch(
+          `/api/reports/allocation/export.json?${params.toString()}`
+        );
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "JSON 내보내기에 실패했습니다.");
+        }
+        const url = URL.createObjectURL(await response.blob());
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `portfotrack-allocation-${_viewingDate}-v1.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        showMessage("export-message", "할당 JSON 파일을 저장했습니다.", "success");
+      } catch (err) {
+        showMessage(
+          "export-message",
+          err.message || "JSON 저장에 실패했습니다.",
+          "error"
+        );
       }
     });
 }
