@@ -12,6 +12,7 @@ related:
   - testing-playbook
   - error-book
 code_refs:
+  - src/portfotrack/services/allocation_report_payload.py
   - src/portfotrack/web/app.py
   - src/portfotrack/web/routes
   - src/portfotrack/web/templates
@@ -82,6 +83,22 @@ Route modules:
 - `report_routes.py`
 - `trend_routes.py`
 - `optional_bet_routes.py`
+
+`GET /api/reports/allocation?snapshot_date=YYYY-MM-DD` returns the selected
+snapshot's comparison with the latest target. Its stable top-level fields are:
+
+- `snapshot_date`: selected ISO snapshot date;
+- `total_portfolio_amount`: integer amount in the snapshot currency;
+- `is_complete`: whether every report item is within its inclusive tolerance;
+- `total_additional_needed`: sum of positive target shortfalls; and
+- `items`: target-ordered asset comparisons.
+
+Each item contains `asset_id`, `asset_name`, `current_amount`,
+`total_portfolio`, `current_ratio`, `target_ratio`, `target_amount_needed`,
+inclusive `tolerance.lower` and `tolerance.upper`, and
+`is_within_tolerance`. Ratios remain on the `0.0` to `1.0` scale without
+presentation rounding. Payload construction belongs to the services layer;
+the route owns request validation and HTTP conversion only.
 
 Allocation report routes also expose
 `GET /api/reports/allocation/export?snapshot_date=YYYY-MM-DD`. The response is

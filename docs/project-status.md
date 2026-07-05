@@ -70,10 +70,10 @@ candidate is currently durable enough to record.
 
 ## Verification Baseline
 
-On 2026-07-05, `uv run pytest -q` completed with `634 passed` in the working
-tree containing shared allocation-report context loading and expanded export
-error tests. This is a verification record, not a promise about later changes;
-re-run the command before relying on the current checkout.
+On 2026-07-05, `uv run pytest -q` completed with `636 passed` in the working
+tree containing the typed allocation-report API payload builder. This is a
+verification record, not a promise about later changes; re-run the command
+before relying on the current checkout.
 
 ## Maintenance Rule
 

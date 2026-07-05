@@ -11,6 +11,9 @@ from flask import Blueprint, Response, jsonify, request
 from portfotrack.services.allocation_context_export import (
     build_allocation_context_export,
 )
+from portfotrack.services.allocation_report_payload import (
+    build_allocation_report_payload,
+)
 from portfotrack.services.chatgpt_export import format_portfolio_markdown
 from portfotrack.services.report_services import (
     AllocationReportContext,
@@ -59,37 +62,7 @@ def allocation_report():
     context = _load_context(snapshot_date)
     if not isinstance(context, AllocationReportContext):
         return context
-    report = context.report
-
-    # Serialize report to JSON
-    items = []
-    for item in report.report_items:
-        items.append(
-            {
-                "asset_id": item.asset_id,
-                "asset_name": item.asset_name,
-                "current_amount": item.current_amount,
-                "total_portfolio": item.total_portfolio,
-                "current_ratio": item.current_ratio,
-                "target_ratio": item.target_ratio,
-                "target_amount_needed": item.target_amount_needed,
-                "tolerance": {
-                    "lower": item.tolerance["lower"],
-                    "upper": item.tolerance["upper"],
-                },
-                "is_within_tolerance": item.is_within_tolerance,
-            }
-        )
-
-    return jsonify(
-        {
-            "snapshot_date": report.snapshot_date,
-            "total_portfolio_amount": report.total_portfolio_amount,
-            "is_complete": report.is_complete(),
-            "total_additional_needed": report.total_additional_needed(),
-            "items": items,
-        }
-    )
+    return jsonify(build_allocation_report_payload(context.report))
 
 
 @report_bp.route("/allocation/export", methods=["GET"])

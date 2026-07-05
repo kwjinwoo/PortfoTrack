@@ -40,13 +40,9 @@ def load_allocation_report_context(snapshot_date: str) -> AllocationReportContex
         SnapshotNotFoundError: If the selected date has no persisted snapshot.
         FileNotFoundError: If no target allocation exists.
     """
-    matching = sorted(
-        path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{snapshot_date}_v*.json")
-    )
+    matching = sorted(path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{snapshot_date}_v*.json"))
     if not matching:
-        raise SnapshotNotFoundError(
-            file_name=f"snapshot_{snapshot_date}_v*.json"
-        )
+        raise SnapshotNotFoundError(file_name=f"snapshot_{snapshot_date}_v*.json")
 
     snapshot = load_snapshot_by_filename(matching[-1].name)
     target = load_latest_target()
