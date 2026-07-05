@@ -3,7 +3,9 @@
 from portfotrack.domain.asset import Asset
 from portfotrack.domain.snapshot import Snapshot
 from portfotrack.domain.target_allocation import TargetAllocation, Tolerance
-from portfotrack.services.allocation_context_export import build_allocation_context_export
+from portfotrack.services.allocation_context_export import (
+    build_allocation_context_export,
+)
 from portfotrack.services.allocation_report import generate_allocation_report
 
 

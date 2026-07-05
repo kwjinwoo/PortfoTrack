@@ -324,3 +324,36 @@ class TestAllocationContextExport:
         assert response.get_json() == {
             "error": "Query parameter 'snapshot_date' is required."
         }
+
+    def test_rejects_invalid_snapshot_date(self, client):
+        """Malformed dates use the same 400 boundary as other report routes."""
+        response = client.get(
+            "/api/reports/allocation/export.json?snapshot_date=2026-2-12"
+        )
+
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Invalid date format. Use YYYY-MM-DD."}
+
+    def test_returns_404_for_missing_snapshot(self, client, tmp_data_dir):
+        """An unavailable explicitly selected snapshot returns 404."""
+        response = client.get(
+            "/api/reports/allocation/export.json?snapshot_date=2099-01-01"
+        )
+
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "Snapshot for 2099-01-01 not found."}
+
+    def test_returns_404_for_missing_target(self, client, tmp_data_dir):
+        """An existing snapshot without a target returns 404."""
+        _write_snapshot(
+            tmp_data_dir["snapshots"],
+            "2026-02-12",
+            [{"asset_id": "us_equity", "label": "S&P500", "amount": 1}],
+        )
+
+        response = client.get(
+            "/api/reports/allocation/export.json?snapshot_date=2026-02-12"
+        )
+
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "No target allocation found."}

@@ -8,20 +8,39 @@ import re
 
 from flask import Blueprint, Response, jsonify, request
 
-import portfotrack.path as path_mod
 from portfotrack.services.allocation_context_export import (
     build_allocation_context_export,
 )
-from portfotrack.services.allocation_report import generate_allocation_report
 from portfotrack.services.chatgpt_export import format_portfolio_markdown
-from portfotrack.services.target_services import load_latest_target
+from portfotrack.services.report_services import (
+    AllocationReportContext,
+    load_allocation_report_context,
+)
 from portfotrack.storage.json_store.errors import SnapshotNotFoundError
-from portfotrack.storage.json_store.snapshot_store import load as store_load
-from portfotrack.storage.serialization.snapshot_json import dto_to_snapshot
 
 _DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 report_bp = Blueprint("reports", __name__, url_prefix="/api/reports")
+
+
+def _validated_snapshot_date() -> str | tuple[Response, int]:
+    snapshot_date = request.args.get("snapshot_date")
+    if not snapshot_date:
+        return jsonify({"error": "Query parameter 'snapshot_date' is required."}), 400
+    if not _DATE_PATTERN.match(snapshot_date):
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+    return snapshot_date
+
+
+def _load_context(
+    snapshot_date: str,
+) -> AllocationReportContext | tuple[Response, int]:
+    try:
+        return load_allocation_report_context(snapshot_date)
+    except SnapshotNotFoundError:
+        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
+    except FileNotFoundError:
+        return jsonify({"error": "No target allocation found."}), 404
 
 
 @report_bp.route("/allocation", methods=["GET"])
@@ -34,34 +53,13 @@ def allocation_report():
     Returns:
         JSON report with per-asset comparison data, or 400/404 error.
     """
-    snapshot_date = request.args.get("snapshot_date")
-    if not snapshot_date:
-        return jsonify({"error": "Query parameter 'snapshot_date' is required."}), 400
-
-    if not _DATE_PATTERN.match(snapshot_date):
-        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
-
-    # Load snapshot
-    matching = list(path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{snapshot_date}_v*.json"))
-    if not matching:
-        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
-
-    latest_file = sorted(matching)[-1]
-    try:
-        snapshot_dto = store_load(latest_file.name)
-    except SnapshotNotFoundError:
-        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
-
-    snapshot = dto_to_snapshot(snapshot_dto)
-
-    # Load target
-    try:
-        target = load_latest_target()
-    except FileNotFoundError:
-        return jsonify({"error": "No target allocation found."}), 404
-
-    # Generate report
-    report = generate_allocation_report(target, snapshot)
+    snapshot_date = _validated_snapshot_date()
+    if not isinstance(snapshot_date, str):
+        return snapshot_date
+    context = _load_context(snapshot_date)
+    if not isinstance(context, AllocationReportContext):
+        return context
+    report = context.report
 
     # Serialize report to JSON
     items = []
@@ -107,33 +105,16 @@ def allocation_markdown_export():
         UTF-8 Markdown suitable for copying into a local AI conversation, or
         a JSON 400/404 response when the requested data is unavailable.
     """
-    snapshot_date = request.args.get("snapshot_date")
-    if not snapshot_date:
-        return jsonify({"error": "Query parameter 'snapshot_date' is required."}), 400
-    if not _DATE_PATTERN.match(snapshot_date):
-        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
-
-    matching = list(path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{snapshot_date}_v*.json"))
-    if not matching:
-        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
-
-    latest_file = sorted(matching)[-1]
-    try:
-        snapshot_dto = store_load(latest_file.name)
-    except SnapshotNotFoundError:
-        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
-    snapshot = dto_to_snapshot(snapshot_dto)
-
-    try:
-        target = load_latest_target()
-    except FileNotFoundError:
-        return jsonify({"error": "No target allocation found."}), 404
-
-    report = generate_allocation_report(target, snapshot)
+    snapshot_date = _validated_snapshot_date()
+    if not isinstance(snapshot_date, str):
+        return snapshot_date
+    context = _load_context(snapshot_date)
+    if not isinstance(context, AllocationReportContext):
+        return context
     markdown = format_portfolio_markdown(
-        target,
-        snapshot,
-        report,
+        context.target,
+        context.snapshot,
+        context.report,
         include_labels=request.args.get("include_labels", "true").lower() != "false",
         hide_amounts=request.args.get("hide_amounts", "false").lower() == "true",
     )
@@ -159,30 +140,15 @@ def allocation_context_export():
         A local JSON attachment, or a JSON 400/404 response when the requested
         portfolio context is unavailable.
     """
-    snapshot_date = request.args.get("snapshot_date")
-    if not snapshot_date:
-        return jsonify({"error": "Query parameter 'snapshot_date' is required."}), 400
-    if not _DATE_PATTERN.match(snapshot_date):
-        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
-
-    matching = list(path_mod.SNAPSHOTS_DIR.glob(f"snapshot_{snapshot_date}_v*.json"))
-    if not matching:
-        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
-
-    latest_file = sorted(matching)[-1]
-    try:
-        snapshot_dto = store_load(latest_file.name)
-    except SnapshotNotFoundError:
-        return jsonify({"error": f"Snapshot for {snapshot_date} not found."}), 404
-    snapshot = dto_to_snapshot(snapshot_dto)
-
-    try:
-        target = load_latest_target()
-    except FileNotFoundError:
-        return jsonify({"error": "No target allocation found."}), 404
-
-    report = generate_allocation_report(target, snapshot)
-    response = jsonify(build_allocation_context_export(snapshot, report))
+    snapshot_date = _validated_snapshot_date()
+    if not isinstance(snapshot_date, str):
+        return snapshot_date
+    context = _load_context(snapshot_date)
+    if not isinstance(context, AllocationReportContext):
+        return context
+    response = jsonify(
+        build_allocation_context_export(context.snapshot, context.report)
+    )
     response.headers["Content-Disposition"] = (
         f'attachment; filename="portfotrack-allocation-{snapshot_date}-v1.json"'
     )
