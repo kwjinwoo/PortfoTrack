@@ -23,10 +23,9 @@ from portfotrack.services.target_services import (
     save_target_overwrite,
 )
 from portfotrack.storage.serialization.target_json import target_to_dto
+from portfotrack.web.date_validation import is_iso_date
 
 target_bp = Blueprint("targets", __name__, url_prefix="/api/targets")
-
-_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 @target_bp.route("", methods=["GET"])
@@ -195,7 +194,7 @@ def update_target(date: str):
         201 with new target DTO for new mode,
         or 400/404 on validation failure.
     """
-    if not _DATE_PATTERN.match(date):
+    if not is_iso_date(date):
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     body = request.get_json(silent=True)

@@ -401,6 +401,16 @@ class TestUpdateTarget:
 
         assert response.status_code == 400
 
+    def test_impossible_calendar_date_returns_400(self, client):
+        """A correctly shaped but nonexistent target date returns 400."""
+        response = client.put(
+            "/api/targets/2026-02-30",
+            json={"mode": "overwrite", "assets": []},
+        )
+
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Invalid date format. Use YYYY-MM-DD."}
+
     def test_target_not_found_returns_404(self, client):
         """PUT to nonexistent target returns 404."""
         payload = {

@@ -4,8 +4,6 @@ Provides an endpoint for generating allocation comparison reports
 by combining a snapshot with the latest target allocation.
 """
 
-import re
-
 from flask import Blueprint, Response, jsonify, request
 
 from portfotrack.services.allocation_context_export import (
@@ -20,8 +18,7 @@ from portfotrack.services.report_services import (
     load_allocation_report_context,
 )
 from portfotrack.storage.json_store.errors import SnapshotNotFoundError
-
-_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+from portfotrack.web.date_validation import is_iso_date
 
 report_bp = Blueprint("reports", __name__, url_prefix="/api/reports")
 
@@ -30,7 +27,7 @@ def _validated_snapshot_date() -> str | tuple[Response, int]:
     snapshot_date = request.args.get("snapshot_date")
     if not snapshot_date:
         return jsonify({"error": "Query parameter 'snapshot_date' is required."}), 400
-    if not _DATE_PATTERN.match(snapshot_date):
+    if not is_iso_date(snapshot_date):
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
     return snapshot_date
 

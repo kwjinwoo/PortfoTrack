@@ -116,6 +116,13 @@ class TestGetSnapshot:
 
         assert response.status_code == 400
 
+    def test_impossible_calendar_date_returns_400(self, client):
+        """A correctly shaped but nonexistent date is invalid input."""
+        response = client.get("/api/snapshots/2026-02-30")
+
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Invalid date format. Use YYYY-MM-DD."}
+
 
 class TestCreateSnapshot:
     """POST /api/snapshots — create and persist a new snapshot."""

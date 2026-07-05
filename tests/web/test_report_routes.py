@@ -334,6 +334,15 @@ class TestAllocationContextExport:
         assert response.status_code == 400
         assert response.get_json() == {"error": "Invalid date format. Use YYYY-MM-DD."}
 
+    def test_rejects_impossible_calendar_date(self, client):
+        """A correctly shaped but nonexistent report date returns 400."""
+        response = client.get(
+            "/api/reports/allocation/export.json?snapshot_date=2026-02-30"
+        )
+
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Invalid date format. Use YYYY-MM-DD."}
+
     def test_returns_404_for_missing_snapshot(self, client, tmp_data_dir):
         """An unavailable explicitly selected snapshot returns 404."""
         response = client.get(

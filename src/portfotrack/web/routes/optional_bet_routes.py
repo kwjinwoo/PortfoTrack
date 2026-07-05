@@ -5,8 +5,6 @@ optional bet snapshots. All endpoints delegate to the services layer;
 no domain logic is performed here.
 """
 
-import re
-
 from flask import Blueprint, jsonify, request
 
 import portfotrack.path as path_mod
@@ -36,8 +34,7 @@ from portfotrack.storage.json_store.errors import (
     SnapshotNotFoundError,
 )
 from portfotrack.storage.serialization.optional_bet_json import optional_bet_to_dto
-
-_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+from portfotrack.web.date_validation import is_iso_date
 
 optional_bet_bp = Blueprint("optional_bets", __name__, url_prefix="/api/optional-bets")
 
@@ -309,7 +306,7 @@ def get_optional_bet_by_date(date: str):
     Returns:
         JSON representation of the snapshot, or 400/404 on error.
     """
-    if not _DATE_PATTERN.match(date):
+    if not is_iso_date(date):
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     matching = sorted(path_mod.OPTIONAL_BETS_DIR.glob(f"optional_bet_{date}_v*.json"))
@@ -349,7 +346,7 @@ def update_optional_bet(date: str):
         201 with new snapshot DTO for new mode,
         or 400/404/409 on validation failure.
     """
-    if not _DATE_PATTERN.match(date):
+    if not is_iso_date(date):
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     body = request.get_json(silent=True)

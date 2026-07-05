@@ -748,6 +748,13 @@ class TestGetOptionalBetByDate:
         data = response.get_json()
         assert "error" in data
 
+    def test_impossible_calendar_date_returns_400(self, client, tmp_data_dir):
+        """A correctly shaped but nonexistent optional-bet date returns 400."""
+        response = client.get("/api/optional-bets/2026-02-30")
+
+        assert response.status_code == 400
+        assert response.get_json() == {"error": "Invalid date format. Use YYYY-MM-DD."}
+
     def test_returns_correct_snapshot_among_multiple(self, client, tmp_data_dir):
         """Returns the correct snapshot when multiple dates exist."""
         _write_optional_bet_file(tmp_data_dir, "2026-02-28")

@@ -14,6 +14,7 @@ related:
 code_refs:
   - src/portfotrack/services/allocation_report_payload.py
   - src/portfotrack/web/app.py
+  - src/portfotrack/web/date_validation.py
   - src/portfotrack/web/routes
   - src/portfotrack/web/templates
   - src/portfotrack/web/static
@@ -75,6 +76,13 @@ consumer-neutral allocation context as local JSON.
 
 API routes live in Flask blueprints under `src/portfotrack/web/routes/`.
 They should return JSON and appropriate HTTP status codes.
+
+User-provided date path and query values must be real calendar dates in exact
+zero-padded `YYYY-MM-DD` form. Malformed values and impossible dates such as
+`2026-02-30` return `400` with
+`Invalid date format. Use YYYY-MM-DD.` Shared validation belongs to
+`src/portfotrack/web/date_validation.py`; route modules must not maintain
+separate date regular expressions.
 
 Route modules:
 

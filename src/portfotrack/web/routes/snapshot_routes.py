@@ -4,8 +4,6 @@ Provides endpoints for listing, retrieving, and creating portfolio snapshots.
 All endpoints delegate to the services layer; no domain logic is performed here.
 """
 
-import re
-
 from flask import Blueprint, jsonify, request
 
 import portfotrack.path as path_mod
@@ -25,8 +23,7 @@ from portfotrack.storage.serialization.snapshot_json import (
     dto_to_snapshot,
     snapshot_to_dto,
 )
-
-_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+from portfotrack.web.date_validation import is_iso_date
 
 snapshot_bp = Blueprint("snapshots", __name__, url_prefix="/api/snapshots")
 
@@ -60,7 +57,7 @@ def get_snapshot(date: str):
     Returns:
         JSON representation of the snapshot, or 400/404 error.
     """
-    if not _DATE_PATTERN.match(date):
+    if not is_iso_date(date):
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     # Find matching file
@@ -192,7 +189,7 @@ def update_snapshot(date: str):
         201 with new snapshot DTO for new mode,
         or 400/404 on validation failure.
     """
-    if not _DATE_PATTERN.match(date):
+    if not is_iso_date(date):
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     body = request.get_json(silent=True)
@@ -274,7 +271,7 @@ def add_item(date: str):
     Returns:
         200 with updated snapshot DTO, or 400/404 error.
     """
-    if not _DATE_PATTERN.match(date):
+    if not is_iso_date(date):
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     body = request.get_json(silent=True)
