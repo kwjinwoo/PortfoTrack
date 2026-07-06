@@ -128,6 +128,12 @@ so trend pages remain usable without external network access.
 Keep UI behavior aligned with the local-only application model.
 Do not add external network dependencies for frontend behavior.
 
+Form styling must distinguish text-like fields from choice inputs. Rules that
+give inputs full width, field height, padding, or text-field borders must
+explicitly exclude checkboxes and radio buttons. Choice inputs use the shared
+compact choice-control pattern so labels remain clickable and keyboard focus
+stays visible.
+
 ## Dynamic UI State
 
 Templates may render panels, buttons, tables, and warnings with `is-hidden`

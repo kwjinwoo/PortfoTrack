@@ -83,6 +83,18 @@ class TestSnapshotsPageStructure:
         assert 'id="export-include-labels"' in html
         assert 'id="export-hide-amounts"' in html
 
+    def test_export_options_use_compact_choice_controls(self, client):
+        """Export options should render as compact choices, not text fields."""
+        response = client.get("/snapshots")
+        html = response.data.decode("utf-8")
+
+        assert html.count('class="choice-control"') >= 2
+
+        css_response = client.get("/static/css/styles.css")
+        css = css_response.data.decode("utf-8")
+        assert '.form-group input:not([type="checkbox"]):not([type="radio"])' in css
+        assert ".choice-control input" in css
+
 
 class TestSnapshotEditUI:
     """Snapshot page should contain UI elements for editing snapshots."""
