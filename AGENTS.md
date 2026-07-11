@@ -3,15 +3,16 @@ applyTo: '**'
 ---
 # Agent Instructions — PortfoTrack
 
-PortfoTrack is a local-only personal portfolio tracking app.
+PortfoTrack is a local-first personal portfolio tracking app.
 It tracks asset-class-level KRW amounts, compares snapshots against target
 allocations, detects drift, and provides minimal rule-based rebalancing
 guidance.
 
 ## Project Constraints
 
-- No network calls, cloud dependencies, databases, ORMs, or external storage
-  engines.
+- Optional outbound notification calls belong only in `integrations`; domain
+  and storage remain network-free.
+- Do not add cloud persistence, databases, ORMs, or external storage engines.
 - Persistence is local JSON or CSV only.
 - Do not add security-level price tracking.
 - Do not add forecasting, optimization-heavy advice, automated trading

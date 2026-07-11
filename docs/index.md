@@ -42,6 +42,7 @@ For a quick orientation before selecting work, read
 - [Error Policy](policies/error-policy.md): User errors versus programmer/invariant errors.
 - [Testing Playbook](policies/testing-playbook.md): TDD workflow and test placement.
 - [Architecture Decision Records](adr/README.md): Accepted decisions and their consequences.
+- [ADR-0006: Optional Outbound Notifications](adr/0006-optional-outbound-notifications.md): Allows isolated, user-configured Telegram delivery while local files remain authoritative.
 - [Error Book](records/error-book.md): Repeated agent mistakes and corrections.
 - [Glossary](foundation/glossary.md): Canonical terms used across the codebase.
 

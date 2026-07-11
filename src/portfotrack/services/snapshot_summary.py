@@ -97,7 +97,9 @@ def _format_message(
         f"{snapshot.date} · {snapshot.currency}",
         "",
         f"총자산: {_amount(report.total_portfolio_amount, currency_suffix)}",
-        _format_change(previous_snapshot, report.total_portfolio_amount, currency_suffix),
+        _format_change(
+            previous_snapshot, report.total_portfolio_amount, currency_suffix
+        ),
         f"허용 범위 이탈: {out_of_range}개 자산군",
         "",
         "━━━━━━━━━━━━━━",

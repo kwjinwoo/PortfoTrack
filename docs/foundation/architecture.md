@@ -14,11 +14,13 @@ code_refs:
   - src/portfotrack/services
   - src/portfotrack/storage
   - src/portfotrack/web
+  - src/portfotrack/integrations
 tests:
   - tests/domain
   - tests/services
   - tests/storage
   - tests/web
+  - tests/integrations
 updates_when:
   - layer boundaries change
   - dependency direction changes
@@ -27,8 +29,9 @@ updates_when:
 
 # Architecture
 
-PortfoTrack is a local-only Flask application for personal portfolio tracking.
-It uses explicit layers and file-based persistence.
+PortfoTrack is a local-first Flask application for personal portfolio tracking.
+It uses explicit layers, file-based persistence, and narrowly scoped optional
+outbound integrations.
 
 ## Layers
 
@@ -57,6 +60,13 @@ Web:
 - Keeps route handlers thin and delegates business logic to services or domain objects.
 - Lives under `src/portfotrack/web/`.
 
+Integrations:
+
+- Own optional outbound communication and external protocol details.
+- Load local credentials without exposing them to domain or storage.
+- Must not become portfolio persistence, inbound remote control, or trading.
+- Live under `src/portfotrack/integrations/`.
+
 ## Dependency Direction
 
 Preferred direction:
@@ -64,15 +74,19 @@ Preferred direction:
 ```text
 web -> services -> domain
 web -> services -> storage -> domain
+web -> services -> integrations
 ```
 
 Storage may import domain classes to reconstruct objects.
 Domain must not import storage, services, or web code.
 
-## Local-Only Boundary
+## Local-First Boundary
 
-The application must not introduce network calls, cloud dependencies, databases,
-ORMs, automated trading integrations, or external storage engines.
+Local JSON remains the portfolio source of truth and core workflows remain
+usable offline. Optional outbound notifications may use the network through
+`integrations` only after local persistence succeeds. Cloud persistence,
+databases, ORMs, inbound remote control, automated trading integrations, and
+external storage engines remain outside the boundary.
 
 ## Links
 

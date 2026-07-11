@@ -2,11 +2,12 @@
 id: adr-0001-local-only-application
 title: "ADR-0001: Local-Only Application"
 kind: decision
-status: accepted
+status: superseded
 depends_on: []
 related:
   - architecture
   - adr-0002-file-based-persistence
+  - adr-0006-optional-outbound-notifications
 code_refs:
   - AGENTS.md
   - src/portfotrack/web/app.py
@@ -21,7 +22,8 @@ updates_when:
 
 ## Status
 
-Accepted.
+Superseded by
+[ADR-0006: Optional Outbound Notifications](0006-optional-outbound-notifications.md).
 
 ## Context
 
@@ -47,4 +49,5 @@ Related:
 
 - [ADR Index](README.md)
 - [ADR-0002: File-Based Persistence](0002-file-based-persistence.md)
+- [ADR-0006: Optional Outbound Notifications](0006-optional-outbound-notifications.md)
 - [Architecture](../foundation/architecture.md)

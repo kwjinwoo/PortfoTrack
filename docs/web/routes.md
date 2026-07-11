@@ -120,9 +120,11 @@ the [Allocation Context Export](../interfaces/allocation-context-export.md)
 contract.
 
 After snapshot persistence succeeds, `POST /api/snapshots` and the `new` mode
-of `PUT /api/snapshots/<date>` request a local portable summary artifact. A
-missing target or summary failure does not change the successful snapshot
-response. Historical overwrite and item-edit routes do not queue summaries.
+of `PUT /api/snapshots/<date>` queue a local portable summary artifact and ask
+the integrated Telegram transport to deliver all pending summaries when
+credentials exist. Missing setup, unavailable networks, or rejected messages
+do not change the successful snapshot response. Historical overwrite and
+item-edit routes do not queue summaries.
 See [Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md).
 
 ## UI Assets
@@ -132,8 +134,8 @@ Static JavaScript and CSS live under `src/portfotrack/web/static/`.
 Chart dependencies are vendored under `src/portfotrack/web/static/vendor/`
 so trend pages remain usable without external network access.
 
-Keep UI behavior aligned with the local-only application model.
-Do not add external network dependencies for frontend behavior.
+Keep frontend behavior and assets local; optional outbound notification
+transport remains a backend integration concern.
 
 Form styling must distinguish text-like fields from choice inputs. Rules that
 give inputs full width, field height, padding, or text-field borders must

@@ -4,7 +4,7 @@ from typing import TypedDict
 
 
 class SnapshotSummaryDTO(TypedDict):
-    """Consumer-neutral message artifact for an external notification bridge."""
+    """Consumer-neutral message artifact for optional notification delivery."""
 
     schema_version: str
     kind: str

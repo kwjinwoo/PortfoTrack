@@ -73,15 +73,18 @@ Related nodes:
 - [Error Policy](../policies/error-policy.md)
 - [Storage Contracts](../storage/contracts.md)
 
-## Do Not Add Network or Database Dependencies
+## Keep Optional Network Calls Isolated
 
-The project is local-only and file-based.
-Do not add network calls, cloud services, databases, ORMs, or external storage
+Portfolio persistence remains local and file-based. Optional outbound
+notifications belong only in `integrations`, run after persistence, and must
+not make core workflows depend on network availability. Do not add cloud
+persistence, databases, ORMs, inbound remote control, or external storage
 engines.
 
 Related nodes:
 
 - [ADR-0001: Local-Only Application](../adr/0001-local-only-application.md)
+- [ADR-0006: Optional Outbound Notifications](../adr/0006-optional-outbound-notifications.md)
 - [ADR-0002: File-Based Persistence](../adr/0002-file-based-persistence.md)
 - [Architecture](../foundation/architecture.md)
 

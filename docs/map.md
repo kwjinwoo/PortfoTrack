@@ -121,7 +121,7 @@ For the machine-readable allocation download, also read
 [Allocation Context Export](interfaces/allocation-context-export.md), then
 inspect its referenced service and tests.
 
-For snapshot-save summary generation or the external Telegram bridge, also
+For snapshot-save summary generation or integrated Telegram delivery, also
 read [Snapshot Summary Notification](interfaces/snapshot-summary-notification.md),
 then inspect its referenced service, storage, route, and companion tests.
 
@@ -170,8 +170,8 @@ Then inspect related nodes only when the edge or traversal path changes.
 - `adr` indexes durable project decisions without replacing individual ADRs.
 - `architecture` is a parent of domain, storage, services, and web nodes.
 - `error-policy` applies across all layers.
-- `snapshot-summary-notification` owns the local outbox artifact and external
-  delivery boundary without introducing a PortfoTrack network dependency.
+- `snapshot-summary-notification` owns the local outbox artifact and the
+  optional outbound Telegram delivery boundary.
 - `testing-playbook` applies to every behavior change.
 - Individual `adr-*` nodes explain why broad constraints exist.
 - `error-book` records recurring corrections that agents should check before editing.

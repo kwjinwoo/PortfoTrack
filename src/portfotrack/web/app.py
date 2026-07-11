@@ -1,8 +1,8 @@
 """Flask application factory for PortfoTrack web UI.
 
-Provides a local-only web interface backed by the existing services layer.
-No external network calls; all data is read from and written to local
-JSON files.
+Provides a local-first web interface backed by the existing services layer.
+Portfolio data remains in local JSON files; optional outbound notifications
+are delegated through the integrations boundary.
 """
 
 import argparse

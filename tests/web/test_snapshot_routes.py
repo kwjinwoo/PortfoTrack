@@ -23,10 +23,12 @@ def tmp_data_dir(tmp_path, monkeypatch):
 
     import portfotrack.path as path_mod
     import portfotrack.services.snapshot_services as svc_mod
+    import portfotrack.services.snapshot_summary as snapshot_summary_mod
     import portfotrack.services.target_services as target_svc_mod
     import portfotrack.storage.json_store.notification_outbox_store as outbox_store_mod
     import portfotrack.storage.json_store.snapshot_store as store_mod
     import portfotrack.storage.json_store.target_store as target_store_mod
+    import portfotrack.web.routes.snapshot_routes as snapshot_routes_mod
 
     monkeypatch.setattr(path_mod, "SNAPSHOTS_DIR", snapshots_dir)
     monkeypatch.setattr(svc_mod, "SNAPSHOTS_DIR", snapshots_dir)
@@ -35,6 +37,11 @@ def tmp_data_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(target_svc_mod, "TARGETS_DIR", targets_dir)
     monkeypatch.setattr(target_store_mod, "TARGETS_DIR", targets_dir)
     monkeypatch.setattr(outbox_store_mod, "NOTIFICATION_OUTBOX_DIR", outbox_dir)
+    monkeypatch.setattr(
+        snapshot_routes_mod,
+        "notify_snapshot_saved",
+        lambda snapshot: snapshot_summary_mod.queue_snapshot_summary(snapshot),
+    )
 
     return snapshots_dir
 
@@ -169,7 +176,7 @@ class TestCreateSnapshot:
     def test_create_snapshot_queues_summary_when_target_exists(
         self, client, tmp_targets_dir, tmp_path
     ):
-        """A successful explicit save leaves one bridge-consumable artifact."""
+        """A successful explicit save leaves one deliverable artifact."""
         _write_target_file(tmp_targets_dir, "2026-02-07")
         payload = {
             "items": [
@@ -195,7 +202,7 @@ class TestCreateSnapshot:
         def fail_summary(_snapshot):
             raise OSError("outbox unavailable")
 
-        monkeypatch.setattr(routes, "queue_snapshot_summary", fail_summary)
+        monkeypatch.setattr(routes, "notify_snapshot_saved", fail_summary)
         payload = {
             "items": [
                 {"asset_id": "us_equity", "label": "S&P500", "amount": 5_000_000},

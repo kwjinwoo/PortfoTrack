@@ -25,11 +25,12 @@ history when a decision changes.
 
 ## Records
 
-- [ADR-0001: Local-Only Application](0001-local-only-application.md) — accepted
+- [ADR-0001: Local-Only Application](0001-local-only-application.md) — superseded
 - [ADR-0002: File-Based Persistence](0002-file-based-persistence.md) — accepted
 - [ADR-0003: Asset-Class-Level Tracking](0003-asset-class-level-tracking.md) — accepted
 - [ADR-0004: Rule-Based Guidance Only](0004-rule-based-guidance-only.md) — accepted
 - [ADR-0005: Explicit Over Automation](0005-explicit-over-automation.md) — accepted
+- [ADR-0006: Optional Outbound Notifications](0006-optional-outbound-notifications.md) — accepted
 
 ## Recording A Decision
 

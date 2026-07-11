@@ -31,7 +31,7 @@ before changing code.
 
 ## Product Direction
 
-PortfoTrack should remain a small, local-only source of truth for personal
+PortfoTrack should remain a small, local-first source of truth for personal
 portfolio allocation. Its useful growth path is to make existing allocation
 facts easier to record, compare, review, and exchange without expanding into
 market-data collection or investment decision-making.
@@ -60,10 +60,31 @@ work. Roadmap order expresses a likely sequence, not a delivery promise.
 ## Current Focus
 
 No new milestone is currently accepted or in progress. Preserve the verified
-local portfolio workflow described in [Project Status](../project-status.md)
-until another candidate has a clear user outcome and durable boundaries.
+portfolio workflow described in [Project Status](../project-status.md) until
+another candidate has a clear user outcome and durable boundaries.
 
 ## Completed Milestone
+
+### Integrated Telegram snapshot delivery
+
+Status: `completed`
+
+Replace the separately operated Telegram bridge with an optional outbound
+integration inside PortfoTrack. After a new snapshot is persisted and its
+summary artifact is queued, PortfoTrack should load Git-ignored `.env`
+credentials, attempt delivery immediately, move fully delivered artifacts to
+`sent`, and retain failed artifacts for a later snapshot-save retry.
+
+Snapshot persistence and all non-notification workflows must remain usable
+without credentials or network access. Telegram transport belongs to an
+integration boundary and must not enter domain or storage logic. The existing
+summary content, deterministic outbox artifact, message-size splitting, and
+failure isolation remain unchanged. The standalone
+`PortfoTrackTelegramBridge` directory was removed after equivalent integrated
+tests passed. The architectural boundary is owned by
+[ADR-0006](../adr/0006-optional-outbound-notifications.md), while the behavior
+is owned by
+[Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md).
 
 ### Machine-readable allocation context export
 
@@ -93,8 +114,8 @@ Status: `completed`
 
 Make a newly recorded snapshot reviewable from a phone after the PortfoTrack
 machine has been turned off. PortfoTrack produces a deterministic local summary
-artifact after an explicit successful snapshot save; the separately maintained
-Telegram bridge can deliver that artifact to a durable chat.
+artifact after an explicit successful snapshot save; integrated Telegram
+delivery can retain that summary in a durable chat.
 
 The summary should reuse existing snapshot, target, and allocation-report
 semantics. It should present:
@@ -110,18 +131,17 @@ semantics. It should present:
   not forecasts, personalized recommendations, or trade instructions.
 
 Snapshot persistence must succeed independently of notification delivery.
-PortfoTrack must not contain channel credentials, call hosted APIs, or depend
-on the bridge being available. Any retry queue should remain an explicit local
-artifact, and the external bridge should minimize disclosed financial data and
-require deliberate user configuration.
+Any retry queue should remain an explicit local artifact, and notification
+delivery should minimize disclosed financial data and require deliberate user
+configuration.
 
 The implemented service and local JSON store define the versioned summary and
 outbox lifecycle. Snapshot routes queue only after explicit new-save success
-and isolate summary failures from snapshot persistence. The sibling bridge
-loads Git-ignored `.env` credentials with process-environment overrides,
-splits messages to Telegram's size limit, moves successful artifacts to `sent`,
-and leaves failures pending for retry. Unit and route tests cover formatting,
-previous-snapshot change,
+and isolate summary failures from snapshot persistence. The integrated
+transport loads Git-ignored `.env` credentials with process-environment
+overrides, splits messages to Telegram's size limit, moves successful artifacts
+to `sent`, and leaves failures pending for retry. Unit and route tests cover
+formatting, previous-snapshot change,
 zero-value edges, deterministic persistence, failure isolation, request shape,
 message splitting, completion, and retry behavior. The durable contract is
 owned by
@@ -131,16 +151,16 @@ owned by
 
 The roadmap must not promote:
 
-- network calls, cloud synchronization, or automatic repository uploads;
+- cloud portfolio synchronization or automatic repository uploads;
 - databases, ORMs, or external storage engines;
 - security-level price or ticker tracking as PortfoTrack's primary model;
 - forecasting, optimization-heavy advice, or automated trading signals;
 - personalized buy or sell recommendations; or
 - trade execution.
 
-An external tool may consume a user-exported local file, but its market data,
-security mapping, alert classification, and automation remain outside
-PortfoTrack.
+Optional outbound notification integrations may transmit user-configured
+summary content. Market data, security mapping, alert classification, cloud
+portfolio persistence, and automation remain outside PortfoTrack.
 
 ## Roadmap Maintenance
 

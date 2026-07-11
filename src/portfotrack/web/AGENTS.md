@@ -10,8 +10,9 @@ The web layer exposes the local Flask UI and JSON API.
 - Route handlers stay thin and delegate business behavior to services or domain
   objects.
 - Use Flask blueprints grouped by domain area.
-- The app remains local-only; do not add external frontend or backend network
-  dependencies.
+- Frontend assets remain local. Routes may delegate optional outbound
+  notifications to services after persistence, but must not perform transport
+  calls directly.
 - Do not overpower script-driven UI state with CSS. Dynamic visibility classes
   such as `is-hidden` must remain revealable by JavaScript.
 - Scope form-control CSS by input type. Text-field sizing, padding, and borders

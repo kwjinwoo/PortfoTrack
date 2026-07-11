@@ -30,8 +30,9 @@ knowledge nodes; those sources remain authoritative for detailed behavior.
 
 ## Current Product State
 
-PortfoTrack is a runnable local-only Flask application with local JSON
-persistence. Its implemented workflow covers:
+PortfoTrack is a runnable local-first Flask application with local JSON
+persistence and optional outbound Telegram notifications. Its implemented
+workflow covers:
 
 - defining asset-class target allocations and tolerance ranges;
 - recording, viewing, updating, and deleting dated KRW portfolio snapshots;
@@ -44,8 +45,8 @@ persistence. Its implemented workflow covers:
 - downloading a versioned, consumer-neutral allocation-context JSON file for
   an explicitly selected snapshot;
 - producing a local, mobile-readable allocation summary outbox artifact after
-  an explicit new snapshot save, for optional delivery by a separate Telegram
-  bridge; and
+  an explicit new snapshot save and immediately attempting delivery through
+  the integrated Telegram transport; and
 - using vendored chart assets without an external network dependency.
 
 See [Domain Model](domain/overview.md),
@@ -69,19 +70,17 @@ boundaries.
 
 A canonical [Project Roadmap](planning/roadmap.md) is recorded in the docs
 graph. It currently contains no accepted or in-progress milestone. The
-machine-readable allocation context export and portable snapshot summary
-notification milestones are completed. Live Telegram delivery still requires
-the user to configure a bot token and destination chat id in the separate
-bridge process.
+machine-readable allocation context export, portable snapshot summary, and
+integrated Telegram delivery milestones are completed.
 
 ## Verification Baseline
 
-On 2026-07-11, `uv run pytest -q` completed with `653 passed` in the working
-tree containing the portable snapshot summary outbox. The separate Telegram
-bridge also completed its seven standard-library unit tests, including `.env`
-loading and process-environment precedence. This is a
-verification record, not a promise about later changes; re-run the commands
-before relying on the current checkout.
+On 2026-07-11, `uv run pytest -q` completed with `664 passed` and
+`uv run pre-commit run --all-files` passed after Telegram delivery moved into
+PortfoTrack. A live message also succeeded through the integrated transport
+using the project-root `.env`. This is a verification record, not a promise
+about later changes; re-run the commands before relying on the current
+checkout.
 
 ## Maintenance Rule
 

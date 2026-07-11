@@ -12,28 +12,30 @@ related:
   - project-roadmap
 code_refs:
   - src/portfotrack/services/snapshot_summary.py
+  - src/portfotrack/services/snapshot_notification.py
+  - src/portfotrack/integrations/telegram.py
   - src/portfotrack/storage/serialization/notification_summary_json.py
   - src/portfotrack/storage/json_store/notification_outbox_store.py
   - src/portfotrack/web/routes/snapshot_routes.py
-  - ../PortfoTrackTelegramBridge/telegram_bridge.py
 tests:
   - tests/services/test_snapshot_summary.py
+  - tests/services/test_snapshot_notification.py
+  - tests/integrations/test_telegram.py
   - tests/storage/json_store/test_notification_outbox_store.py
   - tests/web/test_snapshot_routes.py
-  - ../PortfoTrackTelegramBridge/tests/test_telegram_bridge.py
 updates_when:
   - the summary message or artifact schema changes
   - snapshot-save queue behavior changes
   - outbox naming or delivery lifecycle changes
-  - the external bridge boundary changes
+  - the integrated Telegram boundary changes
 ---
 
 # Snapshot Summary Notification
 
 This contract lets a phone retain a readable allocation summary after the
 PortfoTrack machine is turned off. PortfoTrack produces a local message
-artifact only; the separately maintained Telegram bridge owns credentials,
-HTTPS delivery, polling, and delivery retries.
+artifact and its optional integrations layer owns credentials, HTTPS delivery,
+and delivery retries.
 
 ## Save Boundary
 
@@ -42,10 +44,10 @@ An explicit successful `POST /api/snapshots` save and the `new` mode of
 persistence completes. Item edits and historical overwrites do not queue a
 notification.
 
-The saved snapshot is authoritative. Missing target setup produces no summary,
-and any later summary or outbox failure is logged without changing the
-successful snapshot response. PortfoTrack never calls Telegram or reads a bot
-credential.
+The saved snapshot is authoritative. Missing target setup produces no new
+summary, and any later summary, configuration, outbox, or Telegram failure is
+logged without changing the successful snapshot response. Existing pending
+artifacts are retried on later explicit new snapshot saves.
 
 ## Version 1.0 Artifact
 
@@ -85,18 +87,19 @@ the current snapshot and do not recalculate a future portfolio after a deposit.
 The message identifies them as deterministic references rather than forecasts,
 personalized advice, trade signals, or execution instructions.
 
-## External Telegram Bridge
+## Integrated Telegram Delivery
 
-The sibling `PortfoTrackTelegramBridge` companion reads only version `1.0`
-snapshot-summary artifacts. It loads `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`,
-and the optional `PORTFOTRACK_OUTBOX_DIR` from a bridge-local `.env` file.
-Existing process environment values take precedence. The real `.env` is
-excluded from version control, while `.env.example` documents the supported
-keys. The bridge sends plain text through Telegram's HTTPS `sendMessage`
-method and splits messages at the 4,096 character API limit.
+`src/portfotrack/integrations/telegram.py` reads only version `1.0`
+snapshot-summary artifacts. It loads `TELEGRAM_BOT_TOKEN` and
+`TELEGRAM_CHAT_ID` from the project-root `.env`; existing process environment
+values take precedence. The real `.env` is excluded from version control,
+while `.env.example` documents the supported keys.
 
-Only after every chunk succeeds does the bridge move the artifact to the
-outbox's `sent/` directory. Failed artifacts stay pending for a later pass.
+After a new summary is queued, the service attempts all pending deliveries
+through Telegram's HTTPS `sendMessage` method and splits messages at the 4,096
+character API limit. Only after every chunk succeeds does it move the artifact
+to the outbox's `sent/` directory. Missing credentials disable delivery without
+an error, while failed artifacts stay pending for a later snapshot-save retry.
 This provides at-least-once retry behavior; a failure after a partial
 multi-message delivery can repeat an earlier chunk.
 

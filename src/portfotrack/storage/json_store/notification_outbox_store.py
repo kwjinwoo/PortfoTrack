@@ -15,7 +15,7 @@ def save(summary: SnapshotSummaryDTO) -> Path:
     """Persist one deterministic snapshot summary for an external consumer.
 
     A repeated explicit save for the same snapshot date replaces the pending
-    artifact so the bridge sends the latest locally generated facts.
+    artifact so notification delivery uses the latest locally generated facts.
 
     Args:
         summary: Fully formatted, consumer-neutral snapshot summary.

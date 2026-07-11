@@ -29,7 +29,7 @@ def _snapshot(date: str, us_equity: int, kr_bond: int) -> Snapshot:
 
 
 def test_builds_mobile_summary_with_amounts_shortfalls_and_distribution() -> None:
-    """Summary exposes the factual allocation values required by the bridge."""
+    """Summary exposes the factual allocation values required for delivery."""
     summary = build_snapshot_summary(
         _target(),
         _snapshot("2026-07-11", 4_000_000, 6_000_000),

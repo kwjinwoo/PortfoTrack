@@ -14,7 +14,9 @@ storage.
 - Unknown snapshot asset ids in allocation reports are programmer/invariant
   violations unless the surrounding boundary explicitly treats them as user
   input.
-- Do not add network calls, automated trading integrations, or forecasting.
+- Delegate optional outbound network transport to `integrations`; services may
+  orchestrate it only after local persistence succeeds.
+- Do not add automated trading integrations or forecasting.
 
 ## Related Knowledge
 

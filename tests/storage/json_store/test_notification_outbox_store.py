@@ -19,4 +19,4 @@ def test_save_writes_versioned_human_readable_json(tmp_path, monkeypatch) -> Non
 
     assert path == tmp_path / "snapshot_summary_2026-07-11_v1.json"
     assert json.loads(path.read_text(encoding="utf-8")) == summary
-    assert "\n  \"message\"" in path.read_text(encoding="utf-8")
+    assert '\n  "message"' in path.read_text(encoding="utf-8")
