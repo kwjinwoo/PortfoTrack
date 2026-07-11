@@ -9,6 +9,7 @@ related:
   - domain-model
   - testing-playbook
   - adr
+  - snapshot-summary-notification
 code_refs:
   - src/portfotrack/storage/serialization
   - src/portfotrack/storage/json_store
@@ -50,6 +51,15 @@ Primary code:
 - `src/portfotrack/storage/json_store/snapshot_store.py`
 - `src/portfotrack/storage/json_store/optional_bet_store.py`
 
+## Notification Outbox
+
+Portable snapshot summaries are written as local, human-readable JSON under
+`data/notification_outbox/`. They are interoperability artifacts rather than
+portfolio persistence. Their versioned shape, deterministic naming, overwrite
+behavior, and external delivery lifecycle follow the
+[Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md)
+contract.
+
 ## Error Boundary
 
 Malformed user input should become an application-level user error at the
@@ -79,3 +89,4 @@ Related:
 - [Domain Model](../domain/overview.md)
 - [Testing Playbook](../policies/testing-playbook.md)
 - [Architecture Decision Records](../adr/README.md)
+- [Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md)

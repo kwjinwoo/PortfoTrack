@@ -7,6 +7,7 @@ depends_on:
   - project-status
 related:
   - allocation-context-export
+  - snapshot-summary-notification
   - domain-model
   - storage-contracts
   - web-routes
@@ -86,11 +87,45 @@ selection. The durable shape is owned by the
 [Allocation Context Export](../interfaces/allocation-context-export.md)
 contract.
 
-## Later Horizon
+### Portable snapshot summary notification
 
-No later milestone is currently durable enough to record. Add one only when it
-has a clear user outcome, respects the product boundary, and can be evaluated
-independently of transient implementation ideas.
+Status: `completed`
+
+Make a newly recorded snapshot reviewable from a phone after the PortfoTrack
+machine has been turned off. PortfoTrack produces a deterministic local summary
+artifact after an explicit successful snapshot save; the separately maintained
+Telegram bridge can deliver that artifact to a durable chat.
+
+The summary should reuse existing snapshot, target, and allocation-report
+semantics. It should present:
+
+- the snapshot date, currency, total portfolio amount, and change from the
+  previous snapshot when one exists;
+- each asset class's current amount and weight, target weight and tolerance
+  range, and tolerance status;
+- the rule-based additional amount needed for each underweight asset class;
+- the total additional amount and its distribution amount and ratio across
+  eligible asset classes; and
+- a clear note that these values are deterministic allocation-rule references,
+  not forecasts, personalized recommendations, or trade instructions.
+
+Snapshot persistence must succeed independently of notification delivery.
+PortfoTrack must not contain channel credentials, call hosted APIs, or depend
+on the bridge being available. Any retry queue should remain an explicit local
+artifact, and the external bridge should minimize disclosed financial data and
+require deliberate user configuration.
+
+The implemented service and local JSON store define the versioned summary and
+outbox lifecycle. Snapshot routes queue only after explicit new-save success
+and isolate summary failures from snapshot persistence. The sibling bridge
+loads Git-ignored `.env` credentials with process-environment overrides,
+splits messages to Telegram's size limit, moves successful artifacts to `sent`,
+and leaves failures pending for retry. Unit and route tests cover formatting,
+previous-snapshot change,
+zero-value edges, deterministic persistence, failure isolation, request shape,
+message splitting, completion, and retry behavior. The durable contract is
+owned by
+[Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md).
 
 ## Deliberate Non-goals
 
@@ -128,6 +163,7 @@ Depends on:
 Related:
 
 - [Allocation Context Export](../interfaces/allocation-context-export.md)
+- [Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md)
 - [Domain Model](../domain/overview.md)
 - [Storage Contracts](../storage/contracts.md)
 - [Web Routes](../web/routes.md)

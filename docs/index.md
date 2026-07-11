@@ -35,6 +35,7 @@ For a quick orientation before selecting work, read
 - [Storage Contracts](storage/contracts.md): JSON DTOs, file stores, naming, and persistence rules.
 - [Web Routes](web/routes.md): Flask app pages, API route ownership, and response expectations.
 - [Allocation Context Export](interfaces/allocation-context-export.md): Versioned local JSON exchange contract for a selected allocation state.
+- [Snapshot Summary Notification](interfaces/snapshot-summary-notification.md): Local mobile-readable summary outbox and external Telegram delivery boundary.
 
 ## Cross-Cutting Nodes
 

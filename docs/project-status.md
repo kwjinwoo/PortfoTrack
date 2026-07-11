@@ -7,6 +7,7 @@ depends_on:
 related:
   - project-roadmap
   - allocation-context-export
+  - snapshot-summary-notification
   - domain-model
   - storage-contracts
   - web-routes
@@ -41,7 +42,10 @@ persistence. Its implemented workflow covers:
 - exporting snapshot and target information as paste-ready Markdown, with
   controls for labels and exact amounts;
 - downloading a versioned, consumer-neutral allocation-context JSON file for
-  an explicitly selected snapshot; and
+  an explicitly selected snapshot;
+- producing a local, mobile-readable allocation summary outbox artifact after
+  an explicit new snapshot save, for optional delivery by a separate Telegram
+  bridge; and
 - using vendored chart assets without an external network dependency.
 
 See [Domain Model](domain/overview.md),
@@ -65,14 +69,18 @@ boundaries.
 
 A canonical [Project Roadmap](planning/roadmap.md) is recorded in the docs
 graph. It currently contains no accepted or in-progress milestone. The
-machine-readable allocation context export milestone is completed; no later
-candidate is currently durable enough to record.
+machine-readable allocation context export and portable snapshot summary
+notification milestones are completed. Live Telegram delivery still requires
+the user to configure a bot token and destination chat id in the separate
+bridge process.
 
 ## Verification Baseline
 
-On 2026-07-05, `uv run pytest -q` completed with `646 passed` in the working
-tree containing shared semantic ISO date validation across web routes. This is
-a verification record, not a promise about later changes; re-run the command
+On 2026-07-11, `uv run pytest -q` completed with `653 passed` in the working
+tree containing the portable snapshot summary outbox. The separate Telegram
+bridge also completed its seven standard-library unit tests, including `.env`
+loading and process-environment precedence. This is a
+verification record, not a promise about later changes; re-run the commands
 before relying on the current checkout.
 
 ## Maintenance Rule
@@ -92,6 +100,7 @@ Related:
 
 - [Project Roadmap](planning/roadmap.md)
 - [Allocation Context Export](interfaces/allocation-context-export.md)
+- [Snapshot Summary Notification](interfaces/snapshot-summary-notification.md)
 - [Domain Model](domain/overview.md)
 - [Storage Contracts](storage/contracts.md)
 - [Web Routes](web/routes.md)

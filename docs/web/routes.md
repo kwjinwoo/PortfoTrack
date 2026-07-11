@@ -9,6 +9,7 @@ related:
   - domain-model
   - storage-contracts
   - allocation-context-export
+  - snapshot-summary-notification
   - testing-playbook
   - error-book
 code_refs:
@@ -118,6 +119,12 @@ versioned local JSON attachment. It requires an explicit snapshot and follows
 the [Allocation Context Export](../interfaces/allocation-context-export.md)
 contract.
 
+After snapshot persistence succeeds, `POST /api/snapshots` and the `new` mode
+of `PUT /api/snapshots/<date>` request a local portable summary artifact. A
+missing target or summary failure does not change the successful snapshot
+response. Historical overwrite and item-edit routes do not queue summaries.
+See [Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md).
+
 ## UI Assets
 
 Templates live under `src/portfotrack/web/templates/`.
@@ -159,5 +166,6 @@ Related:
 - [Domain Model](../domain/overview.md)
 - [Storage Contracts](../storage/contracts.md)
 - [Allocation Context Export](../interfaces/allocation-context-export.md)
+- [Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md)
 - [Testing Playbook](../policies/testing-playbook.md)
 - [Error Book](../records/error-book.md)

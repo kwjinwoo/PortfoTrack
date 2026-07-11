@@ -14,15 +14,17 @@ import pytest
 
 @pytest.fixture()
 def tmp_data_dir(tmp_path, monkeypatch):
-    """Redirect SNAPSHOTS_DIR and TARGETS_DIR to temporary directories."""
+    """Redirect snapshot, target, and outbox paths to temporary directories."""
     snapshots_dir = tmp_path / "snapshots"
     snapshots_dir.mkdir()
     targets_dir = tmp_path / "targets"
     targets_dir.mkdir()
+    outbox_dir = tmp_path / "notification_outbox"
 
     import portfotrack.path as path_mod
     import portfotrack.services.snapshot_services as svc_mod
     import portfotrack.services.target_services as target_svc_mod
+    import portfotrack.storage.json_store.notification_outbox_store as outbox_store_mod
     import portfotrack.storage.json_store.snapshot_store as store_mod
     import portfotrack.storage.json_store.target_store as target_store_mod
 
@@ -32,6 +34,7 @@ def tmp_data_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(path_mod, "TARGETS_DIR", targets_dir)
     monkeypatch.setattr(target_svc_mod, "TARGETS_DIR", targets_dir)
     monkeypatch.setattr(target_store_mod, "TARGETS_DIR", targets_dir)
+    monkeypatch.setattr(outbox_store_mod, "NOTIFICATION_OUTBOX_DIR", outbox_dir)
 
     return snapshots_dir
 
@@ -162,6 +165,46 @@ class TestCreateSnapshot:
 
         files = list(tmp_data_dir.glob("snapshot_*.json"))
         assert len(files) == 1
+
+    def test_create_snapshot_queues_summary_when_target_exists(
+        self, client, tmp_targets_dir, tmp_path
+    ):
+        """A successful explicit save leaves one bridge-consumable artifact."""
+        _write_target_file(tmp_targets_dir, "2026-02-07")
+        payload = {
+            "items": [
+                {"asset_id": "us_equity", "label": "S&P500", "amount": 6_000_000},
+                {"asset_id": "kr_bond", "label": "국채", "amount": 4_000_000},
+            ]
+        }
+
+        response = client.post("/api/snapshots", json=payload)
+
+        queued = list((tmp_path / "notification_outbox").glob("*.json"))
+        assert response.status_code == 201
+        assert len(queued) == 1
+        artifact = json.loads(queued[0].read_text(encoding="utf-8"))
+        assert artifact["kind"] == "snapshot_summary"
+        assert "미국 주식" not in artifact["message"]
+        assert "US Equity" in artifact["message"]
+
+    def test_summary_failure_does_not_roll_back_snapshot(self, client, monkeypatch):
+        """Notification preparation is isolated from the primary save result."""
+        import portfotrack.web.routes.snapshot_routes as routes
+
+        def fail_summary(_snapshot):
+            raise OSError("outbox unavailable")
+
+        monkeypatch.setattr(routes, "queue_snapshot_summary", fail_summary)
+        payload = {
+            "items": [
+                {"asset_id": "us_equity", "label": "S&P500", "amount": 5_000_000},
+            ]
+        }
+
+        response = client.post("/api/snapshots", json=payload)
+
+        assert response.status_code == 201
 
     def test_create_snapshot_missing_items_returns_400(self, client):
         """Creating a snapshot without items returns 400."""

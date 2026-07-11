@@ -4,15 +4,19 @@ Provides endpoints for listing, retrieving, and creating portfolio snapshots.
 All endpoints delegate to the services layer; no domain logic is performed here.
 """
 
+import logging
+
 from flask import Blueprint, jsonify, request
 
 import portfotrack.path as path_mod
+from portfotrack.domain.snapshot import Snapshot
 from portfotrack.services.snapshot_services import (
     add_item_to_snapshot,
     init_snapshot,
     save_snapshot,
     save_snapshot_overwrite,
 )
+from portfotrack.services.snapshot_summary import queue_snapshot_summary
 from portfotrack.services.target_services import (
     load_latest_target,
     validate_asset_id_in_target,
@@ -26,6 +30,7 @@ from portfotrack.storage.serialization.snapshot_json import (
 from portfotrack.web.date_validation import is_iso_date
 
 snapshot_bp = Blueprint("snapshots", __name__, url_prefix="/api/snapshots")
+logger = logging.getLogger(__name__)
 
 
 @snapshot_bp.route("", methods=["GET"])
@@ -105,6 +110,7 @@ def create_snapshot():
         add_item_to_snapshot(snapshot, item["asset_id"], item["label"], item["amount"])
 
     save_snapshot(snapshot)
+    _queue_summary_without_affecting_save(snapshot)
     dto = snapshot_to_dto(snapshot)
     return jsonify(dto), 201
 
@@ -233,8 +239,17 @@ def update_snapshot(date: str):
         return jsonify(dto), 200
     else:  # mode == "new"
         save_snapshot(snapshot)
+        _queue_summary_without_affecting_save(snapshot)
         dto = snapshot_to_dto(snapshot)
         return jsonify(dto), 201
+
+
+def _queue_summary_without_affecting_save(snapshot: Snapshot) -> None:
+    """Queue a portable summary without changing snapshot save success."""
+    try:
+        queue_snapshot_summary(snapshot)
+    except Exception:
+        logger.exception("Snapshot saved, but its notification summary was not queued.")
 
 
 def _validate_item_fields(body: dict) -> tuple[str, str, int] | tuple[None, None, None]:
