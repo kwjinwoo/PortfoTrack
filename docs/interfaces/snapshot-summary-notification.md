@@ -76,16 +76,20 @@ The plain-text message contains:
 - the number of asset classes outside their inclusive tolerance;
 - each target asset's current amount and weight, target weight, tolerance
   range, and status;
-- each positive `target_amount_needed`, with negative values presented as zero
-  because the summary does not calculate sales; and
-- the sum of positive target gaps plus each positive gap's share of that sum.
+- each signed `target_amount_needed`, presented as a required addition when
+  positive and a reduction reference when negative;
+- the sum of positive target gaps plus each positive gap's share of that sum;
+  and
+- the absolute sum of negative target gaps plus each reduction's share of that
+  sum.
 
 `target_amount_needed` retains the existing allocation report definition:
-`int(current_total * target_ratio) - current_amount`. Distribution ratios are
-each positive gap divided by the sum of positive gaps. These values describe
-the current snapshot and do not recalculate a future portfolio after a deposit.
-The message identifies them as deterministic references rather than forecasts,
-personalized advice, trade signals, or execution instructions.
+`int(current_total * target_ratio) - current_amount`. Addition and reduction
+distribution ratios are calculated separately from positive and negative gaps.
+These values describe the current snapshot and do not recalculate a future
+portfolio after an addition or reduction. The message identifies them as
+deterministic references rather than forecasts, personalized advice, trade
+signals, or execution instructions.
 
 ## Integrated Telegram Delivery
 

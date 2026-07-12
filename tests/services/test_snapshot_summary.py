@@ -28,8 +28,8 @@ def _snapshot(date: str, us_equity: int, kr_bond: int) -> Snapshot:
     return snapshot
 
 
-def test_builds_mobile_summary_with_amounts_shortfalls_and_distribution() -> None:
-    """Summary exposes the factual allocation values required for delivery."""
+def test_builds_mobile_summary_with_additions_reductions_and_distribution() -> None:
+    """Summary exposes signed target gaps and their separate distributions."""
     summary = build_snapshot_summary(
         _target(),
         _snapshot("2026-07-11", 4_000_000, 6_000_000),
@@ -47,9 +47,12 @@ def test_builds_mobile_summary_with_amounts_shortfalls_and_distribution() -> Non
     assert "허용 범위: 55.0%–65.0%" in summary["message"]
     assert "목표 기준 필요 추가금: +2,000,000원" in summary["message"]
     assert "한국 채권 ⚠️ 허용 범위 이탈" in summary["message"]
-    assert "목표 기준 필요 추가금: 0원" in summary["message"]
+    assert "목표 기준 필요 감액: 2,000,000원" in summary["message"]
     assert "목표 비중 보완에 필요한 총액: 2,000,000원" in summary["message"]
     assert "• 미국 주식: 2,000,000원 · 100.0%" in summary["message"]
+    assert "목표 비중 초과분 감액 참고" in summary["message"]
+    assert "목표 비중 초과분의 총액: 2,000,000원" in summary["message"]
+    assert "• 한국 채권: 2,000,000원 · 100.0%" in summary["message"]
     assert "개인화된 투자 조언이나 거래 지시가 아닙니다." in summary["message"]
 
 
@@ -64,6 +67,7 @@ def test_summary_handles_missing_previous_snapshot_and_no_shortfall() -> None:
     assert "이전 대비: 비교할 이전 스냅샷 없음" in summary["message"]
     assert "허용 범위 이탈: 0개 자산군" in summary["message"]
     assert "목표 비중 보완에 필요한 추가금이 없습니다." in summary["message"]
+    assert "목표 비중 초과분에 대한 감액 참고값이 없습니다." in summary["message"]
 
 
 def test_summary_handles_zero_previous_total_without_dividing_by_zero() -> None:

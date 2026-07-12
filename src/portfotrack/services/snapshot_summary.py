@@ -28,10 +28,10 @@ def build_snapshot_summary(
 ) -> SnapshotSummaryDTO:
     """Build a mobile-readable allocation summary from local facts.
 
-    Additional amounts retain the established allocation report meaning:
-    each positive value is the gap between the current amount and target
-    amount at the current total. Distribution ratios divide each positive gap
-    by the sum of all positive gaps; they do not forecast a post-deposit state.
+    Adjustment amounts retain the established allocation report meaning:
+    each signed value is the gap between the current amount and target amount
+    at the current total. Addition and reduction distributions are calculated
+    separately; they do not forecast a post-adjustment state.
 
     Args:
         target: Target allocation used for the deterministic comparison.
@@ -107,12 +107,7 @@ def _format_message(
 
     for item in report.report_items:
         status = "✅ 정상" if item.is_within_tolerance else "⚠️ 허용 범위 이탈"
-        needed = max(item.target_amount_needed, 0)
-        needed_text = (
-            f"+{_amount(needed, currency_suffix)}"
-            if needed > 0
-            else _amount(0, currency_suffix)
-        )
+        adjustment_text = _format_adjustment(item.target_amount_needed, currency_suffix)
         lines.extend(
             [
                 "",
@@ -123,7 +118,7 @@ def _format_message(
                     "허용 범위: "
                     f"{_percent(item.tolerance['lower'])}–{_percent(item.tolerance['upper'])}"
                 ),
-                f"목표 기준 필요 추가금: {needed_text}",
+                adjustment_text,
             ]
         )
 
@@ -146,10 +141,30 @@ def _format_message(
                 f" · {_percent(distribution)}"
             )
 
+    reduction_items = [
+        item for item in report.report_items if item.target_amount_needed < 0
+    ]
+    total_reduction = sum(-item.target_amount_needed for item in reduction_items)
+    lines.extend(["", "📉 목표 비중 초과분 감액 참고", ""])
+    if total_reduction == 0:
+        lines.append("목표 비중 초과분에 대한 감액 참고값이 없습니다.")
+    else:
+        lines.append(
+            f"목표 비중 초과분의 총액: {_amount(total_reduction, currency_suffix)}"
+        )
+        lines.append("")
+        for item in reduction_items:
+            reduction = -item.target_amount_needed
+            distribution = reduction / total_reduction
+            lines.append(
+                f"• {item.asset_name}: {_amount(reduction, currency_suffix)}"
+                f" · {_percent(distribution)}"
+            )
+
     lines.extend(
         [
             "",
-            "현재 비중이 높은 자산의 매도는 계산하지 않았습니다.",
+            "추가·감액은 현재 총자산의 목표 비중 기준 참고값입니다.",
             "설정된 목표와 허용 범위에 따른 규칙 기반 참고값이며,",
             "개인화된 투자 조언이나 거래 지시가 아닙니다.",
         ]
@@ -177,6 +192,14 @@ def _format_change(
 
 def _amount(value: int, currency_suffix: str) -> str:
     return f"{value:,}{currency_suffix}"
+
+
+def _format_adjustment(needed: int, currency_suffix: str) -> str:
+    if needed > 0:
+        return f"목표 기준 필요 추가금: +{_amount(needed, currency_suffix)}"
+    if needed < 0:
+        return f"목표 기준 필요 감액: {_amount(-needed, currency_suffix)}"
+    return f"목표 기준 조정 필요액: {_amount(0, currency_suffix)}"
 
 
 def _percent(value: float) -> str:
