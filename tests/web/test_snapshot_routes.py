@@ -380,6 +380,31 @@ class TestCreateSnapshotAssetValidation:
 class TestUpdateSnapshot:
     """PUT /api/snapshots/<date> — update an existing snapshot."""
 
+    def test_overwrite_notifies_with_updated_snapshot(
+        self, client, tmp_data_dir, monkeypatch
+    ):
+        """Overwriting sends the persisted replacement to notification handling."""
+        import portfotrack.web.routes.snapshot_routes as routes
+
+        _write_snapshot_file(tmp_data_dir, "2026-02-12")
+        notified_snapshots = []
+        monkeypatch.setattr(routes, "notify_snapshot_saved", notified_snapshots.append)
+        payload = {
+            "mode": "overwrite",
+            "items": [
+                {"asset_id": "gold", "label": "Gold ETF", "amount": 3_000_000},
+            ],
+        }
+
+        response = client.put("/api/snapshots/2026-02-12", json=payload)
+
+        assert response.status_code == 200
+        assert len(notified_snapshots) == 1
+        notified = notified_snapshots[0]
+        assert notified.date == "2026-02-12"
+        assert notified.items[0].asset_id == "gold"
+        assert notified.items[0].amount == 3_000_000
+
     def test_overwrite_existing_returns_200(self, client, tmp_data_dir):
         """Overwriting an existing snapshot should return 200 with updated data."""
         _write_snapshot_file(tmp_data_dir, "2026-02-12")

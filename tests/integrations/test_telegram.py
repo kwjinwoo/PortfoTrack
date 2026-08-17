@@ -44,7 +44,9 @@ def test_load_dotenv_supports_comments_whitespace_and_quotes(tmp_path) -> None:
     }
 
 
-def test_configuration_loads_dotenv_without_shell_exports(tmp_path, monkeypatch) -> None:
+def test_configuration_loads_dotenv_without_shell_exports(
+    tmp_path, monkeypatch
+) -> None:
     env_file = tmp_path / ".env"
     env_file.write_text(
         "TELEGRAM_BOT_TOKEN=file-token\nTELEGRAM_CHAT_ID=file-chat\n",

@@ -235,6 +235,7 @@ def update_snapshot(date: str):
         snapshot.date = date
         latest_file = sorted(matching)[-1]
         save_snapshot_overwrite(snapshot, latest_file.name)
+        _notify_without_affecting_save(snapshot)
         dto = snapshot_to_dto(snapshot)
         return jsonify(dto), 200
     else:  # mode == "new"

@@ -119,12 +119,13 @@ versioned local JSON attachment. It requires an explicit snapshot and follows
 the [Allocation Context Export](../interfaces/allocation-context-export.md)
 contract.
 
-After snapshot persistence succeeds, `POST /api/snapshots` and the `new` mode
-of `PUT /api/snapshots/<date>` queue a local portable summary artifact and ask
-the integrated Telegram transport to deliver all pending summaries when
-credentials exist. Missing setup, unavailable networks, or rejected messages
-do not change the successful snapshot response. Historical overwrite and
-item-edit routes do not queue summaries.
+After snapshot persistence succeeds, `POST /api/snapshots` and both the `new`
+and `overwrite` modes of `PUT /api/snapshots/<date>` queue a local portable
+summary artifact and ask the integrated Telegram transport to deliver all
+pending summaries when credentials exist. Overwrite notifications summarize
+the persisted replacement while retaining its original snapshot date. Missing
+setup, unavailable networks, or rejected messages do not change the successful
+snapshot response. Item-edit routes do not queue summaries.
 See [Snapshot Summary Notification](../interfaces/snapshot-summary-notification.md).
 
 ## UI Assets

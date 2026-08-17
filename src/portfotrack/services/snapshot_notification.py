@@ -26,5 +26,9 @@ def notify_snapshot_saved(snapshot: Snapshot) -> tuple[int, int]:
     config = load_telegram_config()
     if config is None:
         return (0, 0)
-    outbox = queued_path.parent if queued_path is not None else path_mod.NOTIFICATION_OUTBOX_DIR
+    outbox = (
+        queued_path.parent
+        if queued_path is not None
+        else path_mod.NOTIFICATION_OUTBOX_DIR
+    )
     return process_outbox(outbox, config)

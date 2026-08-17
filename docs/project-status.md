@@ -45,8 +45,8 @@ workflow covers:
 - downloading a versioned, consumer-neutral allocation-context JSON file for
   an explicitly selected snapshot;
 - producing a local, mobile-readable allocation summary outbox artifact after
-  an explicit new snapshot save and immediately attempting delivery through
-  the integrated Telegram transport; and
+  an explicit snapshot save, including an overwrite, and immediately
+  attempting delivery through the integrated Telegram transport; and
 - using vendored chart assets without an external network dependency.
 
 See [Domain Model](domain/overview.md),
@@ -75,12 +75,12 @@ integrated Telegram delivery milestones are completed.
 
 ## Verification Baseline
 
-On 2026-07-11, `uv run pytest -q` completed with `664 passed` and
-`uv run pre-commit run --all-files` passed after Telegram delivery moved into
-PortfoTrack. A live message also succeeded through the integrated transport
-using the project-root `.env`. This is a verification record, not a promise
-about later changes; re-run the commands before relying on the current
-checkout.
+On 2026-08-16, `.venv/bin/python -m pytest -q` completed with `665 passed` and
+`.venv/bin/pre-commit run --all-files` passed after overwrite saves were added
+to the notification boundary. A live message also succeeded through the
+integrated transport using the project-root `.env`. This is a verification
+record, not a promise about later changes; re-run the commands before relying
+on the current checkout.
 
 ## Maintenance Rule
 

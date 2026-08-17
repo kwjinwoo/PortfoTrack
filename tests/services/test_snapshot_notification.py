@@ -70,7 +70,9 @@ def test_existing_pending_artifacts_retry_even_when_new_summary_is_not_queued(
         lambda value: None,
     )
     monkeypatch.setattr(snapshot_notification, "load_telegram_config", lambda: config)
-    monkeypatch.setattr(snapshot_notification.path_mod, "NOTIFICATION_OUTBOX_DIR", Path("/outbox"))
+    monkeypatch.setattr(
+        snapshot_notification.path_mod, "NOTIFICATION_OUTBOX_DIR", Path("/outbox")
+    )
     monkeypatch.setattr(
         snapshot_notification,
         "process_outbox",

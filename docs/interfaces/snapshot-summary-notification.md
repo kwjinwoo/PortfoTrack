@@ -39,15 +39,16 @@ and delivery retries.
 
 ## Save Boundary
 
-An explicit successful `POST /api/snapshots` save and the `new` mode of
-`PUT /api/snapshots/<date>` request summary generation after snapshot
-persistence completes. Item edits and historical overwrites do not queue a
-notification.
+An explicit successful `POST /api/snapshots` save and both the `new` and
+`overwrite` modes of `PUT /api/snapshots/<date>` request summary generation
+after snapshot persistence completes. Overwrite summaries use the persisted
+replacement contents and retain the snapshot's original date. Item-edit
+routes do not queue a notification.
 
 The saved snapshot is authoritative. Missing target setup produces no new
 summary, and any later summary, configuration, outbox, or Telegram failure is
 logged without changing the successful snapshot response. Existing pending
-artifacts are retried on later explicit new snapshot saves.
+artifacts are retried on later explicit snapshot saves, including overwrites.
 
 ## Version 1.0 Artifact
 
